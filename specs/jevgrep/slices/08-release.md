@@ -1,6 +1,6 @@
 # Confirm quality and the release artifact
 
-Status: frozen confirmation in progress; solve preservation currently fails on Django. Depends on: 07. Read [contracts](../contracts.md) first.
+Status: frozen confirmation complete and rejected; solve preservation fails on Django and only six cost wins are verified. Depends on: 07. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 

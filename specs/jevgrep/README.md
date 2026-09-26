@@ -7,24 +7,25 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: finish the frozen `installed-jg-cpython-parity-v1` cohort. Requests and
-scikit-learn are officially solved and fully billed cost wins.
-Requests paired trace review is complete; the same plan's remaining cells are
-running. [Cohort confirmation](assets/cpython-confirmation.md) owns the results.
-Never rerun an existing baseline or replace a retained
-attempt. The merged `bun run verify` gate passed and whole-product review's sole
-finding is fixed with a clean follow-up review. Exact archive checks pass on
-macOS arm64 and Linux arm64/amd64; all ten no-call validations passed.
-See [runtime evidence](assets/python-runtime.md) for coverage, artifact identity
-and interpreter-version limits. Django failed a required test despite a solved baseline, so solve-preservation
-acceptance currently fails. Continue the remaining frozen cells and paired failure
-analysis before proposing a correction.
+Next: diagnose the Django regression with one isolated query-framing experiment.
+The frozen `installed-jg-cpython-parity-v1` cohort is complete and not accepted:
+7/10 solves versus 8/10 baseline, six cost wins, and 35.27% lower full Sol cost.
+[Confirmation evidence](assets/cpython-confirmation.md) owns all outcomes, trace
+findings and quality caveats. Never rerun a baseline, replace an attempt, or treat
+the lower total as compensation for a lost solve. Keep the measured CLI unchanged
+while testing any query/skill hypothesis as a separately identified candidate.
+
+The merged `bun run verify` gate passed and whole-product review's sole finding
+is fixed with a clean follow-up review. Exact archive checks pass on macOS arm64
+and Linux arm64/amd64. [Runtime evidence](assets/python-runtime.md) records the
+artifact and interpreter limits. The architecture port is verified for the
+exercised corpus; task-quality acceptance failed and remains required.
 
 `installed-jg-reference-parity-v1` is stopped and superseded. Requests and
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted
 with its patch and traces retained; seven cells never started. These superseded
-studies remain stopped; only the new bundled-CPython study is
-active.
+studies remain stopped. The bundled-CPython cohort is terminal; no Sol run is
+active. The isolated diagnostic makes only bounded Jev classification calls.
 
 The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
 superseded, retaining completed outcomes and interrupted traces. It is not a

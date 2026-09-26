@@ -3,8 +3,11 @@
 Study: `evals/runs/swebench/installed-jg-cpython-parity-v1/plan.json`.
 The [runtime evidence](python-runtime.md) owns the exact archive and preflight
 checks. This is one prospective ten-task cohort; superseded studies do not
-contribute results, and saved baselines are never rerun. Acceptance is currently failing solve preservation because Django did not solve;
-the remaining frozen cells continue to characterize the same policy.
+contribute results, and saved baselines are never rerun. The cohort is complete and **not accepted**: seven solves versus eight baseline
+solves, seven baseline solves preserved, and six successful cost wins versus the
+required seven. Full Sol cost is $4.9338206 versus $7.622069 baseline (35.27% lower).
+The lower total includes failed tasks and does not compensate for the lost solve.
+Jev is excluded; its known subtotal is $1.067555286, with full total unknown.
 
 ## Verified completed pairs
 
@@ -18,10 +21,13 @@ the remaining frozen cells continue to characterize the same policy.
 | SymPy 16792 | Solved, no evaluator errors | $0.4377728 | $0.5479750 | −20.11% | $0.085087926 |
 | pytest 6197 | Solved, no evaluator errors | $0.5946860 | $2.3444580 | −74.63% | $0.100513098 |
 | Sphinx 8638 | Solved, no evaluator errors | $0.7531188 | $1.0594724 | −28.92% | Known $0.106778952; full total unknown |
+| Matplotlib 26466 | Unresolved, as in baseline | $0.4608290 | $0.3957160 | +16.45%, **not a win** | $0.183680616 |
+| Pylint 4604 | Unresolved; retained collection limitation | $0.2727868 | $0.2836264 | −3.82%, **not a win** | Known $0.071647716; full total unknown |
 
-All eight listed Sol bills are complete. Officially, seven tasks solved and six
-are cost wins; Django still violates baseline solve preservation. Matplotlib and
-Pylint are unfinished. Unknown or failed outcomes cannot count as wins. Jev
+All ten Sol bills and official grading receipts are retained. Matplotlib fails
+the annotation/OffsetFrom input-copy image test. Pylint collects no tests because
+`IS_PYPY` cannot be imported from `pylint.constants`, matching its retained harness
+limitation. Neither is silently excluded or counted as a win. Unknown or failed outcomes cannot count as wins. Jev
 costs are observed API metadata rather than invoice reconciliation; incomplete
 transport coverage keeps full totals unknown without discarding known subtotals.
 Original grading and accounting receipts live beside each attempt in the study.
@@ -171,3 +177,36 @@ expected import order before passing. All test generated wrapper code but lack
 NumPy/Cython for a compiled reproduction. No implementation regression was found.
 Evidence: `/tmp/jg-sympy-paired/`. These trace differences are observed associations,
 not isolated causal estimates of retrieval's contribution.
+
+## Pytest and Sphinx paired traces
+
+Pytest's packet contains 24 files and six excerpts (12,518 source bytes), mainly
+Session traversal context; the ultimately changed `Package.collect` is a lead.
+The baseline's broader traversal rewrite repeatedly breaks hook calls, initializer
+collection, ordering and skipping. Its 14 implementation/test patches and 15 test
+runs follow real repairs; they are not gratuitous repeats. The treatment uses two
+patches and two runs. A code-review concern about nested packages did not reproduce:
+with assertion-raising nested initializers and an unrelated passing root test,
+original code fails while treatment, baseline and spike each pass. No functional
+regression is established by that concern. Evidence:
+`/tmp/jg-cpython-pytest-comparison/` and `/tmp/jg-pytest-nested-probe/`.
+
+Sphinx returns 85 files, eight leads and zero excerpts, explicitly incomplete after
+five provider issues. Its implementation change is byte-identical to both
+comparators. Baseline detours through index generation, changelogs and Git objects;
+current skips that route. Current and spike repair a test assertion index before
+passing domain tests. Current also reproduces a broader warning-related failure
+in a pristine checkout. Its added regression covers fewer field variants than the
+spike, but no implementation defect was found. Evidence: `/tmp/jg-sphinx8638-paired/`.
+
+## Next focused experiment
+
+Do not rerun or replace this cohort. Preserve the CLI, parser, traversal, thresholds,
+requests and skill as the recorded incumbent. Investigate query framing separately
+on Django, where solving the retained regression is the most direct unresolved
+quality question. The next bounded diagnostic holds a saved SQLite declaration
+request constant and varies only its query; any later skill candidate must be
+identified separately and validated on actual task outcomes. A classifier score
+increase is insufficient for promotion. Sol baselines remain immutable, and any
+new candidate must still preserve all eight baseline solves and achieve seven
+successful lower-cost solves before final acceptance.
