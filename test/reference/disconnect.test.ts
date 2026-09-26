@@ -1,3 +1,4 @@
+import { referenceTransport, wireResponse } from "./transport";
 import { expect } from "bun:test";
 import { createServer } from "node:http";
 import { resolve } from "node:path";
@@ -5,10 +6,19 @@ import { testIfDocker as test } from "../helpers/docker";
 
 async function disconnected(reference: boolean) {
   const bodies: string[] = [];
+  const transport = await referenceTransport();
   const server = createServer(async (request, response) => {
     const chunks: Buffer[] = [];
     for await (const chunk of request) chunks.push(Buffer.from(chunk));
-    const body = JSON.parse(Buffer.concat(chunks).toString());
+    const body = transport.decode(
+      {
+        url: `http://localhost${request.url}`,
+        method: request.method,
+        headers: new Headers(request.headers as Record<string, string>),
+      },
+      JSON.parse(Buffer.concat(chunks).toString()),
+      !reference,
+    );
     bodies.push(JSON.stringify(body));
     if (bodies.length === 1) {
       response.destroy();
@@ -16,11 +26,16 @@ async function disconnected(reference: boolean) {
     }
     response.writeHead(200, { "content-type": "application/json" });
     response.end(
-      JSON.stringify({
-        answers: Object.fromEntries(
-          Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.05 }]),
+      JSON.stringify(
+        wireResponse(
+          {
+            answers: Object.fromEntries(
+              Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.05 }]),
+            ),
+          },
+          !reference,
         ),
-      }),
+      ),
     );
   });
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
@@ -34,11 +49,7 @@ async function disconnected(reference: boolean) {
         ? ["node", "/opt/jevgrep-reference.mjs", "--query", query, "--root", root]
         : ["node", resolve("apps/cli/dist/bin/index.js"), query, root, "--no-cache"],
       {
-        env: {
-          PATH: process.env.PATH,
-          AI_GATEWAY_API_KEY: "fixture",
-          AI_GATEWAY_BASE_URL: `http://127.0.0.1:${address.port}/v4/ai`,
-        },
+        env: transport.env(!reference, `http://127.0.0.1:${address.port}`),
         stdout: "pipe",
         stderr: "pipe",
         timeout: 20000,
@@ -51,6 +62,7 @@ async function disconnected(reference: boolean) {
     ]);
     return { code, stdout, stderr, bodies: bodies.sort() };
   } finally {
+    await transport.cleanup();
     server.closeAllConnections();
     await new Promise<void>((done) => server.close(() => done()));
   }

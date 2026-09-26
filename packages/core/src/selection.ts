@@ -1,4 +1,4 @@
-import { EvaluationFailure } from "./gateway";
+import { EvaluationFailure } from "./evaluator";
 import { evidenceRequest, type Evidence } from "./requests";
 import {
   inspect,

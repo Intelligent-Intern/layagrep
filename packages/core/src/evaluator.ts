@@ -1,4 +1,6 @@
-import { createGateway, experimental_evaluate as evaluate } from "ai";
+import { APICallError, experimental_evaluate as evaluate } from "ai";
+import { createTypeSafeAi } from "@ai-sdk/typesafe-ai";
+import { providers, type ProviderId } from "./providers";
 import { type createEvaluationCache, type CacheInput } from "./cache";
 import { setTimeout as delay } from "node:timers/promises";
 
@@ -23,14 +25,16 @@ export class EvaluationFailure extends Error {
 }
 
 export function createEvaluator(options: {
+  provider: ProviderId;
   apiKey: string;
   cache?: ReturnType<typeof createEvaluationCache>;
   policyVersion?: string;
-  baseURL?: string;
+  fetch?: typeof fetch;
   signal: AbortSignal;
   requestLimit?: number;
   timeoutMs?: number;
 }) {
+  const preset = providers[options.provider];
   let requests = 0;
   let cacheHits = 0;
   let cooldownUntil = 0;
@@ -39,15 +43,15 @@ export function createEvaluator(options: {
     if (options.signal.aborted) throw new EvaluationFailure("cancelled");
     if (authenticationFailure.signal.aborted) throw new EvaluationFailure("authentication");
   }
-  const gateway = createGateway({
+  const provider = createTypeSafeAi({
     apiKey: options.apiKey,
-    baseURL: options.baseURL,
+    baseURL: preset.baseURL,
     fetch: async (input, init) => {
       assertActive();
       if (requests >= (options.requestLimit ?? 50_000))
         throw new EvaluationFailure("request-limit");
       requests++;
-      const response = await fetch(input, init);
+      const response = await (options.fetch ?? fetch)(input, init);
       if (response.status === 429) {
         const raw = response.headers.get("retry-after");
         const seconds = raw === null ? NaN : Number(raw);
@@ -81,8 +85,10 @@ export function createEvaluator(options: {
       const cacheInput: CacheInput = {
         request,
         namespace: {
-          model: "typesafe-ai/jev",
-          provider: options.baseURL ?? "vercel-ai-gateway",
+          model: preset.model,
+          provider: options.provider,
+          endpoint: preset.baseURL,
+          protocol: "typesafe-ai-3.0.8",
           policyVersion: options.policyVersion ?? "1",
           parserVersion: "cpython-3.11.3-pyodide-0.25.1-ts-5.9.3",
           promptVersion: "unit-locators-1",
@@ -121,7 +127,7 @@ export function createEvaluator(options: {
         assertActive();
         try {
           const result = await evaluate({
-            model: gateway.evaluationModel("typesafe-ai/jev"),
+            model: provider.evaluationModel(preset.model),
             ...request,
             maxRetries: 0,
             abortSignal: AbortSignal.any([
@@ -163,7 +169,8 @@ export function createEvaluator(options: {
             status === 408 ||
             status === 429 ||
             (typeof status === "number" && status >= 500 && status <= 599) ||
-            ["GatewayInternalServerError", "GatewayTimeoutError", "TimeoutError"].includes(name);
+            name === "TimeoutError" ||
+            (APICallError.isInstance(error) && error.statusCode === undefined && error.isRetryable);
           if (navigation && status === 429) attemptLimit = Math.max(attemptLimit, 2);
           if ((navigation && !transient) || attempt + 1 === attemptLimit)
             throw new EvaluationFailure(

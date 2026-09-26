@@ -74,13 +74,19 @@ class Gateway(http.server.BaseHTTPRequestHandler):
    codex=self.path=='/codex/v1/responses'
    engine='codex' if codex else 'claude' if claude else 'jev'
    if (codex or claude) and config.get('agent_engine')!=engine:self.send_error(403);return
-   jev=self.path=='/evaluation-model' and self.headers.get('ai-model-id')=='typesafe-ai/jev'
+   jev=self.path=='/typesafe/v1/systemone' and self.headers.get('x-jevgrep-original-url')=='https://ai-gateway.vercel.sh/typesafe/v1/systemone'
    if jev and config.get('allow_jev') is not True:self.send_error(403);return
    if not (claude or codex or jev):self.send_error(403);return
    size=int(self.headers.get('Content-Length','0'))
    if size<1 or size>2000000:self.send_error(413);return
    data=self.rfile.read(size)
-   if jev:response_trace=capture_jev(request_id,data)
+   if jev:
+    try:body=json.loads(data)
+    except ValueError:self.send_error(403);return
+    if (not isinstance(body,dict) or body.get('model')!='typesafe-ai/jev' or not isinstance(body.get('state'),dict) or not isinstance(body.get('questions'),dict) or
+        any(not isinstance(question,dict) or question.get('type')!='noul' or not isinstance(question.get('instructions'),str) for question in body['questions'].values())):
+     self.send_error(403);return
+    response_trace=capture_jev(request_id,data)
    headers={'Authorization':'Bearer '+config['key'],'Content-Type':'application/json'}
    if codex:
     body=json.loads(data)
@@ -95,8 +101,7 @@ class Gateway(http.server.BaseHTTPRequestHandler):
      if self.headers.get(header):headers[header]=self.headers[header]
     target=GATEWAY_ORIGIN+self.path
    else:
-    target=GATEWAY_ORIGIN+'/v4/ai/evaluation-model'
-    headers.update({'ai-model-id':'typesafe-ai/jev','ai-evaluation-model-specification-version':'4','ai-gateway-protocol-version':'0.0.1','ai-gateway-auth-method':'api-key'})
+    target=GATEWAY_ORIGIN+'/typesafe/v1/systemone'
    with LOG_LOCK:print(json.dumps({'kind':engine+'-request-start','requestId':request_id,'startedAt':time.time(),'operation':'count_tokens' if route.path.endswith('/count_tokens') else 'generation','streamed':bool(body.get('stream')) if claude or codex else False}),flush=True)
    request=urllib.request.Request(target,data=data,headers=headers)
    try:response=urllib.request.urlopen(request,timeout=90)

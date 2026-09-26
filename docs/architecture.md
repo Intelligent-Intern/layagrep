@@ -95,11 +95,14 @@ does not guarantee that the coding agent tests the right behavioral boundary.
 
 ## Integration and acceptance
 
-Use TypeScript and the AI SDK evaluation interface through AI Gateway. Pass native
+Use TypeScript and the AI SDK evaluation interface through one TypeSafe-compatible
+adapter, with fixed Vercel, TypeSafe and OpenRouter presets. Pass native
 `state` and `questions` objects; source is a string field within that data. The
 SDK handles HTTP serialization. Keep provider authentication and model access at
 the core boundary so future providers do not reshape traversal or stdout.
-The CLI authentication module handles the Gateway key; provider expansion is deferred.
+The CLI auth module owns one saved provider/key. The core preset owner resolves
+its endpoint/model; the evaluator owns retries and answer-cache identity. Provider
+selection never changes traversal or source rendering.
 
 Acceptance measures the entire downstream Sol task: an official solve at a lower
 full task cost than its fixed baseline, while preserving baseline solves. Jev

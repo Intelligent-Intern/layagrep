@@ -1,7 +1,7 @@
 # 3. Save a provider and complete the installed journey
 
 **Unlock:** users can choose any supported service once and use ordinary `jg`.
-Depends on slice 2. Status: not started.
+Depends on slice 2. Status: complete; see [verification](../assets/auth-verification.md).
 
 ## API and interaction
 

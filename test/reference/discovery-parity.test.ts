@@ -1,10 +1,12 @@
+import { referenceTransport, wireResponse } from "./transport";
+import { routeProviderFetch } from "../fixtures/provider-route.mjs";
 import { expect } from "bun:test";
 import { mkdtemp, mkdir, writeFile, rm, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { testIfDocker } from "../helpers/docker";
 import { retrieve } from "../../packages/core/src/retrieve";
-import { createEvaluator, EvaluationFailure } from "../../packages/core/src/gateway";
+import { createEvaluator, EvaluationFailure } from "../../packages/core/src/evaluator";
 
 type Body = {
   state: {
@@ -38,12 +40,11 @@ async function trajectory(
     [];
   const requests: Body[] = [];
   let failedGroup = false;
+  const transport = await referenceTransport();
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
-      expect(new URL(request.url).pathname).toBe("/v4/ai/evaluation-model");
-      expect(request.headers.get("ai-model-id")).toBe("typesafe-ai/jev");
-      const body = (await request.json()) as Body;
+      const body = transport.decode(request, await request.json(), !reference) as Body;
       if (body.state.items || body.state.preview) requests.push(body);
       if (body.state.items && fault) {
         if (fault === "rate-limit")
@@ -62,25 +63,30 @@ async function trajectory(
           );
         }
       }
-      const response = Response.json({
-        answers: Object.fromEntries(
-          Object.keys(body.questions).map((id, i) => {
-            const item = body.state.items?.[i];
-            const probability =
-              item?.kind === "directory"
-                ? body.state.relationAnchor &&
-                  item.path.split("/").some((segment) => segment.startsWith("related")) &&
-                  !item.path.includes("-cap") &&
-                  !item.path.includes("-escaped")
-                  ? 0.9
-                  : 0.5
-                : item?.path.startsWith("Anchor.")
-                  ? 0.9
-                  : 0.25;
-            return [id, { type: "boolean", probability }];
-          }),
+      const response = Response.json(
+        wireResponse(
+          {
+            answers: Object.fromEntries(
+              Object.keys(body.questions).map((id, i) => {
+                const item = body.state.items?.[i];
+                const probability =
+                  item?.kind === "directory"
+                    ? body.state.relationAnchor &&
+                      item.path.split("/").some((segment) => segment.startsWith("related")) &&
+                      !item.path.includes("-cap") &&
+                      !item.path.includes("-escaped")
+                      ? 0.9
+                      : 0.5
+                    : item?.path.startsWith("Anchor.")
+                      ? 0.9
+                      : 0.25;
+                return [id, { type: "boolean", probability }];
+              }),
+            ),
+          },
+          !reference,
         ),
-      });
+      );
       if (
         reverseRelationCompletion &&
         body.state.relationAnchor &&
@@ -104,11 +110,7 @@ async function trajectory(
       const child = Bun.spawn(
         ["node", "/opt/jevgrep-reference.mjs", "--root", root, "--query", query],
         {
-          env: {
-            PATH: process.env.PATH,
-            AI_GATEWAY_API_KEY: "fixture",
-            AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
-          },
+          env: transport.env(!reference, `http://127.0.0.1:${server.port}`),
           stdout: "pipe",
           stderr: "pipe",
         },
@@ -126,8 +128,9 @@ async function trajectory(
       const result = await retrieve(
         { root, query, signal },
         createEvaluator({
+          provider: "vercel",
           apiKey: "fixture",
-          baseURL: `http://127.0.0.1:${server.port}/v4/ai`,
+          fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
           signal,
         }),
       );
@@ -136,6 +139,7 @@ async function trajectory(
     return requests;
   } finally {
     server.stop(true);
+    await transport.cleanup();
   }
 }
 

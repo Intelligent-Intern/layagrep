@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { selectFile } from "../../packages/core/src/selection";
-import type { EvaluationRequest } from "../../packages/core/src/gateway";
+import type { EvaluationRequest } from "../../packages/core/src/evaluator";
 import type { Declaration } from "../../packages/core/src/requests";
 import { replaySelection } from "./selection-replay";
 

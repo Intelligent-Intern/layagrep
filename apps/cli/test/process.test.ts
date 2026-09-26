@@ -1,4 +1,6 @@
 import { expect } from "bun:test";
+import { readFile, readdir } from "node:fs/promises";
+import { join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -30,7 +32,7 @@ finally:
 `,
         cli,
       ],
-      { env: { ...process.env, HOME: home, AI_GATEWAY_API_KEY: "" } },
+      { env: { ...process.env, HOME: home } },
     );
     expect(JSON.parse(stdout)).toEqual({ code: 0, stderr: "" });
   });
@@ -38,7 +40,15 @@ finally:
 
 testInDocker("interactive auth hides input and exits 130 on interruption", async () => {
   await withCli(async ({ home }) => {
-    for (const mode of ["save", "interrupt"]) {
+    for (const mode of [
+      "save",
+      "interrupt-provider",
+      "interrupt-key",
+      "cancel-provider",
+      "cancel-key",
+    ]) {
+      const file = join(home, "jevgrep", "credentials.json");
+      const previous = mode === "save" ? undefined : await readFile(file, "utf8");
       const { stdout } = await execute(
         "python3",
         [
@@ -50,14 +60,25 @@ process = subprocess.Popen(["node", sys.argv[1], "auth"], stdin=slave, stdout=su
 os.close(slave)
 output = b""
 try:
-    deadline = time.monotonic() + 5
-    while b"API key" not in output:
-        if time.monotonic() >= deadline:
-            raise RuntimeError("Auth prompt did not appear")
-        if select.select([process.stdout], [], [], 0.1)[0]:
-            output += os.read(process.stdout.fileno(), 4096)
-    if sys.argv[2] == "save":
+    def wait_for(marker):
+        global output
+        deadline = time.monotonic() + 5
+        while marker not in output:
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Auth prompt did not appear")
+            if select.select([process.stdout], [], [], 0.1)[0]:
+                part = os.read(process.stdout.fileno(), 4096)
+                if not part: raise RuntimeError("Auth exited before prompt")
+                output += part
+    wait_for(b"Choose your Jev provider")
+    mode = sys.argv[2]
+    if not mode.endswith("provider"):
+        os.write(master, b"\\x1b[B\\x1b[B\\r")
+        wait_for(b"API key")
+    if mode == "save":
         os.write(master, b"pty-fixture-secret\\r")
+    elif mode.startswith("cancel"):
+        os.write(master, b"\\x03")
     else:
         process.send_signal(signal.SIGINT)
     rest, errors = process.communicate(timeout=5)
@@ -79,13 +100,24 @@ finally:
           cli,
           mode,
         ],
-        { env: { ...process.env, HOME: home, XDG_CONFIG_HOME: home, AI_GATEWAY_API_KEY: "" } },
+        { env: { ...process.env, HOME: home, XDG_CONFIG_HOME: home } },
       );
       const result = JSON.parse(stdout);
       expect(result.code).toBe(mode === "save" ? 0 : 130);
       expect(result.stderr).toBe("");
       expect(result.stdout + result.echo).not.toContain("pty-fixture-secret");
       expect(result.stdout).toContain(mode === "save" ? "key saved" : "Interrupted");
+      if (mode === "save") {
+        expect(JSON.parse(await readFile(file, "utf8"))).toEqual({
+          provider: "openrouter",
+          apiKey: "pty-fixture-secret",
+        });
+        expect(result.stdout.indexOf("Vercel AI Gateway")).toBeLessThan(
+          result.stdout.indexOf("TypeSafe"),
+        );
+        expect(result.stdout.indexOf("TypeSafe")).toBeLessThan(result.stdout.indexOf("OpenRouter"));
+      } else expect(await readFile(file, "utf8")).toBe(previous);
+      expect(await readdir(join(home, "jevgrep"))).toEqual(["credentials.json"]);
     }
   });
 });

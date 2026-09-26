@@ -48,3 +48,21 @@ test("source allocation is independent of the filesystem policy used for retriev
   expect(unlimited.policy).toEqual({ hidden: true, noIgnore: true });
   expect(bounded.policy).toEqual(unlimited.policy);
 });
+
+test("auth requires explicit provider for stdin and keeps provider selection out of search", () => {
+  expect(parseCommand(["auth"])).toEqual({ kind: "auth" });
+  expect(parseCommand(["auth", "--provider", "openrouter", "--stdin"])).toEqual({
+    kind: "auth",
+    provider: "openrouter",
+  });
+  for (const args of [
+    ["auth", "--stdin"],
+    ["auth", "--provider", "vercel"],
+    ["auth", "--provider", "unknown", "--stdin"],
+    ["query", "--provider", "typesafe"],
+    ["doctor", "--provider", "vercel"],
+    ["skill", "--provider", "vercel"],
+    ["cache", "clear", "--provider", "vercel"],
+  ])
+    expect(() => parseCommand(args)).toThrow();
+});

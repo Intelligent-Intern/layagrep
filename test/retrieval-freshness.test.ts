@@ -1,10 +1,11 @@
+import { routeProviderFetch } from "./fixtures/provider-route.mjs";
 import { expect } from "bun:test";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { testIfDocker } from "./helpers/docker";
 import { retrieve } from "../packages/core/src/retrieve";
-import { createEvaluator } from "../packages/core/src/gateway";
+import { createEvaluator } from "../packages/core/src/evaluator";
 
 testIfDocker(
   "queued navigation never uploads source excluded after the first wave",
@@ -29,7 +30,7 @@ testIfDocker(
         }
         return Response.json({
           answers: Object.fromEntries(
-            Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.1 }]),
+            Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.1 }]),
           ),
         });
       },
@@ -39,7 +40,12 @@ testIfDocker(
       const signal = new AbortController().signal;
       const result = await retrieve(
         { root, query: "sentinel", signal },
-        createEvaluator({ apiKey: "fixture", baseURL: `http://127.0.0.1:${server.port}`, signal }),
+        createEvaluator({
+          apiKey: "fixture",
+          provider: "vercel",
+          fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
+          signal,
+        }),
       );
       expect(uploads).toBe(8);
       expect(result.status).toBe("incomplete");
@@ -71,7 +77,7 @@ for (const mutation of ["ignored", "changed"] as const)
           }
           return Response.json({
             answers: Object.fromEntries(
-              Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+              Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.9 }]),
             ),
           });
         },
@@ -86,7 +92,8 @@ for (const mutation of ["ignored", "changed"] as const)
           { root, query: "selected", signal },
           createEvaluator({
             apiKey: "fixture",
-            baseURL: `http://127.0.0.1:${server.port}`,
+            provider: "vercel",
+            fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
             signal,
           }),
         );
@@ -124,7 +131,12 @@ testIfDocker(
       const signal = new AbortController().signal;
       const result = await retrieve(
         { root, query: "retry", signal },
-        createEvaluator({ apiKey: "fixture", baseURL: `http://127.0.0.1:${server.port}`, signal }),
+        createEvaluator({
+          apiKey: "fixture",
+          provider: "vercel",
+          fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
+          signal,
+        }),
       );
       expect(uploads).toBe(1);
       expect(result.status).toBe("incomplete");
@@ -155,7 +167,7 @@ for (const phase of ["selection", "role"] as const)
           }
           return Response.json({
             answers: Object.fromEntries(
-              Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+              Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.9 }]),
             ),
           });
         },
@@ -170,7 +182,8 @@ for (const phase of ["selection", "role"] as const)
           { root, query: "selected", signal },
           createEvaluator({
             apiKey: "fixture",
-            baseURL: `http://127.0.0.1:${server.port}`,
+            provider: "vercel",
+            fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
             signal,
           }),
         );
@@ -202,7 +215,7 @@ for (const size of [2, 4])
           }
           return Response.json({
             answers: Object.fromEntries(
-              Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.1 }]),
+              Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.1 }]),
             ),
           });
         },
@@ -216,7 +229,8 @@ for (const size of [2, 4])
           { root, query: "selected", signal },
           createEvaluator({
             apiKey: "fixture",
-            baseURL: `http://127.0.0.1:${server.port}`,
+            provider: "vercel",
+            fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
             signal,
           }),
         );
@@ -258,8 +272,8 @@ for (const donor of ["sample", "anchor"] as const)
               Object.keys(body.questions).map((id, index) => [
                 id,
                 {
-                  type: "boolean",
-                  probability: body.state.items?.[index]?.kind === "file" ? 0.9 : 0.1,
+                  type: "noul",
+                  noul: body.state.items?.[index]?.kind === "file" ? 0.9 : 0.1,
                 },
               ]),
             ),
@@ -281,7 +295,8 @@ for (const donor of ["sample", "anchor"] as const)
           { root, query: "selected", signal },
           createEvaluator({
             apiKey: "fixture",
-            baseURL: `http://127.0.0.1:${server.port}`,
+            provider: "vercel",
+            fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
             signal,
           }),
         );
@@ -314,7 +329,7 @@ testIfDocker(
         }
         return Response.json({
           answers: Object.fromEntries(
-            Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+            Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.9 }]),
           ),
         });
       },
@@ -325,7 +340,12 @@ testIfDocker(
       const signal = new AbortController().signal;
       const result = await retrieve(
         { root, query: "selected", signal },
-        createEvaluator({ apiKey: "fixture", baseURL: `http://127.0.0.1:${server.port}`, signal }),
+        createEvaluator({
+          apiKey: "fixture",
+          provider: "vercel",
+          fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
+          signal,
+        }),
       );
       expect(attempts).toBe(1);
       expect(result.status).toBe("incomplete");

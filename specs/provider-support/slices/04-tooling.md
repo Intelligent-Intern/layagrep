@@ -1,7 +1,7 @@
 # 4. Preserve maintained eval routing and close verification
 
 **Unlock:** the maintained harness can observe the actual installed product after
-environment-based auth is removed. Depends on slice 3. Status: not started.
+environment-based auth is removed. Depends on slice 3. Status: complete; see [verification](../assets/final-verification.md).
 
 ## Seam and scope
 

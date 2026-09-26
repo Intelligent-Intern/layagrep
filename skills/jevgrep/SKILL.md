@@ -14,8 +14,8 @@ If prerequisites are missing or installation fails, report the specific blocker
 and use ordinary discovery; do not retry indefinitely or use sudo.
 
 If a search reports missing credentials, have the user run `jg auth` in their
-terminal or configure `AI_GATEWAY_API_KEY` through their secret manager. Never ask
-them to paste a key into chat. Do not launch the interactive auth prompt in a
+terminal, select their provider, and enter its key. Saved credentials are required;
+environment keys do not configure the CLI. Never ask them to paste a key into chat. Do not launch the interactive auth prompt in a
 noninteractive agent shell. Continue with ordinary discovery until configured.
 
 ## Scope

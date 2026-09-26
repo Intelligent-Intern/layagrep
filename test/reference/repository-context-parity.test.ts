@@ -1,3 +1,4 @@
+import { referenceTransport, wireResponse } from "./transport";
 import { expect } from "bun:test";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -11,11 +12,11 @@ async function run(
   largeAnchor = false,
 ) {
   const requests: unknown[] = [];
+  const transport = await referenceTransport();
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
-      expect(new URL(request.url).pathname).toBe("/v4/ai/evaluation-model");
-      const body = (await request.json()) as {
+      const body = transport.decode(request, await request.json(), production) as {
         state: {
           items?: Array<{ path: string; kind: string }>;
           relationAnchor?: unknown;
@@ -25,35 +26,40 @@ async function run(
         questions: Record<string, unknown>;
       };
       requests.push(body);
-      return Response.json({
-        answers: Object.fromEntries(
-          Object.keys(body.questions).map((id, i) => [
-            id,
-            {
-              type: "boolean",
-              probability: body.state.items
-                ? largeAnchor
-                  ? body.state.items[i]?.kind === "directory"
-                    ? body.state.relationAnchor
-                      ? 0.9
-                      : 0.1
-                    : body.state.items[i]?.path === "Anchor.ts"
-                      ? 0.9
-                      : 0.1
-                  : 0.9
-                : body.state.declarations
-                  ? !body.state.selectedEvidence &&
-                    body.state.declarations[i]?.name === name &&
-                    body.state.declarations[i]?.startLine === startLine
-                    ? 0.9
-                    : 0.1
-                  : id === "test"
-                    ? 0.9
-                    : 0.1,
-            },
-          ]),
+      return Response.json(
+        wireResponse(
+          {
+            answers: Object.fromEntries(
+              Object.keys(body.questions).map((id, i) => [
+                id,
+                {
+                  type: "boolean",
+                  probability: body.state.items
+                    ? largeAnchor
+                      ? body.state.items[i]?.kind === "directory"
+                        ? body.state.relationAnchor
+                          ? 0.9
+                          : 0.1
+                        : body.state.items[i]?.path === "Anchor.ts"
+                          ? 0.9
+                          : 0.1
+                      : 0.9
+                    : body.state.declarations
+                      ? !body.state.selectedEvidence &&
+                        body.state.declarations[i]?.name === name &&
+                        body.state.declarations[i]?.startLine === startLine
+                        ? 0.9
+                        : 0.1
+                      : id === "test"
+                        ? 0.9
+                        : 0.1,
+                },
+              ]),
+            ),
+          },
+          production,
         ),
-      });
+      );
     },
   });
   try {
@@ -62,11 +68,7 @@ async function run(
         ? ["node", resolve("apps/cli/dist/bin/index.js"), "large regression", root, "--no-cache"]
         : ["node", "/opt/jevgrep-reference.mjs", "--root", root, "--query", "large regression"],
       {
-        env: {
-          PATH: process.env.PATH,
-          AI_GATEWAY_API_KEY: "fixture",
-          AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
-        },
+        env: transport.env(production, `http://127.0.0.1:${server.port}`),
         stdout: "pipe",
         stderr: "pipe",
       },
@@ -82,6 +84,7 @@ async function run(
     return { requests: requests.map((body) => JSON.stringify(body)).sort(), stdout };
   } finally {
     server.stop(true);
+    await transport.cleanup();
   }
 }
 testIfDocker(

@@ -1,10 +1,11 @@
+import { routeProviderFetch } from "./fixtures/provider-route.mjs";
 import { expect } from "bun:test";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { testIfDocker } from "./helpers/docker";
 import { retrieve } from "../packages/core/src/retrieve";
-import { createEvaluator } from "../packages/core/src/gateway";
+import { createEvaluator } from "../packages/core/src/evaluator";
 
 testIfDocker(
   "hierarchical retrieval returns source from multiple files without uploading excluded data",
@@ -21,7 +22,7 @@ testIfDocker(
         sent.push(JSON.stringify(body));
         return Response.json({
           answers: Object.fromEntries(
-            Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+            Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.9 }]),
           ),
         });
       },
@@ -43,7 +44,8 @@ testIfDocker(
       const signal = new AbortController().signal;
       const evaluator = createEvaluator({
         apiKey: "fixture",
-        baseURL: `http://127.0.0.1:${server.port}`,
+        provider: "vercel",
+        fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
         signal,
       });
       const result = await retrieve({ root, query: "research event recording", signal }, evaluator);
@@ -211,13 +213,14 @@ testIfDocker("an aborted evaluator cannot return a previously cached answer", as
     port: 0,
     fetch() {
       calls++;
-      return Response.json({ answers: { q: { type: "boolean", probability: 0.8 } } });
+      return Response.json({ answers: { q: { type: "noul", noul: 0.8 } } });
     },
   });
   try {
     const evaluator = createEvaluator({
       apiKey: "fixture",
-      baseURL: `http://127.0.0.1:${server.port}`,
+      provider: "vercel",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
       signal: controller.signal,
       cache: createEvaluationCache({ directory }),
     });

@@ -1,3 +1,4 @@
+import { referenceTransport, wireResponse } from "./transport";
 import { expect } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -40,29 +41,35 @@ for (const [name, source] of [
       const query = "Find target behavior";
       const requests: string[][] = [[], []];
       let arm = 0;
+      const transport = await referenceTransport();
       const server = Bun.serve({
         port: 0,
         async fetch(request) {
-          const body = (await request.json()) as {
+          const body = transport.decode(request, await request.json(), arm !== 0) as {
             questions: Record<string, unknown>;
             state?: { declarations?: { name: string }[] };
           };
           requests[arm]!.push(JSON.stringify(body));
-          return Response.json({
-            answers: Object.fromEntries(
-              Object.keys(body.questions).map((id, index) => [
-                id,
-                {
-                  type: "boolean",
-                  probability:
-                    name === "CR-only method selected" &&
-                    body.state?.declarations?.[index]?.name.endsWith(".context")
-                      ? 0.1
-                      : 0.9,
-                },
-              ]),
+          return Response.json(
+            wireResponse(
+              {
+                answers: Object.fromEntries(
+                  Object.keys(body.questions).map((id, index) => [
+                    id,
+                    {
+                      type: "boolean",
+                      probability:
+                        name === "CR-only method selected" &&
+                        body.state?.declarations?.[index]?.name.endsWith(".context")
+                          ? 0.1
+                          : 0.9,
+                    },
+                  ]),
+                ),
+              },
+              arm !== 0,
             ),
-          });
+          );
         },
       });
       try {
@@ -80,11 +87,7 @@ for (const [name, source] of [
                   "--no-cache",
                 ],
             {
-              env: {
-                PATH: process.env.PATH,
-                AI_GATEWAY_API_KEY: "fixture",
-                AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
-              },
+              env: transport.env(arm !== 0, `http://127.0.0.1:${server.port}`),
               stdout: "pipe",
               stderr: "pipe",
             },
@@ -102,6 +105,7 @@ for (const [name, source] of [
         expect(outputs[1]).toBe(outputs[0]);
       } finally {
         server.stop(true);
+        await transport.cleanup();
         await rm(root, { recursive: true, force: true });
       }
     },

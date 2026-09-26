@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { selectFile } from "../src/selection";
-import { EvaluationFailure, type EvaluationRequest } from "../src/gateway";
+import { EvaluationFailure, type EvaluationRequest } from "../src/evaluator";
 import type { Evaluator } from "../src/types";
 import type { Declaration } from "../src/requests";
 

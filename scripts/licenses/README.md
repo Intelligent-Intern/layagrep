@@ -1,9 +1,10 @@
 # License sources omitted or abbreviated upstream
 
-`provider-utils-5.0.45.LICENSE` is the Vercel AI repository license at
-[the exact provider-utils 5.0.45 tag revision](https://github.com/vercel/ai/blob/08ae5ad05bc12496dd1ffcf64e34419e0831300d/LICENSE).
-That npm package declares Apache-2.0 but omits its license file. The override is
-version-specific so an upgrade cannot silently reuse an unchecked notice.
+`vercel-ai.LICENSE` is the Vercel AI repository license, verified byte-for-byte at
+[provider-utils 5.0.45](https://github.com/vercel/ai/blob/08ae5ad05bc12496dd1ffcf64e34419e0831300d/LICENSE)
+and [provider-utils 5.0.49](https://github.com/vercel/ai/blob/ee3169b3c4880e2abe4d0d7c781243bb81822ec4/LICENSE).
+Both npm packages declare Apache-2.0 but omit their license file. The notice
+owner allows only these verified versions; a new version requires inspection.
 
 `Apache-2.0.txt` contains the [Apache Software Foundation's full license terms](https://www.apache.org/licenses/LICENSE-2.0.txt).
 The notice generator retains package copyright notices and includes these terms

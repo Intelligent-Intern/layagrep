@@ -1,3 +1,4 @@
+import { referenceTransport, wireResponse } from "./transport";
 import { expect } from "bun:test";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -20,10 +21,11 @@ async function run(root: string, production: boolean) {
   const requests: Record<string, RequestBody> = {};
   const pending = new Map<string, () => void>();
   const released: string[] = [];
+  const transport = await referenceTransport();
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
-      const body = (await request.json()) as RequestBody;
+      const body = transport.decode(request, await request.json(), production) as RequestBody;
       const phase = body.state.items
         ? "discovery"
         : body.state.declarations
@@ -49,11 +51,16 @@ async function run(root: string, production: boolean) {
           }
         });
       }
-      return Response.json({
-        answers: Object.fromEntries(
-          Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+      return Response.json(
+        wireResponse(
+          {
+            answers: Object.fromEntries(
+              Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+            ),
+          },
+          production,
         ),
-      });
+      );
     },
   });
   try {
@@ -75,11 +82,7 @@ async function run(root: string, production: boolean) {
             "trace event recording",
           ],
       {
-        env: {
-          PATH: process.env.PATH,
-          AI_GATEWAY_API_KEY: "fixture",
-          AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.port}/v4/ai`,
-        },
+        env: transport.env(production, `http://127.0.0.1:${server.port}`),
         stdout: "pipe",
         stderr: "pipe",
       },
@@ -95,6 +98,7 @@ async function run(root: string, production: boolean) {
     return { requests, stdout };
   } finally {
     server.stop(true);
+    await transport.cleanup();
   }
 }
 

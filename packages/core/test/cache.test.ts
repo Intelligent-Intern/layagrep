@@ -75,10 +75,12 @@ test("source, path, query, ordered questions and namespace changes cannot reuse 
     },
     { ...input, request: { ...input.request, questions: ["question2", "question1"] } },
     { ...input, request: { ...input.request, query: "different question" } },
-    ...["model", "provider", "policyVersion", "promptVersion"].map((name) => ({
-      ...input,
-      namespace: { ...input.namespace, [name]: "changed" },
-    })),
+    ...["model", "provider", "endpoint", "protocol", "policyVersion", "promptVersion"].map(
+      (name) => ({
+        ...input,
+        namespace: { ...input.namespace, [name]: "changed" },
+      }),
+    ),
   ];
   for (const variant of variants) expect(await cache.get(variant)).toBeUndefined();
   expect(await cache.get(input)).toEqual({ question1: 0.8 });

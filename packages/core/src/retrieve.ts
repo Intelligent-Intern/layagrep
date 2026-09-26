@@ -1,6 +1,6 @@
 import { basename, extname } from "node:path";
 import { createFilesystem, type Snapshot, type DirectoryEntry } from "./filesystem";
-import { type EvaluationRequest, EvaluationFailure } from "./gateway";
+import { type EvaluationRequest, EvaluationFailure } from "./evaluator";
 import { inspect, pythonPreview, sourceForUnit, splitSource } from "./source";
 import {
   navigationRequest,

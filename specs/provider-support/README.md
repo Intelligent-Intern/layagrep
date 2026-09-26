@@ -6,11 +6,11 @@ ordinary searches keep the same interface and retrieval behavior.
 
 ## Next Agent Prompt
 
-You are implementing this plan, last updated 2026-09-26. Slice 1 is complete:
-18 Node protocol tests pass locally and in Docker, and all 5 frozen replay tests
-remain green. Start [slice 2](slices/02-evaluator.md): replace the evaluator while
-preserving production parity. Read [protocol evidence](assets/protocol-verification.md)
-and [preservation gates](parity.md). No live provider calls have occurred.
+Implementation is complete, last updated 2026-09-26. All four slices and required
+checks pass; see [final verification](assets/final-verification.md). Close and
+archive this spec after the final claim audit. TypeSafe/OpenRouter live access
+remains unverified because credentials were unavailable; offline support is
+verified and Vercel passed a live doctor check. No npm publication is selected.
 
 You have no unresolved product question. Published-package behavior and live
 provider access need verification, not invented compatibility code. Missing
@@ -19,9 +19,9 @@ honestly. Do not collect secrets in chat or overwrite the user's own saved setup
 for tests. Use isolated HOME/config/cache locations.
 
 - [x] [1. Protocol reproduction and controlled routing](slices/01-protocol.md)
-- [ ] [2. Shared evaluator and production parity](slices/02-evaluator.md)
-- [ ] [3. Saved-provider auth, installed journeys, and onboarding](slices/03-auth.md)
-- [ ] [4. Maintained eval routing and final verification](slices/04-tooling.md)
+- [x] [2. Shared evaluator and production parity](slices/02-evaluator.md)
+- [x] [3. Saved-provider auth, installed journeys, and onboarding](slices/03-auth.md)
+- [x] [4. Maintained eval routing and final verification](slices/04-tooling.md)
 
 Update this prompt and the owning slice with evidence, remaining work and any
 deviations before ending each pass. Review each implementation slice before

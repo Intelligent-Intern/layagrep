@@ -9,6 +9,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readdir,
   realpath,
   rm,
   stat,
@@ -27,6 +28,20 @@ assert.ok(
   binary && packageDirectory && expectedSkill,
   "Run scripts/test-installed.sh in the Node-only container",
 );
+// These independent expectations pin the public routes of the installed artifact.
+const providers = {
+  vercel: {
+    label: "Vercel AI Gateway",
+    url: "https://ai-gateway.vercel.sh/typesafe/v1/systemone",
+    model: "typesafe-ai/jev",
+  },
+  typesafe: { label: "TypeSafe", url: "https://api.typesafe.ai/v1/systemone", model: "jev-1.13.0" },
+  openrouter: {
+    label: "OpenRouter",
+    url: "https://openrouter.ai/api/v1/systemone",
+    model: "jev-1.13",
+  },
+};
 const fixtureKey = "installed-http-fixture-key";
 const forbidden = "INSTALLED_FIXTURE_IGNORED_CONTENT_MUST_NEVER_UPLOAD";
 const query = "Find event recording implementations across the nested packages.";
@@ -40,6 +55,9 @@ const source = (branch, name) =>
 
 async function context(t, mode = "healthy", executable = binary) {
   let expectedQuery = query;
+  let expectedProvider = "vercel";
+  let expectedKey = fixtureKey;
+  const secrets = new Set([fixtureKey]);
   const scratch = await mkdtemp(join(tmpdir(), "jg-installed-"));
   const tree = join(scratch, "repository");
   const home = join(scratch, "home");
@@ -83,14 +101,22 @@ async function context(t, mode = "healthy", executable = binary) {
   await writeFile(join(tree, "hidden.skip.py"), `value = "${forbidden}"\n`);
   await writeFile(join(tree, ".env"), `PRIVATE_VALUE=${forbidden}\n`);
   await writeFile(join(tree, "unrelated.md"), "This is an unrelated gardening document.\n");
+  const credentialDirectory = join(config, "jevgrep");
+  const credentials = join(credentialDirectory, "credentials.json");
+  await mkdir(credentialDirectory, { mode: 0o700 });
+  await writeFile(credentials, JSON.stringify({ provider: "vercel", apiKey: fixtureKey }) + "\n", {
+    mode: 0o600,
+  });
   server = createServer((request, response) => {
     void (async () => {
       assert.equal(request.method, "POST");
-      assert.equal(request.url, "/v4/ai/evaluation-model");
-      assert.equal(request.headers.authorization, `Bearer ${fixtureKey}`);
-      assert.equal(request.headers["ai-model-id"], "typesafe-ai/jev");
-      assert.equal(request.headers["ai-evaluation-model-specification-version"], "4");
-      assert.equal(request.headers["ai-gateway-protocol-version"], "0.0.1");
+      const preset = providers[expectedProvider];
+      assert.equal(request.url, new URL(preset.url).pathname);
+      assert.equal(request.headers["x-jevgrep-original-url"], preset.url);
+      assert.ok(
+        request.headers.authorization === `Bearer ${expectedKey}`,
+        "Saved key must authenticate the request",
+      );
       assert.match(request.headers["content-type"] ?? "", /^application\/json/);
       const chunks = [];
       let bytes = 0;
@@ -102,7 +128,8 @@ async function context(t, mode = "healthy", executable = binary) {
       const raw = Buffer.concat(chunks).toString("utf8");
       assert.ok(!raw.includes(forbidden), "Ignored/hidden source reached the provider");
       const body = JSON.parse(raw);
-      assert.deepEqual(Object.keys(body), ["state", "questions", "providerOptions"]);
+      assert.deepEqual(Object.keys(body).sort(), ["model", "questions", "state"]);
+      assert.equal(body.model, preset.model);
       assert.equal(
         typeof body.state,
         "object",
@@ -111,11 +138,11 @@ async function context(t, mode = "healthy", executable = binary) {
       assert.ok(body.state !== null && !Array.isArray(body.state));
       assert.ok(Object.keys(body.questions).length > 0);
       for (const question of Object.values(body.questions)) {
-        assert.equal(question.type, "boolean");
+        assert.equal(question.type, "noul");
         assert.ok(typeof question.instructions === "string" && question.instructions.length > 0);
       }
       assert.ok(requests.length < 256, "Synthetic search stopped making bounded forward progress");
-      requests.push({ body, raw, receivedAt: performance.now() });
+      requests.push({ body, raw, provider: expectedProvider, receivedAt: performance.now() });
       if (typeof mode === "function" && (await mode({ body, raw, tree, response }))) return;
       if (mode === "rate-limit" && requests.length === 1) {
         response.writeHead(429, { "content-type": "application/json", "retry-after": "1" });
@@ -187,9 +214,9 @@ async function context(t, mode = "healthy", executable = binary) {
       response.end(
         JSON.stringify({
           answers: Object.fromEntries(
-            ids.map((id, index) => [id, { type: "boolean", probability: probabilities[index] }]),
+            ids.map((id, index) => [id, { type: "noul", noul: probabilities[index] }]),
           ),
-          usage: { inputTokens: 1, outputTokens: 1 },
+          usage: { input_tokens: 1, output_tokens: 1 },
           warnings: [{ type: "other", message: "installed-fixture-warning" }],
         }),
       );
@@ -209,10 +236,11 @@ async function context(t, mode = "healthy", executable = binary) {
     XDG_CONFIG_HOME: config,
     XDG_CACHE_HOME: cache,
     TMPDIR: scratch,
-    AI_GATEWAY_API_KEY: fixtureKey,
-    AI_GATEWAY_BASE_URL: `http://127.0.0.1:${server.address().port}/v4/ai`,
+    NODE_OPTIONS: `--import=${process.env.JEVGREP_TEST_PROVIDER_PRELOAD ?? new URL("./fixtures/provider-route.mjs", import.meta.url).href}`,
+    JEVGREP_TEST_PROVIDER_ORIGIN: `http://127.0.0.1:${server.address().port}`,
   };
-  const run = async (args, overrides = {}, head = false) => {
+  const run = async (args, overrides = {}, head = false, input) => {
+    if (input?.trim()) secrets.add(input.trim());
     const result = await new Promise((resolve, reject) => {
       const child = spawn(
         head ? "bash" : executable === binary ? binary : process.execPath,
@@ -225,10 +253,16 @@ async function context(t, mode = "healthy", executable = binary) {
           cwd: tree,
           detached: true,
           env: { ...env, ...overrides },
-          stdio: ["ignore", "pipe", "pipe"],
+          stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
         },
       );
       children.add(child);
+      if (input !== undefined) {
+        child.stdin.on("error", (error) => {
+          if (error.code !== "EPIPE") reject(error);
+        });
+        child.stdin.end(input);
+      }
       const stdout = [],
         stderr = [];
       let outputBytes = 0;
@@ -267,7 +301,8 @@ async function context(t, mode = "healthy", executable = binary) {
       "",
       "All application output, including SDK warnings, belongs on stdout",
     );
-    assert.ok(!result.stdout.includes(fixtureKey));
+    for (const secret of secrets)
+      assert.ok(!result.stdout.includes(secret), "Credential leaked in stdout");
     assert.ok(!result.stdout.includes("installed-fixture-warning"));
     assert.ok(!result.stdout.includes(forbidden));
     return result;
@@ -275,7 +310,18 @@ async function context(t, mode = "healthy", executable = binary) {
   return {
     run,
     tree,
+    credentials,
+    config,
+    credentialDirectory,
     requests,
+    expectProvider(provider, key = fixtureKey) {
+      expectedProvider = provider;
+      expectedKey = key;
+      secrets.add(key);
+    },
+    async removeCredentials() {
+      await rm(credentials, { force: true });
+    },
     set query(value) {
       expectedQuery = value;
     },
@@ -352,7 +398,8 @@ test("installed local commands match the package without credentials", async (t)
   t.diagnostic(
     `Runtime ${process.version} ${process.platform}/${process.arch}; installed ${metadata.name}@${metadata.version}`,
   );
-  const noCredentials = { AI_GATEWAY_API_KEY: "" };
+  await fixture.removeCredentials();
+  const noCredentials = {};
   const help = await fixture.run(["--help"], noCredentials);
   assert.equal(help.code, 0, help.stdout);
   assert.match(help.stdout, /Usage: jg /);
@@ -363,11 +410,12 @@ test("installed local commands match the package without credentials", async (t)
     await readFile(join(packageDirectory, "dist/skills/jevgrep/SKILL.md"), "utf8"),
     await readFile(expectedSkill, "utf8"),
   );
-  assert.equal(fixture.requests.length, 0, "Local commands must not contact Gateway");
+  assert.equal(fixture.requests.length, 0, "Local commands must not contact a provider");
 });
 
-test("skill command delegates installation to npx without Gateway credentials", async (t) => {
+test("skill command delegates installation to npx without credentials", async (t) => {
   const fixture = await context(t);
+  await fixture.removeCredentials();
   const bin = join(fixture.tree, "installer-bin");
   await mkdir(bin);
   await symlink(process.execPath, join(bin, "node"));
@@ -375,7 +423,7 @@ test("skill command delegates installation to npx without Gateway credentials", 
   await symlink(new URL("./fixtures/skill-installer.mjs", import.meta.url), npx);
   const result = await fixture.run(
     ["skill", "--agent", "codex", "--agent", "claude-code", "--global", "--yes"],
-    { PATH: bin, AI_GATEWAY_API_KEY: "" },
+    { PATH: bin },
   );
   assert.equal(result.code, 0, result.stdout);
   assert.match(result.stdout, /Installer completed/);
@@ -396,7 +444,6 @@ test("skill command delegates installation to npx without Gateway credentials", 
   assert.equal(fixture.requests.length, 0);
   const failed = await fixture.run(["skill"], {
     PATH: bin,
-    AI_GATEWAY_API_KEY: "",
     JEVGREP_INSTALLER_EXIT: "7",
   });
   assert.equal(failed.code, 7, failed.stdout);
@@ -409,7 +456,7 @@ test("skill command delegates installation to npx without Gateway credentials", 
     "jevgrep",
   ]);
   await rm(npx);
-  const unavailable = await fixture.run(["skill"], { PATH: bin, AI_GATEWAY_API_KEY: "" });
+  const unavailable = await fixture.run(["skill"], { PATH: bin });
   assert.equal(unavailable.code, 1);
   assert.match(unavailable.stdout, /requires npx/);
 });
@@ -494,12 +541,15 @@ test("warm cache reuses identical requests, no-cache bypasses reuse, and edits i
   assert.ok(!changed.stdout.includes("py-evidence-alpha:"));
   assert.ok(
     fixture.requests.slice(before).some(({ raw }) => raw.includes("edited-alpha-evidence:")),
-    "Changed source must reach Gateway instead of stale cache evidence",
+    "Changed source must reach the provider instead of stale cache evidence",
   );
   before = fixture.requests.length;
   assert.equal((await fixture.run([query, fixture.tree])).stdout, changed.stdout);
   assertCachedRequestsAreReused(fixture.requests, before);
-  const cleared = await fixture.run(["cache", "clear"], { AI_GATEWAY_API_KEY: "" });
+  const saved = await readFile(fixture.credentials);
+  await fixture.removeCredentials();
+  const cleared = await fixture.run(["cache", "clear"]);
+  await writeFile(fixture.credentials, saved, { mode: 0o600 });
   assert.equal(cleared.code, 0, cleared.stdout);
   before = fixture.requests.length;
   assert.equal((await fixture.run([query, fixture.tree])).code, 0);
@@ -512,7 +562,8 @@ test("doctor uses the installed SDK while missing credentials fail cleanly", asy
   assert.equal(doctor.code, 0, doctor.stdout);
   assert.ok(fixture.requests.length > 0);
   const before = fixture.requests.length;
-  const missing = await fixture.run([query, fixture.tree], { AI_GATEWAY_API_KEY: "" });
+  await fixture.removeCredentials();
+  const missing = await fixture.run([query, fixture.tree]);
   assert.equal(missing.code, 1, missing.stdout);
   assert.ok(missing.stdout.trim().length > 0);
   assert.equal(fixture.requests.length, before);
@@ -766,7 +817,8 @@ test("missing or corrupt packaged Python assets fail closed without downloads", 
       !fixture.requests.some(({ body }) => body.state.declarations),
       "Unavailable parser assets must not fabricate declaration evidence",
     );
-    assert.equal((await fixture.run(["--help"], { AI_GATEWAY_API_KEY: "" })).code, 0);
+    await fixture.removeCredentials();
+    assert.equal((await fixture.run(["--help"])).code, 0);
     await rm(copy, { recursive: true, force: true });
   }
 });
@@ -786,7 +838,7 @@ for (const mutation of ["changed", "ignored"])
       response.end(
         JSON.stringify({
           answers: Object.fromEntries(
-            Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+            Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.9 }]),
           ),
         }),
       );
@@ -826,7 +878,7 @@ test("installed queued freshness withholds excluded source uploads", async (t) =
     response.end(
       JSON.stringify({
         answers: Object.fromEntries(
-          Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.1 }]),
+          Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.1 }]),
         ),
       }),
     );
@@ -844,4 +896,167 @@ test("installed queued freshness withholds excluded source uploads", async (t) =
   assert.equal(result.code, 2, result.stdout);
   assert.match(result.stdout, /incomplete/);
   assert.ok(!result.stdout.includes("QUEUED_INSTALLED_SENTINEL"));
+});
+
+for (const [provider, preset] of Object.entries(providers))
+  test(`installed saved-provider journey: ${provider} auth doctor search cache replacement`, async (t) => {
+    const fixture = await context(t);
+    await fixture.removeCredentials();
+    const key = `installed-${provider}-saved-key`;
+    fixture.expectProvider(provider, key);
+    const auth = await fixture.run(
+      ["auth", "--provider", provider, "--stdin"],
+      {},
+      false,
+      key + "\n",
+    );
+    assert.equal(auth.code, 0, auth.stdout);
+    assert.ok(auth.stdout.includes(preset.label));
+    assert.match(auth.stdout, /doctor/);
+    assert.equal(fixture.requests.length, 0, "Auth must not contact any provider");
+    assert.deepEqual(JSON.parse(await readFile(fixture.credentials, "utf8")), {
+      provider,
+      apiKey: key,
+    });
+    assert.equal((await stat(fixture.credentials)).mode & 0o777, 0o600);
+    assert.equal((await stat(fixture.credentialDirectory)).mode & 0o777, 0o700);
+    const doctor = await fixture.run(["doctor"]);
+    assert.equal(doctor.code, 0, doctor.stdout);
+    assert.ok(doctor.stdout.includes(preset.label));
+    assert.equal(fixture.requests.length, 1);
+    assert.deepEqual(Object.keys(fixture.requests[0].body.questions), ["relevant"]);
+    assert.ok(
+      !fixture.requests[0].raw.includes("py-evidence-"),
+      "Doctor must use only synthetic source",
+    );
+    const cold = await fixture.run([query]);
+    complete(cold);
+    const before = fixture.requests.length;
+    const warm = await fixture.run([query]);
+    complete(warm);
+    assert.equal(warm.stdout, cold.stdout);
+    assertCachedRequestsAreReused(fixture.requests, before);
+
+    const replacement = provider === "vercel" ? "typesafe" : "vercel";
+    const replacementKey = `installed-${replacement}-replacement-key`;
+    const beforeAuth = fixture.requests.length;
+    const replaced = await fixture.run(
+      ["auth", "--provider", replacement, "--stdin"],
+      {},
+      false,
+      replacementKey + "\n",
+    );
+    assert.equal(replaced.code, 0, replaced.stdout);
+    assert.equal(fixture.requests.length, beforeAuth);
+    assert.deepEqual(JSON.parse(await readFile(fixture.credentials, "utf8")), {
+      provider: replacement,
+      apiKey: replacementKey,
+    });
+    fixture.expectProvider(replacement, replacementKey);
+    const search = await fixture.run([query]);
+    complete(search);
+    assert.equal(search.stdout, cold.stdout);
+    assert.ok(
+      fixture.requests.length > beforeAuth,
+      "Provider replacement must not reuse another provider's cache",
+    );
+    assert.ok(
+      fixture.requests.slice(beforeAuth).every((request) => request.provider === replacement),
+    );
+    fixture.mode = "unauthorized";
+    const beforeFailure = fixture.requests.length;
+    const failed = await fixture.run(["doctor"]);
+    assert.equal(failed.code, 1, failed.stdout);
+    assert.equal(
+      fixture.requests.length,
+      beforeFailure + 1,
+      "Authentication failure must not retry or fall back",
+    );
+    assert.ok(failed.stdout.includes(providers[replacement].label));
+    assert.equal(fixture.requests.at(-1).provider, replacement);
+  });
+
+test("installed legacy credentials use Vercel without rewriting saved bytes", async (t) => {
+  const fixture = await context(t);
+  const original = '  { "apiKey": "' + fixtureKey + '" }\n';
+  await writeFile(fixture.credentials, original);
+  const before = await stat(fixture.credentials);
+  const doctor = await fixture.run(["doctor"]);
+  assert.equal(doctor.code, 0, doctor.stdout);
+  assert.ok(doctor.stdout.includes(providers.vercel.label));
+  complete(await fixture.run([query]));
+  assert.ok(fixture.requests.every((request) => request.provider === "vercel"));
+  assert.equal(await readFile(fixture.credentials, "utf8"), original);
+  const after = await stat(fixture.credentials);
+  assert.equal(after.mtimeMs, before.mtimeMs);
+  assert.equal(after.ino, before.ino);
+});
+
+test("installed saved credentials defeat conflicting environment and environment-only auth fails", async (t) => {
+  const fixture = await context(t);
+  const conflicts = {
+    AI_GATEWAY_API_KEY: "environment-gateway-key",
+    TYPESAFE_API_KEY: "environment-typesafe-key",
+    TYPESAFE_AI_API_KEY: "environment-sdk-typesafe-key",
+    OPENROUTER_API_KEY: "environment-openrouter-key",
+    AI_GATEWAY_BASE_URL: "http://127.0.0.1:1/forbidden",
+    TYPESAFE_BASE_URL: "http://127.0.0.1:1/forbidden",
+    OPENROUTER_BASE_URL: "http://127.0.0.1:1/forbidden",
+    AI_GATEWAY_MODEL: "environment-model",
+    TYPESAFE_MODEL: "environment-model",
+    OPENROUTER_MODEL: "environment-model",
+  };
+  for (const provider of Object.keys(providers)) {
+    await writeFile(fixture.credentials, JSON.stringify({ provider, apiKey: fixtureKey }));
+    fixture.expectProvider(provider);
+    const doctor = await fixture.run(["doctor"], conflicts);
+    assert.equal(doctor.code, 0, doctor.stdout);
+    assert.ok(doctor.stdout.includes(providers[provider].label));
+    complete(await fixture.run([query, "--no-cache"], conflicts));
+  }
+  await fixture.removeCredentials();
+  const before = fixture.requests.length;
+  for (const args of [["doctor"], [query]]) {
+    const result = await fixture.run(args, conflicts);
+    assert.equal(result.code, 1, result.stdout);
+    assert.match(result.stdout, /jg auth/);
+    assert.ok(!result.stdout.includes("environment-"));
+  }
+  assert.equal(fixture.requests.length, before);
+});
+
+test("installed invalid saved providers fail before HTTP without rewriting credentials", async (t) => {
+  const fixture = await context(t);
+  for (const provider of [null, "", "unknown", false, 0, {}, []]) {
+    const original = JSON.stringify({ provider, apiKey: fixtureKey }) + "\n";
+    await writeFile(fixture.credentials, original);
+    for (const args of [["doctor"], [query]]) {
+      const result = await fixture.run(args);
+      assert.equal(result.code, 1, result.stdout);
+      assert.match(result.stdout, /auth/);
+      assert.equal(await readFile(fixture.credentials, "utf8"), original);
+    }
+  }
+  assert.equal(fixture.requests.length, 0);
+});
+
+test("installed invalid auth preserves saved bytes and leaves no temporary credentials", async (t) => {
+  const fixture = await context(t);
+  const original = await readFile(fixture.credentials, "utf8");
+  for (const [args, input] of [
+    [["auth", "--stdin"], "invalid-provider-key\n"],
+    [["auth", "--provider", "typesafe"], undefined],
+    [["auth", "--provider", "unknown", "--stdin"], "invalid-provider-key\n"],
+    [["auth", "--provider", "vercel", "--stdin"], "\n"],
+    [["auth", "--provider", "typesafe", "--stdin"], "key with spaces\n"],
+    [["auth", "--provider", "openrouter", "--stdin"], "x".repeat(8193)],
+    [["doctor", "--provider", "vercel"], undefined],
+    [[query, "--provider", "typesafe"], undefined],
+  ]) {
+    const result = await fixture.run(args, {}, false, input);
+    assert.equal(result.code, 1, result.stdout);
+    assert.equal(await readFile(fixture.credentials, "utf8"), original);
+    assert.deepEqual(await readdir(fixture.credentialDirectory), ["credentials.json"]);
+  }
+  assert.equal(fixture.requests.length, 0);
 });

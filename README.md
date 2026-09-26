@@ -22,8 +22,11 @@ jg skill
 jg "How are telemetry events recorded and sent?" ./my-project
 ```
 
-Requires **Node.js 22+**, **macOS or Linux**, and a **Vercel AI Gateway key**.
+Requires **Node.js 22+**, **macOS or Linux**, and a key for **Vercel AI Gateway, TypeSafe, or OpenRouter**.
 No separate Python, Bun, or ripgrep installation is required to use `jg`.
+
+**Provider selection is on main and awaits the next npm release.** The published
+0.2.0 package uses Vercel AI Gateway; build from source to try TypeSafe/OpenRouter.
 
 ## Install the agent skill — required for agent setup
 
@@ -41,7 +44,7 @@ others) and asks where to install. Add `--global` for a user-wide install, or
 returned context, and when to fill gaps with its normal tools. It skips redundant
 retrieval when the needed context is already known. The current repository skill
 checks for `jg` and installs the CLI if it is missing; authentication still needs
-your Gateway key. The skill installer itself does not configure credentials.
+your selected provider’s key. The skill installer itself does not configure credentials.
 
 `jg skill` delegates to the [skills CLI](https://github.com/vercel-labs/skills)
 and needs npm/npx plus network access. You can also run that installer directly,
@@ -112,13 +115,16 @@ include exact costs, failed tasks, and separately observed Jev charges. See the
 
 ## Source, credentials, and local state
 
-Searches send eligible source content to Jev through Vercel AI Gateway. Default
+Searches send eligible source content to Jev through the provider selected during auth. Default
 filesystem filtering respects ignore files and excludes hidden, dependency/build,
 binary, and obvious credential files. These filters are not a guarantee that all
 sensitive information has been removed; choose a search root you intend to send.
 
-`jg auth` saves your key in an owner-only config file. `AI_GATEWAY_API_KEY` takes
-precedence when set; `jg doctor` checks the connection with synthetic input.
+`jg auth` asks for your provider, then saves its key in an owner-only config file.
+Re-running auth replaces that setup; searches always use the saved provider.
+`jg doctor` checks it with synthetic input. Existing saved keys without a provider
+remain Vercel keys. Environment-based credentials and endpoint overrides are not
+used; run `jg auth` if you previously relied on them.
 Evaluation answers are cached locally by default. The CLI writes its output to
 stdout and does not create report files. Use `jg --help` for cache controls,
 search overrides, and incomplete-result behavior.

@@ -1,10 +1,25 @@
 # Provider support choices
 
-No unplanned product choice has been made in slice 1. The SDK pin, endpoint/model
-presets, external routing seam and immutable reference were specified. Probe file
-names and test layout are delegated implementation discretion.
+## Sound — high confidence
 
-The routing fixture preserves the SDK's original body instead of converting it
-to a stream. This is a correctness fix within the specified transport contract,
-not an additional product behavior. Further passes append only decisions not
-already made or delegated by the plan.
+### New benchmark plans use schema 4
+
+When a new benchmark cohort is frozen, its plan now includes the exact routing
+preload used by the installed CLI. A plan without that file cannot reproduce the
+new transport. The plan did not specify how to version this required addition.
+New plans use schema 4 so a reader can distinguish them from old schema-3 plans;
+old studies continue using their original frozen runners and are never rewritten.
+The alternative was to reuse schema 3 while changing its required fields, which
+would conceal a real format change. Future tooling must honor this distinction.
+
+This is a benchmark-harness format decision, not a credential migration: existing
+saved providerless keys still work as Vercel, exactly as requested.
+
+## Within the specification
+
+Provider presets, single-record authentication, environment removal, legacy-key
+handling, cache isolation, retry policy and the external test transport were
+already decided by the spec. Internal names and probe layout were delegated.
+The shared Node routing fixture preserves the SDK's original body after testing
+showed that converting it to a stream obscures 401 errors; that implements the
+specified transport contract rather than adding product behavior.

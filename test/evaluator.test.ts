@@ -1,5 +1,6 @@
+import { routeProviderFetch } from "./fixtures/provider-route.mjs";
 import { expect, test } from "bun:test";
-import { createEvaluator } from "../packages/core/src/gateway";
+import { createEvaluator } from "../packages/core/src/evaluator";
 
 test("Jev uses native state and validated boolean probabilities through real HTTP", async () => {
   const state = {
@@ -10,17 +11,18 @@ test("Jev uses native state and validated boolean probabilities through real HTT
     port: 0,
     async fetch(request) {
       expect(await request.json()).toEqual({
+        model: "typesafe-ai/jev",
         state,
-        questions: { useful: { type: "boolean", instructions: "Is the source useful?" } },
-        providerOptions: {},
+        questions: { useful: { type: "noul", instructions: "Is the source useful?" } },
       });
-      return Response.json({ answers: { useful: { type: "boolean", probability: 0.8 } } });
+      return Response.json({ answers: { useful: { type: "noul", noul: 0.8 } } });
     },
   });
   try {
     const evaluator = createEvaluator({
       apiKey: "fixture",
-      baseURL: `http://127.0.0.1:${server.port}`,
+      provider: "vercel",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
       signal: new AbortController().signal,
     });
     const result = await evaluator.evaluate({
@@ -42,13 +44,14 @@ test("transient failures retry within the shared request guard and never become 
       calls++;
       return calls === 1
         ? Response.json({ error: "retry" }, { status: 503 })
-        : Response.json({ answers: { q: { type: "boolean", probability: 0.2 } } });
+        : Response.json({ answers: { q: { type: "noul", noul: 0.2 } } });
     },
   });
   try {
     const evaluator = createEvaluator({
       apiKey: "fixture",
-      baseURL: `http://127.0.0.1:${server.port}`,
+      provider: "vercel",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
       signal: new AbortController().signal,
       requestLimit: 2,
     });
@@ -86,7 +89,8 @@ test("cancellation of a rate-limited request prevents further attempts", async (
   try {
     const evaluator = createEvaluator({
       apiKey: "fixture",
-      baseURL: `http://127.0.0.1:${server.port}`,
+      provider: "vercel",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
       signal: controller.signal,
     });
     const result = evaluator.evaluate({
@@ -115,13 +119,14 @@ test("Retry-After delays a retry before the provider can recover", async () => {
             { error: "rate limited" },
             { status: 429, headers: { "retry-after": "0.1" } },
           )
-        : Response.json({ answers: { q: { type: "boolean", probability: 0.8 } } });
+        : Response.json({ answers: { q: { type: "noul", noul: 0.8 } } });
     },
   });
   try {
     const evaluator = createEvaluator({
       apiKey: "fixture",
-      baseURL: `http://127.0.0.1:${server.port}`,
+      provider: "vercel",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
       signal: new AbortController().signal,
     });
     expect(
@@ -150,7 +155,8 @@ test("stalled HTTP attempts time out without exceeding the evaluator attempt lim
   try {
     const evaluator = createEvaluator({
       apiKey: "fixture",
-      baseURL: `http://127.0.0.1:${server.port}`,
+      provider: "vercel",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
       signal: new AbortController().signal,
       timeoutMs: 100,
     });
@@ -175,13 +181,14 @@ test("authentication failure stops other in-flight and subsequent query requests
       calls++;
       if (calls === 1) return new Promise<Response>(() => {});
       if (calls === 2) return Response.json({ error: "unauthorized" }, { status: 401 });
-      return Response.json({ answers: { q: { type: "boolean", probability: 0.8 } } });
+      return Response.json({ answers: { q: { type: "noul", noul: 0.8 } } });
     },
   });
   try {
     const evaluator = createEvaluator({
       apiKey: "fixture",
-      baseURL: `http://127.0.0.1:${server.port}`,
+      provider: "vercel",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
       signal: new AbortController().signal,
       timeoutMs: 1000,
     });
@@ -225,7 +232,8 @@ test("authentication failure interrupts a sibling Retry-After wait", async () =>
   try {
     const evaluator = createEvaluator({
       apiKey: "fixture",
-      baseURL: `http://127.0.0.1:${server.port}`,
+      provider: "vercel",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
       signal: new AbortController().signal,
     });
     const request = {
@@ -245,3 +253,75 @@ test("authentication failure interrupts a sibling Retry-After wait", async () =>
     server.stop(true);
   }
 }, 2000);
+
+for (const status of [409, 422, 503]) {
+  test(`navigation HTTP ${status} preserves retry and split policy`, async () => {
+    let calls = 0;
+    const server = Bun.serve({
+      port: 0,
+      fetch() {
+        calls++;
+        return Response.json({ message: "synthetic failure" }, { status });
+      },
+    });
+    try {
+      const evaluator = createEvaluator({
+        provider: "openrouter",
+        apiKey: "fixture",
+        fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
+        signal: new AbortController().signal,
+      });
+      await expect(
+        evaluator.evaluate(
+          {
+            state: { source: "code" },
+            questions: {
+              q0: { type: "boolean", instructions: "Relevant?" },
+              q1: { type: "boolean", instructions: "Related?" },
+            },
+          },
+          { navigation: true },
+        ),
+      ).rejects.toMatchObject({ kind: "provider", splitEligible: status === 503 });
+      expect(calls).toBe(1);
+      expect(evaluator.requests).toBe(1);
+    } finally {
+      server.stop(true);
+    }
+  });
+}
+
+test("native HTTP-date Retry-After is honored before another attempt", async () => {
+  const retryAt = new Date(Math.ceil(Date.now() / 1000) * 1000 + 1000);
+  const arrivals: number[] = [];
+  const server = Bun.serve({
+    port: 0,
+    fetch() {
+      arrivals.push(Date.now());
+      return arrivals.length === 1
+        ? Response.json(
+            { message: "rate limited" },
+            { status: 429, headers: { "retry-after": retryAt.toUTCString() } },
+          )
+        : Response.json({ answers: { q: { type: "noul", noul: 0.8 } } });
+    },
+  });
+  try {
+    const evaluator = createEvaluator({
+      provider: "typesafe",
+      apiKey: "fixture",
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
+      signal: new AbortController().signal,
+    });
+    expect(
+      await evaluator.evaluate({
+        state: "code",
+        questions: { q: { type: "boolean", instructions: "Relevant?" } },
+      }),
+    ).toEqual({ q: 0.8 });
+    expect(arrivals.length).toBe(2);
+    expect(arrivals[1]!).toBeGreaterThanOrEqual(retryAt.getTime());
+  } finally {
+    server.stop(true);
+  }
+}, 5000);

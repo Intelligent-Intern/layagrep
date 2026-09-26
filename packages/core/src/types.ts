@@ -1,5 +1,5 @@
 import type { FilesystemPolicy } from "./filesystem";
-import type { EvaluationRequest } from "./gateway";
+import type { EvaluationRequest } from "./evaluator";
 
 import type { Range } from "./source";
 export type { Range } from "./source";

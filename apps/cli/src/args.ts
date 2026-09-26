@@ -1,12 +1,13 @@
 import { parseArgs } from "node:util";
 import type { SearchInput } from "@repo/core";
+import { isProviderId, type ProviderId } from "@repo/core/providers";
 import { CliError } from "./errors";
 import { DEFAULT_MAX_SOURCE_BYTES } from "./render";
 
 export type Command =
   | { kind: "help" | "version" | "doctor" | "cache-clear" }
   | { kind: "skill"; agents: string[]; global: boolean; yes: boolean }
-  | { kind: "auth"; fromStdin: boolean }
+  | { kind: "auth"; provider?: ProviderId }
   | {
       kind: "search";
       query: string;
@@ -27,6 +28,7 @@ export function parseCommand(args: string[]): Command {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean" },
         stdin: { type: "boolean" },
+        provider: { type: "string" },
         agent: { type: "string", multiple: true },
         global: { type: "boolean" },
         yes: { type: "boolean" },
@@ -49,9 +51,12 @@ export function parseCommand(args: string[]): Command {
   if (values.help || values.version) throw new CliError("Use --help or --version alone.");
   const first = positionals[0];
   if (first === "auth") {
-    if (positionals.length !== 1 || keys.some((key) => key !== "stdin"))
-      throw new CliError("Usage: jg auth [--stdin]");
-    return { kind: "auth", fromStdin: values.stdin ?? false };
+    if (positionals.length !== 1 || keys.some((key) => !["stdin", "provider"].includes(key)))
+      throw new CliError("Usage: jg auth OR jg auth --provider NAME --stdin");
+    if (!keys.length) return { kind: "auth" };
+    if (!values.stdin || !isProviderId(values.provider))
+      throw new CliError("Use auth --provider vercel|typesafe|openrouter --stdin for a piped key.");
+    return { kind: "auth", provider: values.provider };
   }
   if (first === "skill") {
     const agents = values.agent ?? [];
@@ -77,7 +82,7 @@ export function parseCommand(args: string[]): Command {
     !first?.trim() ||
     positionals.length > 2 ||
     values.stdin ||
-    keys.some((key) => ["agent", "global", "yes"].includes(key))
+    keys.some((key) => ["agent", "global", "yes", "provider"].includes(key))
   )
     throw new CliError('Usage: jg "question" [root]. Run jg --help.');
   const rawBudget = values["max-source-bytes"];
@@ -109,11 +114,16 @@ Usage: jg "question" [root]
 Root defaults to the current directory; use -- before a root beginning with -.
 
 Commands:
-  auth [--stdin]   Save a Gateway key (hidden prompt, or an explicit pipe)
+  auth            Choose a provider, then save its key (hidden prompt)
   doctor          Verify Jev access using a synthetic question
   skill           Install the agent skill via npx skills
   --help, -h      Show usage
   --version       Show the installed version
+
+Auth automation:
+  auth --provider vercel|typesafe|openrouter --stdin
+  Save one provider/key from a pipe. Re-running auth replaces your setup.
+  Saved credentials only; provider key/URL environment variables are ignored.
 
 Skill installation options:
   --agent NAME    Target an agent (repeat for multiple agents)

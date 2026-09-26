@@ -19,6 +19,7 @@ import uuid
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
+PROVIDER_ROUTE = HERE / 'provider-route.mjs' if (HERE / 'provider-route.mjs').exists() else ROOT / 'test/fixtures/provider-route.mjs'
 REGISTRY = json.loads((HERE / 'fixed-baselines.json').read_text())
 HARNESS_COMMIT = '02e7a74ffd0b707aab73d203fe87bdc7c76afc8e'
 TIMING_POLICY = {'clock': 'work_excluding_standalone_jg_search_wait', 'work_seconds': 900,
@@ -171,13 +172,13 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
         write_json(out / 'agent-inputs.json', [public for _, _, public in pairs])
         frozen = out / 'runner'
         frozen.mkdir(mode=0o700)
-        for source in [Path(__file__).resolve(), HERE / 'gateway_broker.py', HERE / 'fixed-baselines.json']:
+        for source in [Path(__file__).resolve(), HERE / 'gateway_broker.py', HERE / 'fixed-baselines.json', PROVIDER_ROUTE]:
             shutil.copyfile(source, frozen / source.name)
         artifacts = [*frozen.iterdir(), package, out / 'installed-prefix.tar', out / 'skill.md', out / 'agent-inputs.json', root / REGISTRY['dataset']]
-        plan = {'schema': 3, 'timing_policy': dict(TIMING_POLICY), 'status': 'frozen', 'cells': cells,
+        plan = {'schema': 4, 'timing_policy': dict(TIMING_POLICY), 'status': 'frozen', 'cells': cells,
                 'purpose': 'One prospective package cohort; reuse fixed baselines without execution.',
                 'inputs': str(out / 'agent-inputs.json'), 'skill': str(out / 'skill.md'), 'package': str(package),
-                'runner': str(frozen / 'installed.py'), 'broker': str(frozen / 'gateway_broker.py'),
+                'runner': str(frozen / 'installed.py'), 'broker': str(frozen / 'gateway_broker.py'), 'provider_preload': str(frozen / 'provider-route.mjs'),
                 'registry': str(frozen / 'fixed-baselines.json'), 'dataset': str(root / REGISTRY['dataset']),
                 'tooling': str(root / REGISTRY['tooling']),
                 'artifacts': {str(path): digest(path) for path in artifacts}}
@@ -189,16 +190,18 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
 
 def load_cohort(path):
     plan = json.loads(path.read_text())
-    if plan.get('schema') != 3 or plan.get('status') != 'frozen':
-        raise ValueError('Expected a frozen schema-3 cohort; use the archived runner for older studies')
+    if plan.get('schema') != 4 or plan.get('status') != 'frozen':
+        raise ValueError('Expected a frozen schema-4 cohort; use the archived runner for older studies')
     if plan.get('timing_policy') != TIMING_POLICY:
         raise ValueError('Frozen treatment timing policy changed')
     for artifact, expected in plan['artifacts'].items():
         if digest(artifact) != expected:
             raise ValueError('Frozen artifact changed: ' + artifact)
-    for key in ['runner', 'broker', 'registry', 'inputs', 'skill', 'package', 'dataset']:
-        if plan[key] not in plan['artifacts']:
+    for key in ['runner', 'broker', 'provider_preload', 'registry', 'inputs', 'skill', 'package', 'dataset']:
+        if plan.get(key) not in plan['artifacts']:
             raise ValueError('Plan omits required artifact: ' + key)
+    if digest(PROVIDER_ROUTE) != digest(plan['provider_preload']):
+        raise ValueError('Use the frozen provider preload')
     if digest(__file__) != digest(plan['runner']) or digest(HERE / 'gateway_broker.py') != digest(plan['broker']) or json.loads(Path(plan['registry']).read_text()) != REGISTRY:
         raise ValueError('Use the frozen runner and registry')
     prefixes = {item['cell']['candidate'] for item in plan['cells']}
@@ -458,6 +461,12 @@ def run(args):
         receipt['prompt_sha256'] = digest(out / 'prompt.txt')
         token = uuid.uuid4().hex
         put(proxy, '/run/gateway.json', json.dumps({'key': os.environ['AI_GATEWAY_API_KEY'], 'token': token, 'agent_engine': 'codex', 'allow_jev': True}).encode(), 'root:root')
+        dx(['mkdir', '-p', '/home/agent/.config/jevgrep'], 'agent')
+        dx(['chmod', '700', '/home/agent/.config/jevgrep'], 'agent')
+        dx(['mkdir', '-p', '/opt/jg-harness'])
+        put(tag, '/home/agent/.config/jevgrep/credentials.json', json.dumps({'provider': 'vercel', 'apiKey': token}).encode())
+        put(tag, '/opt/jg-harness/provider-route.mjs', Path(plan['provider_preload']).read_bytes(), 'root:root', '444')
+        receipt['provider_preload_sha256'] = digest(plan['provider_preload'])
         config = ('model = "openai/gpt-5.6-sol"\nmodel_provider = "vercel"\nmodel_reasoning_effort = "medium"\n'
                   '[model_providers.vercel]\nname = "Vercel AI Gateway"\n'
                   'base_url = "http://model-egress:3129/codex/v1"\nenv_key = "JEVGREP_MODEL_TOKEN"\nwire_api = "responses"\n')
@@ -467,7 +476,9 @@ def run(args):
         path = '/opt/jg-install/bin:/opt/node-v24.14.0-linux-x64/bin:/opt/miniconda3/envs/testbed/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
         invocation = ['docker', 'exec', '-u', 'agent', '-e', 'HOME=/home/agent', '-e', 'PATH=' + path,
                       '-e', 'CONDA_PREFIX=/opt/miniconda3/envs/testbed', '-e', 'JEVGREP_MODEL_TOKEN=' + token,
-                      '-e', 'AI_GATEWAY_API_KEY=' + token, '-e', 'AI_GATEWAY_BASE_URL=http://model-egress:3129', '-w', '/testbed', tag, *native]
+                      '-e', 'XDG_CONFIG_HOME=/home/agent/.config',
+                      '-e', 'NODE_OPTIONS=--import=/opt/jg-harness/provider-route.mjs',
+                      '-e', 'JEVGREP_TEST_PROVIDER_ORIGIN=http://model-egress:3129', '-w', '/testbed', tag, *native]
         receipt['status'] = 'running'
         receipt['agent_started_at'] = time.time()
         write_json(out / 'receipt.json', receipt)
@@ -578,19 +589,21 @@ def observed_jev(out, events, log_valid, traces_copied):
         try:
             response = responses[identifier]
             body = json.loads(response.read_text())
-            gateway = body['providerMetadata']['gateway']
-            value = gateway.get('cost')
-            if type(value) not in (str, int, float):
-                raise ValueError('Missing or invalid response cost')
-            cost = Decimal(str(value))
-            if not cost.is_finite() or cost < 0 or not math.isfinite(float(cost)):
-                raise ValueError('Invalid response cost')
-            costs.append(cost)
             usage = body.get('usage', {})
-            if count(usage.get('inputTokens')): inputs.append(usage['inputTokens'])
-            if count(usage.get('outputTokens')): outputs.append(usage['outputTokens'])
+            if count(usage.get('input_tokens', usage.get('inputTokens'))): inputs.append(usage.get('input_tokens', usage.get('inputTokens')))
+            if count(usage.get('output_tokens', usage.get('outputTokens'))): outputs.append(usage.get('output_tokens', usage.get('outputTokens')))
+            gateway = body.get('provider_metadata', body.get('providerMetadata', {})).get('gateway', {})
             provider_attempts = gateway.get('routing', {}).get('totalProviderAttemptCount')
             if count(provider_attempts): attempts.append(provider_attempts)
+            value = gateway.get('cost')
+            # Billing can be absent while usage and transport coverage remain known.
+            try:
+                if type(value) not in (str, int, float): raise ValueError('Missing cost')
+                cost = Decimal(str(value))
+                if not cost.is_finite() or cost < 0 or not math.isfinite(float(cost)): raise ValueError('Invalid cost')
+                costs.append(cost)
+            except (ValueError, InvalidOperation):
+                pass
             matching = [event for event in ends if event.get('requestId') == identifier]
             if len(matching) != 1:
                 coverage = False
@@ -606,7 +619,7 @@ def observed_jev(out, events, log_valid, traces_copied):
     if not math.isfinite(known):
         known = None
         complete = False
-    return {'basis': 'Retained response providerMetadata.gateway.cost; observed API metadata, not invoice reconciliation',
+    return {'basis': 'Retained response provider_metadata.gateway.cost or historical providerMetadata.gateway.cost; observed API metadata, not invoice reconciliation',
             'included_in_scored_task_cost': False, 'client_calls': len(ids), 'responses_with_cost': len(costs),
             'complete': complete, 'observed_cost_usd': known if complete else None, 'known_cost_usd': known,
             'input_tokens': sum(inputs) if coverage and len(inputs) == len(ids) else None,

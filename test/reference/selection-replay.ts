@@ -7,7 +7,7 @@ import {
   contextWindows,
 } from "../../evals/implementation/swebench/source-method-windows-spike";
 import { completeSourceFragments } from "../../evals/implementation/swebench/complete-source-v64-spike";
-import type { EvaluationRequest } from "../../packages/core/src/gateway";
+import type { EvaluationRequest } from "../../packages/core/src/evaluator";
 import type { Declaration } from "../../packages/core/src/requests";
 import type { Range } from "../../packages/core/src/source";
 

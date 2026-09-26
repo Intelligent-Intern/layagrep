@@ -13,10 +13,22 @@ jg doctor
 jg "How are telemetry events recorded and sent?" ./my-project
 ```
 
-`auth` saves your Vercel AI Gateway key; `doctor` verifies it with synthetic input.
-You can instead supply `AI_GATEWAY_API_KEY`. Searches send eligible source to Jev
-through AI Gateway. Credentials use an owner-only config file. Evaluation answers
-are cached locally; `jg --help` describes overrides and cache commands.
+`auth` asks for Vercel AI Gateway, TypeSafe, or OpenRouter, then saves its key in
+an owner-only config file. Searches use that provider until you run auth again.
+`doctor` verifies access with synthetic input and names the selected provider.
+For unattended setup, pipe the key from your secret manager to:
+
+```sh
+jg auth --provider openrouter --stdin
+```
+
+Both options are required for piped setup. Credentials are saved under
+`$XDG_CONFIG_HOME/jevgrep/credentials.json`, or `~/.config/jevgrep/credentials.json`.
+Existing saved records without a provider still mean Vercel, without a migration.
+API-key, endpoint, and model environment overrides are ignored; users who only
+configured an environment key must run auth. There is no automatic fallback or
+per-search provider override. Searches send eligible source to the saved service.
+Evaluation answers are cached locally; `jg --help` describes cache controls.
 
 The summary comes first, followed by file and declaration locations and selected
 source. Locations are reading leads, not a checklist. Omitted excerpts are marked;

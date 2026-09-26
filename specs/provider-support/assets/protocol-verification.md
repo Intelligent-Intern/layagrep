@@ -38,7 +38,7 @@ omits a license, like 5.0.45. The upstream repository LICENSE at tag revision
 5.0.45 license. Slice 2 must extend the exact-version notice mapping before the
 adapter becomes part of the product bundle.
 
-Reproduce with `node --test packages/core/test-node/provider-protocol.test.mjs`;
+Reproduce with `node --test packages/core/test-node/provider-protocol.mjs`;
 the same command runs inside `scripts/test-reference.sh`, and the normal suite
 now includes it. No credentials or live model calls were used.
 

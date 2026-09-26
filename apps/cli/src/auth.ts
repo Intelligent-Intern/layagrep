@@ -2,7 +2,8 @@ import { chmod, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises"
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { isCancel, password } from "@clack/prompts";
+import { isCancel, password, select } from "@clack/prompts";
+import { providers, isProviderId, type ProviderId } from "@repo/core/providers";
 import { CliError } from "./errors";
 
 export function configDirectory() {
@@ -17,9 +18,11 @@ function validateKey(raw: string): string {
   return key;
 }
 
-export async function authenticate(fromStdin: boolean, signal: AbortSignal) {
+export type Credentials = { provider: ProviderId; apiKey: string };
+
+export async function authenticate(provider: ProviderId | undefined, signal: AbortSignal) {
   let key: string;
-  if (fromStdin) {
+  if (provider !== undefined) {
     const chunks: Buffer[] = [];
     let bytes = 0;
     const abort = () => process.stdin.destroy(new DOMException("Interrupted", "AbortError"));
@@ -36,9 +39,23 @@ export async function authenticate(fromStdin: boolean, signal: AbortSignal) {
       signal.removeEventListener("abort", abort);
     }
   } else {
-    if (!process.stdin.isTTY) throw new CliError("Use auth --stdin to read a piped key.");
+    if (!process.stdin.isTTY)
+      throw new CliError(
+        "Use auth --provider vercel|typesafe|openrouter --stdin to read a piped key.",
+      );
+    const selected = await select<ProviderId>({
+      message: "Choose your Jev provider",
+      options: (Object.keys(providers) as ProviderId[]).map((value) => ({
+        value,
+        label: providers[value].label,
+      })),
+      output: process.stdout,
+      signal,
+    });
+    if (isCancel(selected)) throw new DOMException("Interrupted", "AbortError");
+    provider = selected;
     const answer = await password({
-      message: "Paste your Vercel AI Gateway API key",
+      message: `Paste your ${providers[provider].label} API key`,
       output: process.stdout,
       signal,
     });
@@ -53,21 +70,19 @@ export async function authenticate(fromStdin: boolean, signal: AbortSignal) {
   await chmod(directory, 0o700);
   const temporary = join(directory, `.credentials-${randomUUID()}.json`);
   try {
-    await writeFile(temporary, JSON.stringify({ apiKey: key }) + "\n", { mode: 0o600, flag: "wx" });
+    await writeFile(temporary, JSON.stringify({ provider, apiKey: key }) + "\n", {
+      mode: 0o600,
+      flag: "wx",
+    });
+    signal.throwIfAborted();
     await rename(temporary, join(directory, "credentials.json"));
   } finally {
     await rm(temporary, { force: true });
   }
-  process.stdout.write("AI Gateway key saved. Run jg doctor to verify access.\n");
+  process.stdout.write(`${providers[provider].label} key saved. Run jg doctor to verify access.\n`);
 }
 
-export async function loadApiKey(): Promise<string> {
-  const fromEnvironment = process.env.AI_GATEWAY_API_KEY;
-  if (fromEnvironment !== undefined) {
-    if (!fromEnvironment.trim())
-      throw new CliError("AI_GATEWAY_API_KEY is empty; saved credentials are disabled.");
-    return validateKey(fromEnvironment);
-  }
+export async function loadCredentials(): Promise<Credentials> {
   try {
     const credentials = JSON.parse(
       await readFile(join(configDirectory(), "credentials.json"), "utf8"),
@@ -75,10 +90,12 @@ export async function loadApiKey(): Promise<string> {
     if (typeof credentials.apiKey !== "string" || !credentials.apiKey.trim()) {
       throw new CliError("Invalid credentials. Run jg auth again.");
     }
-    return validateKey(credentials.apiKey);
+    const provider = Object.hasOwn(credentials, "provider") ? credentials.provider : "vercel";
+    if (!isProviderId(provider)) throw new CliError("Invalid provider. Run jg auth again.");
+    return { provider, apiKey: validateKey(credentials.apiKey) };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new CliError("Run jg auth or set AI_GATEWAY_API_KEY.");
+      throw new CliError("Run jg auth or use jg auth --provider NAME --stdin.");
     }
     throw new CliError("Could not read valid credentials. Run jg auth again.");
   }

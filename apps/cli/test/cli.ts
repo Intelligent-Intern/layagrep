@@ -25,8 +25,6 @@ export async function withCli(
         HOME: home,
         XDG_CONFIG_HOME: home,
         XDG_CACHE_HOME: join(home, "cache"),
-        AI_GATEWAY_API_KEY: "",
-        AI_GATEWAY_BASE_URL: undefined,
         ...env,
       },
       stdin: new Blob([input]),

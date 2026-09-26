@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { authenticate, configDirectory, loadApiKey } from "./auth";
+import { authenticate, configDirectory, loadCredentials } from "./auth";
+import { providers } from "@repo/core/providers";
 import { help, parseCommand } from "./args";
 import { CliError } from "./errors";
 import { renderResult } from "./render";
@@ -46,7 +47,7 @@ async function main() {
       process.exitCode = await installSkill(command, controller.signal);
       return;
     case "auth":
-      return authenticate(command.fromStdin, controller.signal);
+      return authenticate(command.provider, controller.signal);
     case "cache-clear": {
       const { createEvaluationCache } = await import("@repo/core");
       const cache = createEvaluationCache({ directory: cacheDirectory() });
@@ -56,12 +57,11 @@ async function main() {
       return write("Cache cleared.\n");
     }
     case "doctor": {
-      const apiKey = await loadApiKey();
+      const credentials = await loadCredentials();
       const { createEvaluator } = await import("@repo/core");
       const evaluator = createEvaluator({
-        apiKey,
+        ...credentials,
         signal: controller.signal,
-        baseURL: process.env.AI_GATEWAY_BASE_URL,
       });
       try {
         const answers = await evaluator.evaluate({
@@ -74,18 +74,20 @@ async function main() {
           },
         });
         if (!(answers.relevant! > 0.5))
-          throw new CliError("Jev returned an unexpected answer to the connection check.");
-        await write("Jev connection verified.\n");
+          throw new CliError(
+            `${providers[credentials.provider].label} returned an unexpected answer to the connection check.`,
+          );
+        await write(`Jev connection verified through ${providers[credentials.provider].label}.\n`);
       } catch (error) {
         if (error instanceof CliError) throw error;
         throw new CliError(
-          "Jev connection check failed. Check your Gateway key, model access, and network.",
+          `Jev connection check failed through ${providers[credentials.provider].label}. Check your saved key, model access, and network.`,
         );
       }
       return;
     }
     case "search": {
-      const apiKey = await loadApiKey();
+      const credentials = await loadCredentials();
       const { retrieve, createEvaluator, createEvaluationCache } = await import("@repo/core");
       const cache = createEvaluationCache({
         directory: cacheDirectory(),
@@ -94,9 +96,8 @@ async function main() {
       const evaluator = createEvaluator({
         cache,
         policyVersion: JSON.stringify(command.policy),
-        apiKey,
+        ...credentials,
         signal: controller.signal,
-        baseURL: process.env.AI_GATEWAY_BASE_URL,
       });
       const result = await retrieve(
         {

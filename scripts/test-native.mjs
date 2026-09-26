@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { cp, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { release, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 const execute = promisify(execFile);
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -100,6 +100,8 @@ try {
   );
   const skill = join(scratch, "canonical-skill.md");
   await cp(process.env.JEVGREP_CANONICAL_SKILL || join(root, "skills/jevgrep/SKILL.md"), skill);
+  const preload = join(scratch, "provider-route.mjs");
+  await cp(join(root, "test/fixtures/provider-route.mjs"), preload);
   await symlink(process.execPath, join(runtimeBin, "node"));
   const runtimeEnv = {
     PATH: runtimeBin,
@@ -107,8 +109,7 @@ try {
     XDG_CONFIG_HOME: config,
     XDG_CACHE_HOME: cache,
     TMPDIR: scratch,
-    AI_GATEWAY_API_KEY: "",
-    AI_GATEWAY_BASE_URL: "http://127.0.0.1:1/unused",
+    JEVGREP_TEST_PROVIDER_PRELOAD: pathToFileURL(preload).href,
     JEVGREP_INSTALLED_BINARY: binary,
     JEVGREP_INSTALLED_PACKAGE: packageDirectory,
     JEVGREP_EXPECTED_SKILL: skill,
@@ -130,7 +131,7 @@ try {
       "--test-reporter=tap",
       "--test-concurrency=1",
       "--test-name-pattern",
-      "^(installed local commands match the package without credentials|skill command delegates installation to npx without Gateway credentials|actual installed search parses Python and returns every relevant hierarchy branch)$",
+      "^(installed local commands match the package without credentials|skill command delegates installation to npx without credentials|actual installed search parses Python and returns every relevant hierarchy branch|installed saved-provider journey: (vercel|typesafe|openrouter) auth doctor search cache replacement|installed legacy credentials use Vercel without rewriting saved bytes|installed saved credentials defeat conflicting environment and environment-only auth fails|installed invalid saved providers fail before HTTP without rewriting credentials|installed invalid auth preserves saved bytes and leaves no temporary credentials)$",
       join(root, "test/installed.test.mjs"),
     ],
     { cwd: scratch, env: runtimeEnv, timeout: 120_000, maxBuffer: 8_000_000 },
@@ -138,7 +139,7 @@ try {
   assert.equal(tested.stderr, "");
   assert.match(
     tested.stdout,
-    /^# pass 3$/m,
+    /^# pass 10$/m,
     "All native smoke journeys must execute; renamed selectors cannot silently pass",
   );
   console.log(tested.stdout.trimEnd());

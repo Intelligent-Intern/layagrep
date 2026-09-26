@@ -170,9 +170,9 @@ class InstalledTests(unittest.TestCase):
         patcher=patch.object(runner,'REGISTRY',registry);patcher.start();self.addCleanup(patcher.stop)
         inputs = root / 'agent-inputs.json'; runner.write_json(inputs,rows)
         dataset=root/'dataset.json';dataset.write_text('fixture dataset')
-        paths = [dataset,Path(runner.__file__),HERE/'gateway_broker.py',registry_path,inputs,skill,package,prefix]
-        plan = {'schema':3,'timing_policy':dict(runner.TIMING_POLICY),'status':'frozen','cells':cells,'runner':str(Path(runner.__file__)),'broker':str(HERE/'gateway_broker.py'),
-                'registry':str(registry_path),'tooling':str(root/'tooling'),'dataset':str(root/'dataset.json'),
+        paths = [runner.PROVIDER_ROUTE,dataset,Path(runner.__file__),HERE/'gateway_broker.py',registry_path,inputs,skill,package,prefix]
+        plan = {'schema':4,'timing_policy':dict(runner.TIMING_POLICY),'status':'frozen','cells':cells,'runner':str(Path(runner.__file__)),'broker':str(HERE/'gateway_broker.py'),
+                'provider_preload':str(runner.PROVIDER_ROUTE),'registry':str(registry_path),'tooling':str(root/'tooling'),'dataset':str(root/'dataset.json'),
                 'inputs':str(inputs),'skill':str(skill),'package':str(package),'artifacts':{str(p):runner.digest(p) for p in paths}}
         plan_path=root/'plan.json';runner.write_json(plan_path,plan)
         return plan_path,{**plan,**cells[0]}
@@ -186,9 +186,10 @@ class InstalledTests(unittest.TestCase):
     def test_timeout_with_zero_exit_retains_patch_but_cannot_complete_treatment(self):
         with tempfile.TemporaryDirectory() as temporary:
             path, plan = self.fixture(Path(temporary))
-            calls, elapsed, lifetime = [], [0], [float('inf')]
+            calls, writes, elapsed, lifetime = [], {}, [0], [float('inf')]
             def docker(argv, checked=True, **kwargs):
                 calls.append(argv)
+                if 'input' in kwargs: writes[argv[-3]] = kwargs['input']
                 if argv[:3] == ['docker', 'run', '-d'] and argv[-2] == 'sleep':
                     lifetime[0] = float(argv[-1])
                 if argv[:2] == ['docker', 'exec'] and elapsed[0] >= lifetime[0]:
@@ -208,6 +209,13 @@ class InstalledTests(unittest.TestCase):
                     output = b'fixture patch'
                 return subprocess.CompletedProcess(argv, 0, output, b'')
             def expired(invocation, stdout, stderr, policy):
+                self.assertIn('NODE_OPTIONS=--import=/opt/jg-harness/provider-route.mjs', invocation)
+                self.assertIn('JEVGREP_TEST_PROVIDER_ORIGIN=http://model-egress:3129', invocation)
+                self.assertFalse(any(arg.startswith('AI_GATEWAY_') for arg in invocation))
+                saved = json.loads(writes['/home/agent/.config/jevgrep/credentials.json'])
+                self.assertEqual(saved['provider'], 'vercel')
+                self.assertNotEqual(saved['apiKey'], 'fixture-only')
+                self.assertEqual(writes['/opt/jg-harness/provider-route.mjs'], runner.PROVIDER_ROUTE.read_bytes())
                 # Native completion can already be in the pipe when the work
                 # deadline is noticed. A zero OS exit cannot override that clock.
                 # Simulate an hour of retrieval plus expired work. Docker's
@@ -402,21 +410,86 @@ class InstalledTests(unittest.TestCase):
             self.assertEqual(result['gateway_cost_usd'],0.1);self.assertTrue(result['successful_cost_win'])
             self.assertEqual(result['jev']['observed_cost_usd'],100.02)
 
+    def test_native_usage_survives_missing_cost(self):
+        for cost in ['0.04', None, 'NaN', True, '0']:
+            with self.subTest(cost=cost), tempfile.TemporaryDirectory() as temporary:
+                root=Path(temporary);events=self.jev_fixture(root)
+                for index in range(2):
+                    response=root/'jev-traces'/(str(index)*32+'.response.json')
+                    runner.write_json(response,{'usage':{'input_tokens':11,'output_tokens':3},'provider_metadata':{'gateway':{'cost':cost,'generationId':'fixture-generation'}}})
+                    events[index*2+1]['responseBytes']=response.stat().st_size
+                result=runner.observed_jev(root,events,True,True)
+                self.assertEqual(result['input_tokens'],22);self.assertEqual(result['output_tokens'],6)
+                self.assertEqual(result['observed_cost_usd'],float(cost)*2 if cost in ('0.04','0') else None)
+                self.assertEqual(result['complete'],cost in ('0.04','0'))
+
+    def test_preload_is_required_and_identity_checked(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);path,plan=self.fixture(root)
+            runner.load_cohort(path)
+            plan=json.loads(path.read_text())
+            plan['schema']=3;runner.write_json(path,plan)
+            with self.assertRaisesRegex(ValueError,'schema-4'):runner.load_cohort(path)
+            plan['schema']=4
+            preload=root/'provider-route.mjs';preload.write_bytes(runner.PROVIDER_ROUTE.read_bytes())
+            plan['provider_preload']=str(preload)
+            runner.write_json(path,plan)
+            with self.assertRaisesRegex(ValueError,'required artifact'):runner.load_cohort(path)
+            plan['artifacts'][str(preload)]=runner.digest(preload);runner.write_json(path,plan)
+            runner.load_cohort(path)
+            preload.write_text('modified')
+            with self.assertRaisesRegex(ValueError,'Frozen artifact changed'):runner.load_cohort(path)
+            plan['artifacts'][str(preload)]=runner.digest(preload);runner.write_json(path,plan)
+            with self.assertRaisesRegex(ValueError,'frozen provider preload'):runner.load_cohort(path)
+
+    def test_broker_rejects_wrong_target_auth_and_body_before_capture(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);config=root/'gateway.json'
+            config.write_text(json.dumps({'key':'real-key','token':'token','allow_jev':True}))
+            route='/typesafe/v1/systemone'
+            headers={'Authorization':'Bearer token','x-jevgrep-original-url':'https://ai-gateway.vercel.sh'+route}
+            body={'model':'typesafe-ai/jev','state':{},'questions':{'q':{'type':'noul','instructions':'matches?'}}}
+            cases=[('/evaluation-model',headers,body),(route+'?target=evil',headers,body),
+                   (route,{**headers,'Authorization':'Bearer wrong'},body),
+                   (route,{**headers,'x-jevgrep-original-url':'https://evil.example'+route},body),
+                   (route,headers,{**body,'model':'other'}),(route,headers,{**body,'state':None}),
+                   (route,headers,{**body,'questions':{'q':{'type':'boolean'}}}),(route,headers,[]),(route,headers,'invalid-json'),(route,{'Authorization':'Bearer token'},body)]
+            with patch.object(broker,'CONFIG_PATH',str(config)),patch.object(broker,'TRACE_DIR',str(root/'traces')),patch.object(broker.urllib.request,'urlopen',side_effect=AssertionError('No forwarding')),contextlib.redirect_stdout(io.StringIO()):
+                server=http.server.ThreadingHTTPServer(('127.0.0.1',0),broker.Gateway)
+                thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+                try:
+                    for path,auth,value in cases:
+                        client=http.client.HTTPConnection('127.0.0.1',server.server_port)
+                        client.request('POST',path,value if isinstance(value,str) else json.dumps(value),auth)
+                        response=client.getresponse();self.assertEqual(response.status,403);response.read();client.close()
+                finally:server.shutdown();server.server_close();thread.join()
+            self.assertFalse((root/'traces').exists())
+
     def test_broker_captures_exact_jev_bodies_without_auth_headers(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);config=root/'gateway.json';config.write_text(json.dumps({'key':'REAL_KEY_SENTINEL','token':'BROKER_TOKEN_SENTINEL','allow_jev':True,'agent_engine':'codex'}))
-            request_body=b'{"state":{"source":"public fixture"},"questions":{}}';response_body=b'{"answers":{}}'
-            class Response(io.BytesIO):
-                status=200;headers={'Content-Type':'application/json'}
-                def read1(self,size):return self.read(size)
-            with patch.object(broker,'CONFIG_PATH',str(config)),patch.object(broker,'TRACE_DIR',str(root/'traces')),patch.object(broker.urllib.request,'urlopen',return_value=Response(response_body)),contextlib.redirect_stdout(io.StringIO()):
+            request_body=b'{"model":"typesafe-ai/jev","state":{"source":"public fixture"},"questions":{"q":{"type":"noul","instructions":"matches?"}}}';response_body=b'{"answers":{},"usage":{"input_tokens":11,"output_tokens":3},"provider_metadata":{"gateway":{"cost":"0.04","generationId":"gen_fixture"}}}'
+            forwarded={}
+            class Upstream(http.server.BaseHTTPRequestHandler):
+                def log_message(self,*args):pass
+                def do_POST(self):
+                    forwarded.update(path=self.path,body=self.rfile.read(int(self.headers['Content-Length'])),headers=dict(self.headers))
+                    self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(response_body)
+            upstream=http.server.ThreadingHTTPServer(('127.0.0.1',0),Upstream)
+            upstream_thread=threading.Thread(target=upstream.serve_forever,daemon=True);upstream_thread.start()
+            self.addCleanup(upstream_thread.join);self.addCleanup(upstream.server_close);self.addCleanup(upstream.shutdown)
+            with patch.object(broker,'CONFIG_PATH',str(config)),patch.object(broker,'TRACE_DIR',str(root/'traces')),patch.object(broker,'GATEWAY_ORIGIN','http://127.0.0.1:'+str(upstream.server_port)),contextlib.redirect_stdout(io.StringIO()):
                 server=http.server.ThreadingHTTPServer(('127.0.0.1',0),broker.Gateway)
                 thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
                 try:
                     client=http.client.HTTPConnection('127.0.0.1',server.server_port)
-                    client.request('POST','/evaluation-model',request_body,{'Authorization':'Bearer BROKER_TOKEN_SENTINEL','ai-model-id':'typesafe-ai/jev'})
+                    client.request('POST','/typesafe/v1/systemone',request_body,{'Authorization':'Bearer BROKER_TOKEN_SENTINEL','x-jevgrep-original-url':'https://ai-gateway.vercel.sh/typesafe/v1/systemone'})
                     response=client.getresponse();self.assertEqual(response.status,200);self.assertEqual(response.read(),response_body);client.close()
                 finally:server.shutdown();server.server_close();thread.join()
+            self.assertEqual(forwarded['path'],'/typesafe/v1/systemone')
+            self.assertEqual(forwarded['body'],request_body)
+            self.assertEqual(forwarded['headers']['Authorization'],'Bearer REAL_KEY_SENTINEL')
+            self.assertNotIn('X-Jevgrep-Original-Url',forwarded['headers'])
             requests=list((root/'traces').glob('*.request.json'));responses=list((root/'traces').glob('*.response.json'))
             self.assertEqual(requests[0].read_bytes(),request_body);self.assertEqual(responses[0].read_bytes(),response_body)
             for file in requests+responses:

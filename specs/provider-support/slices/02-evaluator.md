@@ -1,7 +1,7 @@
 # 2. Replace the evaluator and prove production parity
 
 **Unlock:** one provider-neutral evaluator preserves the existing search contract.
-Depends on slice 1. Status: not started.
+Depends on slice 1. Status: complete; see [verification](../assets/evaluator-verification.md).
 
 ## API seam and ownership
 

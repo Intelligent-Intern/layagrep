@@ -4,6 +4,10 @@ import { dirname, resolve } from "node:path";
 /** Use emitted inputs, so the notice follows the actual bundled dependency graph. */
 export async function bundledNotices(metafile, root) {
   const packages = new Map();
+  const retainedLicenses = {
+    "@ai-sdk/provider-utils@5.0.45": "vercel-ai.LICENSE",
+    "@ai-sdk/provider-utils@5.0.49": "vercel-ai.LICENSE",
+  };
   let needsApacheTerms = false;
   for (const output of Object.values(metafile.outputs)) {
     for (const [input, contribution] of Object.entries(output.inputs)) {
@@ -26,7 +30,7 @@ export async function bundledNotices(metafile, root) {
               )
               .map((entry) => entry.name)
               .sort();
-            if (!files.length && key !== "@ai-sdk/provider-utils@5.0.45")
+            if (!files.length && !retainedLicenses[key])
               throw new Error(`Bundled dependency ${key} has no license file`);
             if (metadata.license === "Apache-2.0") needsApacheTerms = true;
             const texts = await Promise.all(
@@ -39,7 +43,7 @@ export async function bundledNotices(metafile, root) {
             if (!files.length)
               texts.push(
                 await readFile(
-                  new URL("./licenses/provider-utils-5.0.45.LICENSE", import.meta.url),
+                  new URL(`./licenses/${retainedLicenses[key]}`, import.meta.url),
                   "utf8",
                 ),
               );
