@@ -272,3 +272,42 @@ testIfDocker(
     }
   },
 );
+
+testIfDocker(
+  "cancellation between declaration groups preserves already selected source",
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "jg-partial-cancel-"));
+    const controller = new AbortController();
+    let groups = 0;
+    try {
+      await writeFile(
+        join(root, "events.ts"),
+        Array.from({ length: 20 }, (_, i) => `export function event${i}() {return ${i};}\n`).join(
+          "",
+        ),
+      );
+      const result = await retrieve(
+        { root, query: "event behavior", signal: controller.signal },
+        {
+          requests: 0,
+          async evaluate(request) {
+            if ((request.state as { declarations?: unknown[] }).declarations) {
+              groups++;
+              controller.abort();
+            }
+            return Object.fromEntries(Object.keys(request.questions).map((id) => [id, 0.9]));
+          },
+        },
+      );
+      expect(result.status).toBe("interrupted");
+      expect(groups).toBe(1);
+      const source = result.files
+        .flatMap((file) => file.excerpts.map((excerpt) => excerpt.source))
+        .join("\n");
+      expect(source).toContain("function event0");
+      expect(source).not.toContain("function event19");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);

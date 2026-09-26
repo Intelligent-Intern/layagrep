@@ -1,6 +1,6 @@
 # Deliver the installed CLI and agent workflow
 
-Status: planned. Depends on: 01, 02, 03. Read [contracts](../contracts.md) first.
+Status: verified (integration only). Depends on: 01, 02, 03. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -8,7 +8,7 @@ Compose core `retrieve` and the CLI contract. Port hierarchy, file admission, so
 
 CLI owns credentials, rendering, stdout-only errors, cancellation and exit codes. Core result carries selected versus rendered ranges and completeness. Ship `jg skill` and the canonical `skills/jevgrep/SKILL.md` following write-skills. Production invocation is selective, benchmark wrapper forces first retrieval. Implement initial finite evaluator attempts and 50k counter now; the later fault slice expands conformance rather than allowing runaway work here.
 
-Build/pack/install outside checkout. First checkpoint deliberately has no persistent cache yet; do not advertise final cache behavior until slice 06. This is feature staging, not a temporary second retrieval implementation. Start with the accepted source allocation, retaining all qualifying paths.
+Build/pack/install outside checkout. Cache was integrated through the single evaluator before this checkpoint; slice 06 owns its full freshness acceptance. Start with the accepted source allocation, retaining all qualifying paths.
 
 ## Human-runnable artifact
 
@@ -29,7 +29,7 @@ Internal naming and command implementation, packaging mechanics; public contract
 
 ## Keep green
 
-Parser/filesystem/reference checks; no automatic report file. Cache is the only intentionally unshipped final capability at this checkpoint.
+Parser/filesystem/reference checks; no automatic report file. Later slices own remaining fault, cache, output and cohort acceptance.
 
 ## Review
 
@@ -37,3 +37,5 @@ Show the artifact and summarize deviations. This is a non-blocking review checkp
 continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
+
+The installed fixture, live query and official Requests task completed. The task solved but cost more than its saved baseline. Exact query, output, follow-up behavior, grade and billing are in the [checkpoint report](../assets/installed-requests-checkpoint.md). Reproduction uses the maintained [runner workflow](../../../evals/implementation/swebench/installed.md); the frozen checkpoint retains its original runner.

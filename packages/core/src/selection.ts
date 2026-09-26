@@ -103,38 +103,38 @@ export async function selectFile(
   if (pending.length) groups.push(pending);
   let invalidated = false;
   for (const group of groups) {
-    const prepared = prepare ? await prepare() : {};
-    if (prepared === null) {
-      invalidated = true;
-      selected.length = 0;
-      leads.clear();
-      break;
-    }
-    const first = Math.max(1, group[0]!.range.startLine - 8),
-      last = Math.min(lines.length, group.at(-1)!.range.endLine + 8);
-    const oversizedContext = [...lines.slice(0, 20), ...lines.slice(first - 1, last)].some(
-      (line) => Buffer.byteLength(line) > sourceUnitBytes,
-    );
-    // Line-only windows cannot describe a partial giant line; send only the parser's bounded byte spans.
-    const context =
-      group.some(partialLine) || oversizedContext
-        ? group
-            .map(
-              (unit) =>
-                `Source lines ${unit.range.startLine}-${unit.range.endLine}; source bytes ${unit.sourceByteStart}-${unit.sourceByteEnd}:\n${sourceForUnit(snapshot, unit)}`,
-            )
-            .join("\n")
-        : bytes.length <= 16000
-          ? snapshot.source
-          : `Opening context:\n${lines.slice(0, 20).join("\n")}\nSource lines ${first}-${last}:\n${lines.slice(first - 1, last).join("\n")}`;
-    const request = evidenceRequest(
-      query,
-      snapshot.path,
-      context,
-      group.map((unit) => ({ name: unit.name, ...unit.range })),
-      prepared.evidence,
-    );
     try {
+      const prepared = prepare ? await prepare() : {};
+      if (prepared === null) {
+        invalidated = true;
+        selected.length = 0;
+        leads.clear();
+        break;
+      }
+      const first = Math.max(1, group[0]!.range.startLine - 8),
+        last = Math.min(lines.length, group.at(-1)!.range.endLine + 8);
+      const oversizedContext = [...lines.slice(0, 20), ...lines.slice(first - 1, last)].some(
+        (line) => Buffer.byteLength(line) > sourceUnitBytes,
+      );
+      // Line-only windows cannot describe a partial giant line; send only the parser's bounded byte spans.
+      const context =
+        group.some(partialLine) || oversizedContext
+          ? group
+              .map(
+                (unit) =>
+                  `Source lines ${unit.range.startLine}-${unit.range.endLine}; source bytes ${unit.sourceByteStart}-${unit.sourceByteEnd}:\n${sourceForUnit(snapshot, unit)}`,
+              )
+              .join("\n")
+          : bytes.length <= 16000
+            ? snapshot.source
+            : `Opening context:\n${lines.slice(0, 20).join("\n")}\nSource lines ${first}-${last}:\n${lines.slice(first - 1, last).join("\n")}`;
+      const request = evidenceRequest(
+        query,
+        snapshot.path,
+        context,
+        group.map((unit) => ({ name: unit.name, ...unit.range })),
+        prepared.evidence,
+      );
       const answers = await evaluator.evaluate(request);
       const values = group.map((unit, index) => {
         const value = answers[`q${index}`];

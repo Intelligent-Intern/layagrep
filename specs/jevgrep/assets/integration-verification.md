@@ -65,3 +65,27 @@ duration and confirms three attempts, then a classified provider failure.
 `bun run test:parser` is now the combined named gate: conformance in Node plus
 pack/install and actual Python units in a runtime without development prerequisites.
 It passed all 15 conformance tests and both selected installed journeys.
+
+## Installed failure and cache checkpoint
+
+The installed failure selector passed all ten selected journeys, including the
+actual three 30-second stalled HTTP attempts, malformed answers/JSON, retry
+recovery, rate limits, SIGINT, and `head -200`. Separate installed journeys cover
+cold/warm identical output, no-cache, changed query, add/delete/ignore changes,
+same-size edits with restored mtime, failed-answer recovery and cache clear.
+The named filesystem gate also passed the installed wide/deep plain-root and
+nested-repository fixture with excluded sentinels and unreadable source.
+
+Independent Codex review found two confirmed remaining failure-path defects:
+authentication did not abort a sibling retry delay, and a timeout of the shell
+pipeline could leave descendants holding pipes. The evaluator now interrupts both
+HTTP work and retry sleeps with the shared authentication signal. Test processes
+have their own process group, so bounded cleanup covers the whole pipeline.
+A subprocess probe verified descendant pipes close on group termination.
+The reviewer could not bind localhost in its sandbox; its in-memory/subprocess
+probes were reproduced by the parent, whose Docker HTTP gate passed.
+
+The focused Docker gateway/retrieval/selection gate passes 22 tests and 118
+assertions, including preserving already-selected source when cancellation occurs
+between declaration groups. Typecheck and lint pass. These failure fixes preserve
+the healthy request construction used by the retained Requests checkpoint.

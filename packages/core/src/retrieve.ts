@@ -225,6 +225,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       return result.snapshot;
     }
     issue(result.status === "issue" ? result.issue.kind : "changed");
+    if (result.status === "issue" && result.issue.kind === "interrupted") return;
     const prior = files.get(candidate.path);
     if (prior)
       files.set(candidate.path, {
@@ -243,7 +244,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     const results = await Promise.allSettled(
       Array.from({ length: Math.min(8, items.length) }, async () => {
         try {
-          while (next < items.length && !stop) await work(items[next++]!);
+          while (next < items.length && !stop && !input.signal.aborted) await work(items[next++]!);
         } catch (error) {
           stop = true;
           throw error;
@@ -306,7 +307,10 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           candidate.score,
           evaluator,
           async () => {
-            if (!(await unchanged(candidate))) return null;
+            if (input.signal.aborted) throw new EvaluationFailure("cancelled");
+            const current = await unchanged(candidate);
+            if (input.signal.aborted) throw new EvaluationFailure("cancelled");
+            if (!current) return null;
             return { evidence: await evidence?.() };
           },
           files.get(candidate.path),
@@ -317,6 +321,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     await select();
     const evidence: Evidence[] = [];
     for (const candidate of ordered) {
+      if (stop || input.signal.aborted) break;
       if (!files.get(candidate.path)!.excerpts.length) continue;
       // Context donors obey the same current eligibility/hash check as target files.
       if (!(await unchanged(candidate))) continue;

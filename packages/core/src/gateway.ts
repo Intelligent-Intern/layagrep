@@ -27,10 +27,16 @@ export function createEvaluator(options: {
   let requests = 0;
   let cacheHits = 0;
   let cooldownUntil = 0;
+  const authenticationFailure = new AbortController();
+  function assertActive() {
+    if (options.signal.aborted) throw new EvaluationFailure("cancelled");
+    if (authenticationFailure.signal.aborted) throw new EvaluationFailure("authentication");
+  }
   const gateway = createGateway({
     apiKey: options.apiKey,
     baseURL: options.baseURL,
     fetch: async (input, init) => {
+      assertActive();
       if (requests >= (options.requestLimit ?? 50_000))
         throw new EvaluationFailure("request-limit");
       requests++;
@@ -62,7 +68,7 @@ export function createEvaluator(options: {
       return requests;
     },
     async evaluate(request: EvaluationRequest): Promise<Record<string, number>> {
-      if (options.signal.aborted) throw new EvaluationFailure("cancelled");
+      assertActive();
       const cacheInput: CacheInput = {
         request,
         namespace: {
@@ -74,7 +80,7 @@ export function createEvaluator(options: {
         },
       };
       const cached = await options.cache?.get(cacheInput);
-      if (options.signal.aborted) throw new EvaluationFailure("cancelled");
+      assertActive();
       if (
         cached &&
         Object.keys(cached).length === Object.keys(request.questions).length &&
@@ -86,7 +92,7 @@ export function createEvaluator(options: {
         return cached;
       }
       for (let attempt = 0; attempt < 3; attempt++) {
-        if (options.signal.aborted) throw new EvaluationFailure("cancelled");
+        assertActive();
         if (requests >= (options.requestLimit ?? 50_000))
           throw new EvaluationFailure("request-limit");
         const wait = Math.max(
@@ -96,8 +102,11 @@ export function createEvaluator(options: {
         );
         if (wait) {
           try {
-            await delay(wait, undefined, { signal: options.signal });
+            await delay(wait, undefined, {
+              signal: AbortSignal.any([options.signal, authenticationFailure.signal]),
+            });
           } catch {
+            assertActive();
             throw new EvaluationFailure("cancelled");
           }
         }
@@ -108,6 +117,7 @@ export function createEvaluator(options: {
             maxRetries: 0,
             abortSignal: AbortSignal.any([
               options.signal,
+              authenticationFailure.signal,
               AbortSignal.timeout(options.timeoutMs ?? 30_000),
             ]),
           });
@@ -117,14 +127,17 @@ export function createEvaluator(options: {
           await options.cache?.put(cacheInput, scores);
           return scores;
         } catch (error) {
-          if (options.signal.aborted) throw new EvaluationFailure("cancelled");
+          assertActive();
           if (requests >= (options.requestLimit ?? 50_000))
             throw new EvaluationFailure("request-limit");
           const status =
             error && typeof error === "object" && "statusCode" in error
               ? error.statusCode
               : undefined;
-          if (status === 401 || status === 403) throw new EvaluationFailure("authentication");
+          if (status === 401 || status === 403) {
+            authenticationFailure.abort();
+            throw new EvaluationFailure("authentication");
+          }
           if (
             typeof status === "number" &&
             status >= 400 &&

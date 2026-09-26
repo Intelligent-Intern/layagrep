@@ -155,7 +155,7 @@ test("stalled HTTP attempts time out without exceeding the evaluator attempt lim
       apiKey: "fixture",
       baseURL: `http://127.0.0.1:${server.port}`,
       signal: new AbortController().signal,
-      timeoutMs: 20,
+      timeoutMs: 100,
       retryDelayMs: 0,
     });
     await expect(
@@ -166,6 +166,87 @@ test("stalled HTTP attempts time out without exceeding the evaluator attempt lim
     ).rejects.toMatchObject({ kind: "provider" });
     expect(calls).toBe(3);
     expect(evaluator.requests).toBe(3);
+  } finally {
+    server.stop(true);
+  }
+}, 2000);
+
+test("authentication failure stops other in-flight and subsequent query requests", async () => {
+  let calls = 0;
+  const server = Bun.serve({
+    port: 0,
+    fetch() {
+      calls++;
+      if (calls === 1) return new Promise<Response>(() => {});
+      if (calls === 2) return Response.json({ error: "unauthorized" }, { status: 401 });
+      return Response.json({ answers: { q: { type: "boolean", probability: 0.8 } } });
+    },
+  });
+  try {
+    const evaluator = createEvaluator({
+      apiKey: "fixture",
+      baseURL: `http://127.0.0.1:${server.port}`,
+      signal: new AbortController().signal,
+      timeoutMs: 1000,
+      retryDelayMs: 0,
+    });
+    const request = {
+      state: "test",
+      questions: { q: { type: "boolean" as const, instructions: "Relevant?" } },
+    };
+    const outcomes = await Promise.allSettled([
+      evaluator.evaluate(request),
+      evaluator.evaluate(request),
+    ]);
+    expect(outcomes).toMatchObject([
+      { status: "rejected", reason: { kind: "authentication" } },
+      { status: "rejected", reason: { kind: "authentication" } },
+    ]);
+    await expect(evaluator.evaluate(request)).rejects.toMatchObject({ kind: "authentication" });
+    expect(calls).toBe(2);
+  } finally {
+    server.stop(true);
+  }
+}, 2000);
+
+test("authentication failure interrupts a sibling Retry-After wait", async () => {
+  let calls = 0;
+  let releaseAuthentication!: () => void;
+  const authenticationReady = new Promise<void>((resolve) => {
+    releaseAuthentication = resolve;
+  });
+  const server = Bun.serve({
+    port: 0,
+    async fetch() {
+      calls++;
+      if (calls === 1) {
+        await authenticationReady;
+        return Response.json({ error: "unauthorized" }, { status: 401 });
+      }
+      setTimeout(releaseAuthentication, 50);
+      return Response.json({ error: "limited" }, { status: 429, headers: { "retry-after": "30" } });
+    },
+  });
+  try {
+    const evaluator = createEvaluator({
+      apiKey: "fixture",
+      baseURL: `http://127.0.0.1:${server.port}`,
+      signal: new AbortController().signal,
+      retryDelayMs: 0,
+    });
+    const request = {
+      state: "test",
+      questions: { q: { type: "boolean" as const, instructions: "Relevant?" } },
+    };
+    const outcomes = await Promise.allSettled([
+      evaluator.evaluate(request),
+      evaluator.evaluate(request),
+    ]);
+    expect(outcomes).toMatchObject([
+      { status: "rejected", reason: { kind: "authentication" } },
+      { status: "rejected", reason: { kind: "authentication" } },
+    ]);
+    expect(calls).toBe(2);
   } finally {
     server.stop(true);
   }

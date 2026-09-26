@@ -23,10 +23,11 @@
     "format:check": "oxfmt --check .",
     "test:reference": "bash scripts/test-reference.sh",
     "test:parser": "bash scripts/test-reference.sh node --experimental-strip-types --test test/parser/source.test.ts && bash scripts/test-installed.sh --test-name-pattern \"runtime has|parses Python\"",
-    "test:filesystem": "bash scripts/test-reference.sh bun test packages/core/test/filesystem.test.ts test/retrieval.test.ts",
+    "test:filesystem": "bash scripts/test-reference.sh bun test packages/core/test/filesystem.test.ts test/retrieval.test.ts && bash scripts/test-installed.sh --test-name-pattern \"filesystem policy\"",
     "test:installed": "bash scripts/test-installed.sh",
     "test:e2e": "bun run test:installed",
-    "verify": "bun run check-types && bun run lint && bun run test && bun run test:installed"
+    "verify": "bun run check-types && bun run lint && bun run test && bun run test:installed",
+    "eval:swebench": "python3 evals/implementation/swebench/installed.py"
   },
   "devDependencies": {
     "oxfmt": "0.57.0",

@@ -7,20 +7,23 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-25**.
-Next: run the installed `jg` on the
-retained official Requests task with Sol. Parser, filesystem, evaluator, selection,
-cache and CLI components are integrated; slice acceptance remains open until its
-full evidence exists. Reference HTTP replay and the Node-only installed fixture
-journey pass. Two mutation regressions now verify that invalidated evidence is
-removed and reported incomplete. The default test runner passes under non-root, read-only Docker isolation; see
+Next: finish the reviewed failure fixes, then integrate and measure the one
+bounded source-output candidate on the saved Requests task. The installed Requests
+checkpoint is complete: official solve passed, but Sol cost exceeded baseline.
+See [the paired trace and billing report](assets/installed-requests-checkpoint.md).
+The result proves integration, not the final quality gate.
+
+Parser and filesystem gates pass. Installed cache mutation, failure recovery,
+real timeout and head-pipe journeys have passed; the latest authentication-wait
+and pipeline-cleanup corrections are undergoing focused verification. See
 [integrated verification](assets/integration-verification.md).
 
-Priority after that checkpoint: fault/cache coverage, measured output policy,
-frozen ten-task confirmation, and release verification. Never rerun saved
-baselines. The current source allocation is uncapped: the accepted reference
-validated its budget flag but did not enforce it. A cap needs slice 07 evidence.
-See [verification evidence](assets/reference-verification.md),
-[contracts](contracts.md), and the [decision map](map.md).
+Priority: finish fault/cache acceptance, measure source allocation, freeze one
+policy for all ten tasks, then complete supported-platform and release gates.
+Never rerun saved baselines. Production source remains uncapped until slice 07
+has official grade and full cost evidence. Jev API cost is reported separately
+and excluded from scored Sol cost. See [contracts](contracts.md) and the
+[decision map](map.md).
 
 No user decision blocks starting. External verification dependencies are a working
 Docker daemon, explicit Gateway credentials for live tests, retained official task
@@ -36,8 +39,8 @@ not claims about the current scaffold.
 
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
 - [x] [02 — Bundled parser parity](slices/02-parser.md)
-- [ ] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
-- [ ] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
+- [x] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
+- [x] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
 - [ ] [05 — Faults, cancellation and partial results](slices/05-failures.md)
 - [ ] [06 — Default-on fresh cache](slices/06-cache.md)
 - [ ] [07 — Measured source budget](slices/07-output-policy.md)

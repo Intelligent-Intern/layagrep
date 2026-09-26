@@ -1,6 +1,6 @@
 # Make all retrieval reads eligible and consistent
 
-Status: planned. Depends on: 01. Read [contracts](../contracts.md) first.
+Status: verified. Depends on: 01. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -35,3 +35,5 @@ Show the artifact and summarize deviations. This is a non-blocking review checkp
 continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
+
+The named Docker filesystem gate passed, including the installed wide/deep plain-root and nested-repository journey. See [integration evidence](../assets/integration-verification.md).

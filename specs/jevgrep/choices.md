@@ -114,3 +114,27 @@ selected MIT for Jevgrep itself.
 Gap: the spec required licenses but left collection mechanics open. Reach: a
 new dependency can require a verified notice update, while ordinary builds need
 no network license lookup. Verdict: sound. Confidence: high.
+
+### Share fatal authentication cancellation across a search
+
+When: installed failure acceptance. If one request is rejected for its API key,
+other requests using the same key stop, including requests sleeping before a retry.
+The evaluator owns one shared cancellation signal; the caller's cancellation
+remains distinguishable. Otherwise a sibling could spend its entire retry delay
+waiting after the search already knows the key cannot work.
+
+Gap: stopping on global authentication failure was required; the shared signal
+and its scope were implementation choices. Reach: future retry paths must obey
+the same evaluator cancellation. Verdict: sound. Confidence: high.
+
+### Keep verified partial source when the caller interrupts selection
+
+When: installed failure acceptance. A user can interrupt after some declaration
+groups have returned useful source. That interruption ends further work and marks
+the result incomplete; it does not itself mean the source changed. Actual changed
+or newly excluded snapshots still discard their evidence.
+
+Gap: the filesystem interruption and invalidation paths shared a preparation
+boundary, so the implementation had to distinguish their effect on retained data.
+Reach: partial output remains useful without claiming complete discovery or a
+filesystem lock. Verdict: sound. Confidence: high.
