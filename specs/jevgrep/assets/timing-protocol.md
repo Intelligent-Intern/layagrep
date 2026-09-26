@@ -174,17 +174,5 @@ and timing policy match v1 byte-for-byte where applicable. Proof:
 all 1,198 manifest hashes and the unchanged failed receipt before paid continuation.
 
 
-V2's first cell, scikit-learn, officially resolved with zero infrastructure/errors.
-Its complete 10-generation Sol cost is **$0.2414888** versus **$0.2944360**
-baseline. Jev observed cost is complete at **$0.070983906** (277 client calls),
-separately excluded from scoring. The same unconditional random-state validation
-caveat applies to its patch. Django is running next; full acceptance remains open.
-
-
-V2 Django officially resolved with zero infrastructure/errors. Its complete
-35-generation Sol cost is **$1.2852270**, below **$1.5055472** baseline. Jev's
-known subtotal is **$0.152654124**; full observed cost remains unknown and excluded
-from scoring. The patch includes SQLite collation-only rebuilding, old/new
-collation comparison for related columns, and MySQL nullability handling. Its
-added regression still combines a type change and collation change; the official
-evaluator supplies the same-type regression. Astropy is running next.
+[Replacement confirmation](work-clock-confirmation.md) owns v2 results and paired
+trace findings. This document retains the protocol and outage rationale.
