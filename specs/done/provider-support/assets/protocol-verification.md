@@ -35,8 +35,7 @@ that prototype was removed. No product transport workaround is needed.
 The adapter archive includes its license. Its provider-utils 5.0.49 dependency
 omits a license, like 5.0.45. The upstream repository LICENSE at tag revision
 `ee3169b3c4880e2abe4d0d7c781243bb81822ec4` is byte-identical to the existing retained
-5.0.45 license. Slice 2 must extend the exact-version notice mapping before the
-adapter becomes part of the product bundle.
+5.0.45 license. The product notice owner now maps both verified versions to that retained license.
 
 Reproduce with `node --test packages/core/test-node/provider-protocol.mjs`;
 the same command runs inside `scripts/test-reference.sh`, and the normal suite

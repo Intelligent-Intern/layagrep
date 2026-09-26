@@ -39,6 +39,7 @@ export async function referenceTransport(provider: Provider = "vercel", key = "f
       production: boolean,
     ) {
       expect(request.method).toBe("POST");
+      expect(request.headers.get("content-type")).toMatch(/^application\/json(?:;|$)/);
       expect(request.headers.get("authorization")).toBe(`Bearer ${key}`);
       const body = raw as {
         model?: string;

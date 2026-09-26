@@ -1,7 +1,7 @@
 # Provider contract evidence
 
 Inspected 2026-09-26. These are documentation/source observations, not live service
-results. The implementation starts with a small adapter reproduction, not another
+results. Verification uses a small adapter reproduction, not another
 retrieval experiment.
 
 ## Fixed presets
@@ -19,13 +19,13 @@ OpenRouter chat completions or its separate `/api/alpha/decisions` API.
 Versioned native/OpenRouter names do not prove identical backends or answers to
 Vercel's alias. Preserve existing thresholds; do not claim cross-provider solve
 quality from transport fixtures. Record actual returned model identity in external
-probe evidence when available. A conflicting live API result goes into this plan
+probe evidence when available. A conflicting live API result goes into this record
 before changing a preset; never silently try other providers/models.
 
 ## Adapter identity and behavior
 
-Use `@ai-sdk/typesafe-ai@3.0.8` with the existing `ai@7.0.107`, subject to the
-published-package reproduction gate in slice 1. Registry metadata inspected:
+Use `@ai-sdk/typesafe-ai@3.0.8` with the existing `ai@7.0.107`, verified by the
+[published-package reproduction](assets/protocol-verification.md). Registry metadata inspected:
 
 ```text
 dist.integrity = sha512-nP5NJGCwZ7jDE2dImurTU9igbj1OUeFAXLvZKcM05KlBpLxhOddBe3sMftAhQq3Zq+B8NqLx1dcW4vQVD2l32w==
@@ -50,18 +50,18 @@ the maintained broker's raw-response decoder, not reasons to add CLI telemetry.
 Native TypeSafe billing may be absent. Unknown totals remain unknown; observed
 Jev billing stays separate from scored coding-agent task cost.
 
-The adapter's error classes differ from Gateway's. Slice 1 reproduces HTTP status,
-timeout, disconnect, and malformed-response behavior; slice 2 owns the mapping to
-existing retry/split semantics. Primary [TypeSafe API documentation](https://docs.typesafe.ai/api)
+The adapter's error classes differ from Gateway's. The [protocol checks](assets/protocol-verification.md) reproduce HTTP status,
+timeout, disconnect, and malformed-response behavior; the evaluator maps those
+to the existing retry/split semantics. Primary [TypeSafe API documentation](https://docs.typesafe.ai/api)
 and the Vercel guide describe native errors; fixtures must use their shapes.
 
 ## Immutable preservation baseline
 
 Repository input: `ca7054ed4c50283030102d15cd73d816e85bc569`. This Git tree pins the
-current production implementation, lockfile, policy, parser versions, source tree,
+pre-change production implementation, lockfile, policy, parser versions, source tree,
 skill, test harness, and previously recorded evidence. The additional historical
-source hashes are owned by [the reference manifest](../../test/reference/manifest.json).
-Keep that manifest, its covered files, [the corpus](../../test/reference/corpus.json),
+source hashes are owned by [the reference manifest](../../../test/reference/manifest.json).
+Keep that manifest, its covered files, [the corpus](../../../test/reference/corpus.json),
 and all historical benchmark results unchanged.
 
 The corpus compares a request multiset: independent network arrival order is not
@@ -70,7 +70,7 @@ selection/evidence ordering, and complete rendered stdout are invariants. Keep
 existing decision/order regressions alongside semantic wire comparison; never
 serialize production concurrency to make a replay easier.
 
-The [corrected repeat](../done/jevgrep/assets/variance-repeat.md) is historical
+The [corrected repeat](../jevgrep/assets/variance-repeat.md) is historical
 evidence, not a new-provider acceptance result. Baselines are immutable and are
 never rerun for this feature. Neither equal success rate nor fresh savings is
-established by this plan.
+established by transport checks.

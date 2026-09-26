@@ -12,6 +12,7 @@ test("wire normalization retains every corpus field and rejects unknown envelope
         method: "POST",
         headers: {
           authorization: "Bearer fixture",
+          "content-type": "application/json",
           "x-jevgrep-original-url": preset.url,
         },
       });
@@ -19,7 +20,11 @@ test("wire normalization retains every corpus field and rejects unknown envelope
         const original = JSON.parse(serialized);
         const historical = new Request("http://localhost/v4/ai/evaluation-model", {
           method: "POST",
-          headers: { authorization: "Bearer fixture", "ai-model-id": "typesafe-ai/jev" },
+          headers: {
+            authorization: "Bearer fixture",
+            "ai-model-id": "typesafe-ai/jev",
+            "content-type": "application/json",
+          },
         });
         expect(JSON.stringify(transport.decode(historical, original, false))).toBe(serialized);
         const wire = {
@@ -33,6 +38,9 @@ test("wire normalization retains every corpus field and rejects unknown envelope
           ),
         };
         expect(JSON.stringify(transport.decode(request, wire, true))).toBe(serialized);
+        const invalidContentType = new Request(request);
+        invalidContentType.headers.set("content-type", "text/plain");
+        expect(() => transport.decode(invalidContentType, wire, true)).toThrow();
         expect(() => transport.decode(request, { ...wire, extra: true }, true)).toThrow();
         const id = Object.keys(wire.questions)[0]!;
         expect(() =>
