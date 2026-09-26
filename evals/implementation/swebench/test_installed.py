@@ -160,6 +160,64 @@ class InstalledTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):result=runner.aggregate(argparse.Namespace(plan=path))
             self.assertFalse(result['prospective_full_cohort']);self.assertFalse(result['accepted'])
 
+    def jev_fixture(self, root):
+        traces=root/'jev-traces';traces.mkdir()
+        events=[]
+        for index,cost in enumerate(['0.01','0.02']):
+            identifier=str(index)*32
+            request=traces/(identifier+'.request.json');request.write_text('{}')
+            response=traces/(identifier+'.response.json')
+            runner.write_json(response,{'usage':{'inputTokens':10,'outputTokens':2},'providerMetadata':{'gateway':{'cost':cost,'routing':{'totalProviderAttemptCount':index+1}}}})
+            events.extend([{'kind':'jev-request-start','requestId':identifier},
+                           {'kind':'gateway','requestId':identifier,'status':200,'requestBytes':request.stat().st_size,'responseBytes':response.stat().st_size}])
+        return events
+
+    def test_jev_reports_response_cost_once_and_provider_retry_counts_separately(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);events=self.jev_fixture(root)
+            result=runner.observed_jev(root,events,True,True)
+            self.assertTrue(result['complete']);self.assertEqual(result['observed_cost_usd'],0.03)
+            self.assertEqual(result['client_calls'],2);self.assertEqual(result['provider_attempts'],3)
+            self.assertEqual(result['input_tokens'],20);self.assertEqual(result['output_tokens'],4)
+            self.assertFalse(result['included_in_scored_task_cost'])
+
+    def test_jev_missing_invalid_or_unfinished_responses_leave_total_unknown(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);events=self.jev_fixture(root)
+            response=root/'jev-traces'/('1'*32+'.response.json')
+            original=response.read_bytes()
+            for value in [b'{',b'{}',b'{"providerMetadata":{"gateway":{"cost":"NaN"}}}',b'{"providerMetadata":{"gateway":{"cost":true}}}']:
+                response.write_bytes(value)
+                result=runner.observed_jev(root,events,True,True)
+                self.assertFalse(result['complete']);self.assertIsNone(result['observed_cost_usd'])
+                self.assertEqual(result['known_cost_usd'],0.01)
+            response.write_bytes(original)
+            for log_valid,copied,extra in [(False,True,[]),(True,False,[]),(True,True,[events[0]])]:
+                result=runner.observed_jev(root,events+extra,log_valid,copied)
+                self.assertFalse(result['complete']);self.assertIsNone(result['observed_cost_usd'])
+            events[-1]['transportError']='Interrupted'
+            self.assertIsNone(runner.observed_jev(root,events,True,True)['observed_cost_usd'])
+
+    def test_observed_jev_cost_does_not_change_scored_sol_cost_win(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path,plan=self.fixture(Path(temporary));out=self.receipt(path,plan)
+            events=self.jev_fixture(out)
+            identifier='0'*32;response=out/'jev-traces'/(identifier+'.response.json')
+            body=json.loads(response.read_text());body['providerMetadata']['gateway']['cost']='100';runner.write_json(response,body)
+            events[1]['responseBytes']=response.stat().st_size
+            events.extend([{'kind':'codex-request-start','operation':'generation','requestId':'sol'},
+                           {'kind':'codex-generation','requestId':'sol','generationId':'gen_sol'},
+                           {'kind':'codex-gateway','requestId':'sol','status':200,'streamTerminal':'response.completed'}])
+            (out/'proxy.jsonl').write_text('\n'.join(json.dumps(event) for event in events))
+            receipt=json.loads((out/'receipt.json').read_text());receipt['jev_traces_copied']=True;runner.write_json(out/'receipt.json',receipt)
+            runner.write_json(out/'generation-lookups.json',[{'id':'gen_sol','metadata':{'id':'gen_sol','model':'openai/gpt-5.6-sol','total_cost':0.1}}])
+            runner.write_json(out/'grading-receipt.json',{'run_id':'jg-'+plan['cell']['id'],'exit_code':0,'resolved_instances':1})
+            with patch.object(runner.urllib.request,'urlopen',side_effect=AssertionError('No network')),contextlib.redirect_stdout(io.StringIO()):
+                runner.account(argparse.Namespace(plan=path,task=None))
+            result=json.loads((out/'generation-accounting.json').read_text())
+            self.assertEqual(result['gateway_cost_usd'],0.1);self.assertTrue(result['successful_cost_win'])
+            self.assertEqual(result['jev']['observed_cost_usd'],100.02)
+
     def test_broker_captures_exact_jev_bodies_without_auth_headers(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary);config=root/'gateway.json';config.write_text(json.dumps({'key':'REAL_KEY_SENTINEL','token':'BROKER_TOKEN_SENTINEL','allow_jev':True,'agent_engine':'codex'}))

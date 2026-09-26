@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Freeze and evaluate one installed package against the ten retained SWE-bench baselines."""
 import argparse
+from decimal import Decimal, InvalidOperation
 import hashlib
 import json
 import math
@@ -410,6 +411,63 @@ def valid_cost(value):
     return type(value) in (int, float) and math.isfinite(value) and value >= 0
 
 
+def observed_jev(out, events, log_valid, traces_copied):
+    """Sum response-level gateway.cost once; provider retries are counts, not extra prices."""
+    starts = [event for event in events if event.get('kind') == 'jev-request-start']
+    ids = [event.get('requestId') for event in starts]
+    safe_ids = {identifier for identifier in ids if isinstance(identifier, str) and re.fullmatch(r'[a-f0-9]{32}', identifier)}
+    traces = out / 'jev-traces'
+    responses = {path.name.removesuffix('.response.json'): path for path in traces.glob('*.response.json')}
+    requests = {path.name.removesuffix('.request.json'): path for path in traces.glob('*.request.json')}
+    ends = [event for event in events if event.get('kind') == 'gateway']
+    end_ids = [event.get('requestId') for event in ends]
+    safe_end_ids = {identifier for identifier in end_ids if isinstance(identifier, str) and re.fullmatch(r'[a-f0-9]{32}', identifier)}
+    coverage = (log_valid and traces_copied is True and len(safe_ids) == len(ids) and
+                safe_ids == set(responses) == set(requests) == safe_end_ids and len(safe_end_ids) == len(ends) == len(ids))
+    costs, inputs, outputs, attempts = [], [], [], []
+    def count(value):
+        return type(value) is int and value >= 0
+    for identifier in sorted(safe_ids):
+        try:
+            response = responses[identifier]
+            body = json.loads(response.read_text())
+            gateway = body['providerMetadata']['gateway']
+            value = gateway.get('cost')
+            if type(value) not in (str, int, float):
+                raise ValueError('Missing or invalid response cost')
+            cost = Decimal(str(value))
+            if not cost.is_finite() or cost < 0 or not math.isfinite(float(cost)):
+                raise ValueError('Invalid response cost')
+            costs.append(cost)
+            usage = body.get('usage', {})
+            if count(usage.get('inputTokens')): inputs.append(usage['inputTokens'])
+            if count(usage.get('outputTokens')): outputs.append(usage['outputTokens'])
+            provider_attempts = gateway.get('routing', {}).get('totalProviderAttemptCount')
+            if count(provider_attempts): attempts.append(provider_attempts)
+            matching = [event for event in ends if event.get('requestId') == identifier]
+            if len(matching) != 1:
+                coverage = False
+                continue
+            end = matching[0]
+            if (end.get('status') != 200 or end.get('transportError') or end.get('incompleteStream') or
+                    end.get('responseBytes') != response.stat().st_size or end.get('requestBytes') != requests[identifier].stat().st_size):
+                coverage = False
+        except (OSError, ValueError, KeyError, TypeError, AttributeError, InvalidOperation):
+            coverage = False
+    complete = coverage and len(costs) == len(ids)
+    known = float(sum(costs, Decimal(0)))
+    if not math.isfinite(known):
+        known = None
+        complete = False
+    return {'basis': 'Retained response providerMetadata.gateway.cost; observed API metadata, not invoice reconciliation',
+            'included_in_scored_task_cost': False, 'client_calls': len(ids), 'responses_with_cost': len(costs),
+            'complete': complete, 'observed_cost_usd': known if complete else None, 'known_cost_usd': known,
+            'input_tokens': sum(inputs) if coverage and len(inputs) == len(ids) else None,
+            'output_tokens': sum(outputs) if coverage and len(outputs) == len(ids) else None,
+            'provider_attempts': sum(attempts) if coverage and len(attempts) == len(ids) else None,
+            'known_input_tokens': sum(inputs), 'known_output_tokens': sum(outputs), 'known_provider_attempts': sum(attempts)}
+
+
 def account(args):
     plan, _ = load_plan(args.plan.resolve(), args.task)
     out = Path(plan['output'])
@@ -448,7 +506,7 @@ def account(args):
     write_json(path, lookups)
     complete = log_valid and bool(identifiers) and len(request_ids) == len(starts) == len(ends) == len(identifiers) == len(lookups) and request_ids == {event.get('requestId') for event in ends} == {event.get('requestId') for event in observations} and all(event.get('streamTerminal') == 'response.completed' and not event.get('incompleteStream') and not event.get('transportError') and event.get('status') == 200 for event in ends) and all(valid_cost(row.get('metadata', {}).get('total_cost')) for row in lookups)
     known = sum(row.get('metadata', {}).get('total_cost', 0) for row in lookups if valid_cost(row.get('metadata', {}).get('total_cost')))
-    result = {'cell': plan['cell']['id'], 'request_starts': len(starts), 'generation_ids': len(identifiers), 'all_requests_accounted': complete, 'known_gateway_cost_usd': known, 'gateway_cost_usd': known if complete else None, 'baseline_cost_usd': plan['baseline_cost_usd'], 'jev_cost_usd': 0}
+    result = {'cell': plan['cell']['id'], 'request_starts': len(starts), 'generation_ids': len(identifiers), 'all_requests_accounted': complete, 'known_gateway_cost_usd': known, 'gateway_cost_usd': known if complete else None, 'baseline_cost_usd': plan['baseline_cost_usd'], 'jev': observed_jev(out, events, log_valid, receipt.get('jev_traces_copied'))}
     grading = out / 'grading-receipt.json'
     if grading.exists():
         grade_receipt = json.loads(grading.read_text())
@@ -487,6 +545,7 @@ def aggregate(args):
                      'terminal': terminal, 'grading_attempted': grade_attempted, 'graded': graded, 'protocol_valid': protocol, 'official_resolved': solved, 'resolved': solved and protocol,
                      'baseline_resolved': item['baseline_resolved'], 'baseline_cost_usd': item['baseline_cost_usd'],
                      'fully_billed': billed, 'gateway_cost_usd': cost,
+                     'jev': billing.get('jev', {}) if belongs and billing.get('cell') == item['cell']['id'] else {},
                      'known_gateway_cost_usd': billing.get('known_gateway_cost_usd') if belongs and billing.get('cell') == item['cell']['id'] and valid_cost(billing.get('known_gateway_cost_usd')) else None,
                      'successful_cost_win': solved and protocol and billed and cost < item['baseline_cost_usd']})
     full = {row['task'] for row in rows} == {item['task'] for item in REGISTRY['tasks']}
@@ -498,6 +557,11 @@ def aggregate(args):
               'accepted': complete and preserved == REGISTRY['baseline_solves'] and wins >= REGISTRY['required_cost_wins'],
               'known_gateway_subtotal_usd': sum(row['known_gateway_cost_usd'] for row in rows if row['known_gateway_cost_usd'] is not None),
               'fully_billed_total_usd': sum(row['gateway_cost_usd'] for row in rows) if all(row['fully_billed'] for row in rows) else None,
+              'jev': {'included_in_scored_task_cost': False,
+                      'basis': 'Observed response API metadata, not invoice reconciliation',
+                      'complete': all(row['jev'].get('complete') is True and valid_cost(row['jev'].get('observed_cost_usd')) for row in rows),
+                      'known_cost_usd': sum(row['jev']['known_cost_usd'] for row in rows if valid_cost(row['jev'].get('known_cost_usd'))),
+                      'observed_cost_usd': sum(row['jev']['observed_cost_usd'] for row in rows) if all(row['jev'].get('complete') is True and valid_cost(row['jev'].get('observed_cost_usd')) for row in rows) else None},
               'cells': rows}
     write_json(args.plan.resolve().parent / 'aggregate.json', result)
     print(json.dumps(result))

@@ -47,6 +47,15 @@ official harness and unique run IDs. Accounting reuses saved generation metadata
 fetches missing receipts, and leaves full cost unknown if any request is missing.
 Neither operation reruns the coding agent.
 
+Jev is reported separately under `jev`: the observed cost sums each retained
+response's `providerMetadata.gateway.cost` once. Input/output tokens and internal
+provider attempt counts are reported separately from client calls; provider
+fallbacks do not multiply the response cost. This is observed API metadata, not
+invoice reconciliation. Complete totals require matching client starts, completed
+transport receipts, request/response files and valid cost fields. Missing or
+invalid evidence leaves the total unknown while preserving a known subtotal.
+These observations never enter the scored Sol task cost or change cost-win rules.
+
 `aggregate --plan ...` requires ten terminal attempts with official grading receipts,
 all eight baseline solves preserved by valid solved treatments, and at least seven
 valid solved results with complete billing and strictly lower cost. Failed or
