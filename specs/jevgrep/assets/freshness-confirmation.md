@@ -64,6 +64,17 @@ pre-patch SQLite read are retained in
 this does not prove model variance alone caused the outcome, nor that adding
 initial excerpts would prevent it.
 
+The exact solver-visible SQLite guard and normal-FK traversal span was also
+byte-identical before both runs' first patches: 743 bytes, SHA-256
+`31346969bf77570fa98be35fc913ba8a2ec646a23017f22f4ec7bed2ba8af592`.
+The passing run read a wider range including later many-to-many and rebuild code.
+Initial packets shared 42 files, with no excerpts in either; the failing run lost
+the base `_alter_field` and same-type schema-test reading leads, and gained a
+type-changing migration-test lead. Its query emphasized BigAutoField-to-varchar,
+while the passing query framed character-PK collation. These differences make
+query/test-scope narrowing a plausible hypothesis, not an established cause.
+Evidence: `/tmp/jg-freshness-v1-django-retrieval-diff.md`.
+
 Astropy returned 39 files in 6,381 bytes without excerpts. Two source reads and a
 linear-coordinate reproduction led to the established dropped-axis fix. Focused
 tests passed 41 twice; a broader local directory passed 64, skipped seven and
@@ -92,6 +103,15 @@ failures involve legacy environment behavior, but they do not explain this
 explicit HEAD assertion failure. The relevant implementation was available;
 the patch and test scope were too narrow. Evidence:
 `/tmp/jg-freshness-v1-requests-comparison/findings.md`.
+
+A direct retained-packet comparison found all seven Requests source blocks
+byte-identical between the preceding passing run and this failing run, including
+line labels and whitespace. The file list shrank from nine to six, dropping three
+vendored urllib3 paths; some role labels and an adapter reading lead also changed.
+The queries and later solver actions differed. Exact source equality rules out
+loss of those delivered blocks, but does not isolate all possible effects of
+the other context differences. Hash proof:
+`/tmp/jg-freshness-v1-requests-source-equality.json`.
 
 SymPy returned 29 files in 4,899 bytes without excerpts. Three reads led to the
 established unused-matrix-dimension fix, using lists where comparator patches use
