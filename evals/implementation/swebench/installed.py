@@ -128,7 +128,8 @@ def prepare(args):
 cd /tmp
 npm install --global --prefix /opt/jg-install /tmp/package.tgz --ignore-scripts --no-audit --no-fund
 /opt/jg-install/bin/jg --version > /tmp/jg-version.txt
-/opt/jg-install/bin/jg skill > /tmp/jg-skill.md
+# jg skill runs the npx installer; read the bundled skill bytes directly.
+cat /opt/jg-install/lib/node_modules/@dzhng/jevgrep/dist/skills/jevgrep/SKILL.md > /tmp/jg-skill.md
 node -e 'const fs=require("fs"),cp=require("child_process");const p=require("/opt/jg-install/lib/node_modules/@dzhng/jevgrep/package.json");if(fs.realpathSync("/opt/jg-install/bin/jg")!=="/opt/jg-install/lib/node_modules/@dzhng/jevgrep/dist/bin/index.js")throw Error("Unexpected executable");const git=a=>cp.execFileSync("git",["-C","/testbed",...a],{encoding:"utf8"}).trim();fs.writeFileSync("/tmp/install.json",JSON.stringify({package:p.name,version:p.version,head:git(["rev-parse","HEAD"]),tree:git(["rev-parse","HEAD^{tree}"]),status:git(["status","--porcelain"])}));'
 tar -C /opt -cf /tmp/installed-prefix.tar jg-install
 '''
@@ -153,7 +154,7 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
             check = 'jg-preflight-' + uuid.uuid4().hex[:12]
             try:
                 command(['docker', 'create', '--platform', 'linux/amd64', '--network', 'none', '--name', check, runtime, 'sh', '-ec',
-                         'tar -xf /tmp/prefix.tar -C /opt; node --version; codex --version; claude --version; /opt/jg-install/bin/jg --version; /opt/jg-install/bin/jg skill; git -C /testbed rev-parse HEAD; git -C /testbed rev-parse HEAD^{tree}; git -C /testbed status --porcelain'])
+                         'tar -xf /tmp/prefix.tar -C /opt; node --version; codex --version; claude --version; /opt/jg-install/bin/jg --version; cat /opt/jg-install/lib/node_modules/@dzhng/jevgrep/dist/skills/jevgrep/SKILL.md; git -C /testbed rev-parse HEAD; git -C /testbed rev-parse HEAD^{tree}; git -C /testbed status --porcelain'])
                 command(['docker', 'cp', str(out / 'installed-prefix.tar'), check + ':/tmp/prefix.tar'])
                 output = command(['docker', 'start', '-a', check]).stdout
                 expected = ((''.join(value + '\n' for value in VERSIONS.values())).encode() + (out / 'version.txt').read_bytes() + (out / 'skill.md').read_bytes() +
