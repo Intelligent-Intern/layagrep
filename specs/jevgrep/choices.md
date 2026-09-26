@@ -139,7 +139,6 @@ boundary, so the implementation had to distinguish their effect on retained data
 Reach: partial output remains useful without claiming complete discovery or a
 filesystem lock. Verdict: sound. Confidence: high.
 
-
 ### Use available declaration scores to allocate limited source
 
 When: source-budget trial. If a byte cap cannot fit every selected excerpt,

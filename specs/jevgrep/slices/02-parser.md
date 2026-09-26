@@ -26,7 +26,6 @@ and intentional grammar differences are documented in
 [parser conformance](../../../test/parser/README.md). This proves source inspection
 and installed asset loading, not downstream task quality.
 
-
 Assert source text and line coordinates, meaningful comments, bounded oversized units and fallback behavior. Inspect representative source from the saved official task trees without copying personal repos. Ensure no shell-out to python/Bun/compiler and no runtime asset download.
 
 ## Delegated decisions
