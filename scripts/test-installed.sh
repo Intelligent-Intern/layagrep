@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || { echo "--case requires checkpoint, failures, or cache"; exit 1; }
       case "$2" in
         checkpoint) pattern="" ;;
-        failures) pattern="provider|malformed|cancellation|interrupt|stdout pipe" ;;
+        failures) pattern="provider|malformed|invalid JSON|cancellation|interrupt|stdout pipe" ;;
         cache) pattern="cache" ;;
         *) echo "Unknown installed test case: $2"; exit 1 ;;
       esac

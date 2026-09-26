@@ -1,6 +1,6 @@
 # Bundle source inspection without Python
 
-Status: planned. Depends on: 01. Read [contracts](../contracts.md) first.
+Status: verified (2026-09-25). Depends on: 01. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -18,6 +18,14 @@ Commands are implementation targets. Add them in this slice; do not imply they
 already exist. CLI transcripts replace visual/screenshot gates for this product.
 
 ## Verification and verdict
+
+`bun run test:parser` passes: 15 Node parser conformance tests followed by two
+packed-runtime journeys, printing the Python declaration units read by the real
+SDK fixture. The runtime has no Python, Bun or compiler. The frozen-helper corpus
+and intentional grammar differences are documented in
+[parser conformance](../../../test/parser/README.md). This proves source inspection
+and installed asset loading, not downstream task quality.
+
 
 Assert source text and line coordinates, meaningful comments, bounded oversized units and fallback behavior. Inspect representative source from the saved official task trees without copying personal repos. Ensure no shell-out to python/Bun/compiler and no runtime asset download.
 

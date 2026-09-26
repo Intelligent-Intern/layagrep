@@ -35,7 +35,7 @@ verification before ending each pass. These commands are targets to implement,
 not claims about the current scaffold.
 
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
-- [ ] [02 — Bundled parser parity](slices/02-parser.md)
+- [x] [02 — Bundled parser parity](slices/02-parser.md)
 - [ ] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
 - [ ] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
 - [ ] [05 — Faults, cancellation and partial results](slices/05-failures.md)

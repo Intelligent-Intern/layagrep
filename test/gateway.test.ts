@@ -140,3 +140,33 @@ test("Retry-After delays a retry before the provider can recover", async () => {
     server.stop(true);
   }
 });
+
+test("stalled HTTP attempts time out without exceeding the evaluator attempt limit", async () => {
+  let calls = 0;
+  const server = Bun.serve({
+    port: 0,
+    fetch() {
+      calls++;
+      return new Promise<Response>(() => {});
+    },
+  });
+  try {
+    const evaluator = createEvaluator({
+      apiKey: "fixture",
+      baseURL: `http://127.0.0.1:${server.port}`,
+      signal: new AbortController().signal,
+      timeoutMs: 20,
+      retryDelayMs: 0,
+    });
+    await expect(
+      evaluator.evaluate({
+        state: "test",
+        questions: { q: { type: "boolean", instructions: "Relevant?" } },
+      }),
+    ).rejects.toMatchObject({ kind: "provider" });
+    expect(calls).toBe(3);
+    expect(evaluator.requests).toBe(3);
+  } finally {
+    server.stop(true);
+  }
+}, 2000);

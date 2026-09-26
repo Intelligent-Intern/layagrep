@@ -51,3 +51,17 @@ This is not the complete slice 05 matrix yet.
 A live `jg doctor` completed successfully through AI Gateway with the authorized
 Duet staging credential, loaded through its existing dotenvx mechanism. No secret
 was printed. This verifies live connectivity only; the official task remains next.
+
+Further focused installed checks pass: in-flight SIGINT exits 130 and stops
+requests; invalid JSON exhausts three attempts for each independent request and
+returns incomplete; a disconnected socket retries the same request and retains
+source after recovery. The malformed-JSON test initially assumed the entire
+search made one request. The fixture actually creates independent hierarchy
+batches, so the assertion now verifies the specified three-attempt bound per
+exact request body rather than imposing a global three-request search limit.
+A stalled-HTTP evaluator test uses the same timeout mechanism with a short injected
+duration and confirms three attempts, then a classified provider failure.
+
+`bun run test:parser` is now the combined named gate: conformance in Node plus
+pack/install and actual Python units in a runtime without development prerequisites.
+It passed all 15 conformance tests and both selected installed journeys.

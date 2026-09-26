@@ -94,6 +94,19 @@ async function context(t, mode = "healthy") {
       }
       assert.ok(requests.length < 256, "Synthetic search stopped making bounded forward progress");
       requests.push({ body, raw });
+      if (mode === "disconnect" && requests.length === 1) {
+        response.destroy();
+        return;
+      }
+      if (mode === "invalid-json") {
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end("{broken");
+        return;
+      }
+      if (mode === "interrupt") {
+        for (const child of children) child.kill("SIGINT");
+        return;
+      }
       if (mode === "transient" && requests.length === 1) {
         response.writeHead(500, { "content-type": "application/json" });
         response.end(JSON.stringify({ error: "temporary fixture failure" }));
@@ -389,6 +402,35 @@ test("provider authentication failure stops immediately with fatal exit 1", asyn
 
 test("a transient provider failure retries the same request and completes installed retrieval", async (t) => {
   const fixture = await context(t, "transient");
+  const result = await fixture.run([query]);
+  assert.equal(result.code, 0);
+  assert.match(result.stdout, /Status: complete/);
+  assert.deepEqual(fixture.requests[0].body, fixture.requests[1].body);
+  for (const [branch] of branches) assert.ok(result.stdout.includes(`py-evidence-${branch}:`));
+});
+
+test("interrupting an in-flight installed search exits 130 and stops requests", async (t) => {
+  const fixture = await context(t, "interrupt");
+  const result = await fixture.run([query]);
+  assert.equal(result.code, 130);
+  assert.match(result.stdout, /Status: interrupted/);
+  assert.equal(fixture.requests.length, 1);
+});
+
+test("invalid JSON remains incomplete with at most three attempts per request", async (t) => {
+  const fixture = await context(t, "invalid-json");
+  const result = await fixture.run([query]);
+  assert.equal(result.code, 2);
+  assert.match(result.stdout, /Status: incomplete/);
+  const attempts = new Map();
+  for (const { raw } of fixture.requests) attempts.set(raw, (attempts.get(raw) ?? 0) + 1);
+  assert.ok(attempts.size > 0);
+  for (const count of attempts.values()) assert.equal(count, 3);
+  assert.ok(!result.stdout.includes("py-evidence-"));
+});
+
+test("a disconnected provider request retries without losing installed source evidence", async (t) => {
+  const fixture = await context(t, "disconnect");
   const result = await fixture.run([query]);
   assert.equal(result.code, 0);
   assert.match(result.stdout, /Status: complete/);
