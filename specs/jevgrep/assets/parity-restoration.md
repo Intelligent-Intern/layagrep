@@ -1,4 +1,12 @@
-# Restore the accepted spike before further evaluation
+# Historical restoration of the accepted spike
+
+This record preserves the pre-CPython restoration work and its superseded
+cohorts. The bundled-CPython port subsequently passed integration, platform and
+whole-product checks; [runtime evidence](python-runtime.md) owns that coverage.
+Its completed quality cohort failed acceptance, as recorded in
+[confirmation evidence](cpython-confirmation.md). The separate
+[mechanism-first skill experiment](query-framing-study.md) owns the active trial;
+none of the stopped studies below is reactivated.
 
 The user rejected unvalidated architecture changes during production porting.
 The accepted reference is the source closure and skill bound by
@@ -6,10 +14,12 @@ The accepted reference is the source closure and skill bound by
 The required executable rename is `jevgrep` → `jg`; packaging, credentials,
 cache and Node-only runtime must preserve healthy retrieval behavior.
 
-Restore computed discovery inputs and grouping, selection and bounded second
-expansion, exact source evidence serialization, numbered stdout packets, scoped
-guidance lookup, test suggestions, and the accepted skill. The benchmark prompt
-returns to the accepted `$jevgrep` invocation plus the immutable baseline task.
+The restoration required computed discovery inputs and grouping, selection and
+bounded second expansion, exact source evidence serialization, numbered stdout
+packets, scoped
+guidance lookup, test suggestions, and the accepted skill to match the reference.
+The benchmark prompt returned to the accepted `$jevgrep` invocation plus the
+immutable baseline task.
 Do not use matching prompt templates as proof that their computed inputs match.
 Use the frozen executable/selection block with fixed HTTP answers and compare
 actual native request objects, ranges and complete output. Keep array ordering;
@@ -39,7 +49,7 @@ solve rate and full task cost; timing is diagnostic. Any subsequent cache
 maintenance change must preserve answer/cache behavior and identify its artifact
 separately from this confirmation.
 
-## Preservation evidence
+## Preservation evidence and historical checkpoint
 
 The retained winning executable is
 `evals/runs/swebench/auto-research-80/unit-locators.mjs`, SHA-256
@@ -65,12 +75,12 @@ it does not prove all possible parser inputs equivalent or establish live task
 cost. Historical live Jev answers were not retained, so reconstructing selected
 Requests ranges does not prove the cause of every historical cost difference.
 
-The merged integration checkpoint passes 87 core/reference tests, 16 parser
+The pre-CPython integration checkpoint passed 87 core/reference tests, 16 parser
 tests, three release tests, 14 benchmark-harness tests and all 20 installed
 journeys, including discovery's
 declaration index, large-test suggestions, TypeScript context expansion and the
 large-file anchor/selection boundary. Native and alternate-architecture
-verification uses the final restored archive. SHA-256
+verification used that checkpoint archive. SHA-256
 `10cc842f25a11ff1c62cb109df27cd08b9875892907f2e89eb7bac26665a1e85`
 passed native macOS arm64 on Node 24.14.0 and both Linux amd64 and arm64 installed
 smokes on Node 22.23.3. These are package/runtime checks, not live quality results.
@@ -132,7 +142,7 @@ agent recovered from a patch-context failure and a rejected test command before
 running its full module once; those steps were downstream of retrieval. A
 passing official grade does not establish all behavioral edge cases equivalent.
 
-## Remaining review gate
+## Historical review corrections
 
 The whole-product review reproduced two ordinary preservation defects. The
 reference builds second-pass `selectedEvidence` in source-selection completion
@@ -142,25 +152,28 @@ returned before collecting comments, so a selected fragment inside a block
 comment ended inside it instead of expanding to the reference's full comment.
 Commits `a7a28bb` and `bcf3253` fix these defects with whole-CLI regressions that
 failed before the corrections and now compare complete native requests and stdout
-against the frozen executable. The merged gate and whole-product review must
-finish before another frozen candidate.
+against the frozen executable. The later bundled-CPython integration completed
+the merged gate and whole-product review; these were prerequisites for its now
+terminal confirmation, not outstanding parser gates.
 
 The interrupted Django attempt has a known Sol subtotal of $0.9671056 and known
 Jev subtotal of $0.277447296. Neither is a complete total: the final coding-agent
 response was interrupted, and five of 1,267 Jev calls lack complete cost responses.
 These costs remain retained even though the attempt cannot count as a solve.
 
-Finish whole-product review before paid confirmation, in addition to matched
-HTTP tests and supported-runtime gates. The quality target remains every fixed
+Whole-product review, matched HTTP tests and supported-runtime checks remain
+prerequisites for candidate confirmation. The quality target remains every fixed
 baseline solve preserved and at least seven solved strict Sol-cost wins in one
 prospective ten-task cohort. Historical or interrupted attempts cannot be pooled.
 
-## Python runtime parity remains open
+## Python runtime replacement completed
 
 Further whole-product review found Python decorator, line-ending and invalid-AST
-mismatches beyond the already corrected TS/JS comments and selection ordering.
-The grammar approximation is being replaced with unchanged reference helpers
-executed in bundled CPython. [Runtime evidence](python-runtime.md) owns the bounded
-probe and remaining integration requirements. Neither stopped paid cohort is
-reactivated by this change; merged verification and a clean full review must
-precede a new prospective confirmation.
+mismatches beyond the corrected TS/JS comments and selection ordering. The grammar
+approximation was replaced with unchanged reference helpers executed in bundled
+CPython. [Runtime evidence](python-runtime.md) owns the completed probe,
+integration and supported-runtime checks, including the finite interpreter-version
+coverage. Those checks do not prove every possible parser input equivalent or
+establish task quality. Neither stopped cohort was reactivated; the subsequent
+CPython cohort was separately frozen and its failed quality result remains
+recorded in [confirmation evidence](cpython-confirmation.md).

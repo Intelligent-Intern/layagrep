@@ -7,8 +7,10 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: prepare and run Django first in the isolated
-[mechanism-first skill experiment](assets/query-framing-study.md).
+Next: follow the isolated `installed-jg-mechanism-query-v1b` plan in the
+[mechanism-first skill experiment](assets/query-framing-study.md). Inspect the
+retained Django attempt and its official grade/bill before applying the registered
+continuation rule. Do not launch another attempt while its process is active.
 The frozen `installed-jg-cpython-parity-v1` cohort is complete and not accepted:
 7/10 solves versus 8/10 baseline, six cost wins, and 35.27% lower full Sol cost.
 [Confirmation evidence](assets/cpython-confirmation.md) owns all outcomes, trace
@@ -25,23 +27,26 @@ exercised corpus; task-quality acceptance failed and remains required.
 `installed-jg-reference-parity-v1` is stopped and superseded. Requests and
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted
 with its patch and traces retained; seven cells never started. These superseded
-studies remain stopped. The bundled-CPython cohort is terminal; no Sol run is
-active. The completed query diagnostics made only bounded Jev calls. A separately
-identified skill candidate is prepared for an actual Django task test.
+studies remain stopped. The bundled-CPython cohort is terminal. The completed
+query diagnostics made only bounded Jev calls; the separate mechanism-first plan
+owns the new skill candidate and its Django-first evaluation.
 
 The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
 superseded, retaining completed outcomes and interrupted traces. It is not a
 release acceptance cohort. Never rerun saved baselines or pool candidates.
 Report Jev observed API costs separately from scored full Sol cost.
 
-Keep the restored expansion, discovery inputs/order, excerpt presentation, scoped
-guidance and exact accepted skill (only rename executable to `jg`). Required
+Keep the production incumbent's restored expansion, discovery inputs/order,
+excerpt presentation, scoped guidance and accepted skill (only rename executable
+to `jg`) unchanged. The isolated experiment changes only the recorded skill
+instruction and does not promote that change into production. Required
 Node-only runtime, auth, cache, filesystem protections and truthful failure
 handling remain, but must not silently change healthy retrieval decisions.
 The earlier deterministic and platform gates passed for the deviating port;
 they do not prove parity. See [parity restoration](assets/parity-restoration.md) and the
 [source-budget investigation](assets/source-budget-decision.md).
-Remaining: frozen quality confirmation, whole-spec review and close-spec.
+Remaining: a candidate that passes frozen quality confirmation, final choices
+consolidation, whole-spec closeout review and close-spec.
 See [contracts](contracts.md) for the corrected contract.
 
 No user decision blocks starting. External verification dependencies are a working
@@ -53,8 +58,8 @@ acceptance claim. Do not repair credentials or regenerate an existing baseline.
 Implement one focused slice at a time, running its narrow tests and recording its
 artifact. Use write-tests for behavioral tests and review before completing an
 implementation pass. Update this section, slice status, decisions and unresolved
-verification before ending each pass. These commands are targets to implement,
-not claims about the current scaffold.
+verification before ending each pass. The named commands are implemented; their
+recorded evidence does not substitute for the open quality gate.
 
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
 - [x] [02 — Bundled parser parity](slices/02-parser.md)
@@ -143,7 +148,7 @@ The sample was tuned and Python-only. TS/JS conformance tests establish parser
 behavior, not downstream solve generalization. Arbitrary roots are supported by
 contract; whole-computer effectiveness is not established by synthetic scale tests.
 
-## Draft synthesis and fog audit
+## Planning rationale and remaining boundaries
 
 Three independent fresh-context drafts used the same interview brief: Codex with
 fewest-slices and seam-quality biases; Claude Opus/high with a risk-first bias.
@@ -155,14 +160,16 @@ first task, and separates failures/cache/output evidence instead of bundling the
 into a vague hardening phase.
 
 Claude proposed Pyodide for closer CPython parity. The initial smaller grammar
-parser failed that requirement; the measured fallback is now being integrated.
-This reopens the parser mechanism, not the Node-only user contract. Do not
-normalize semantically meaningful source or question order. The skill-path ambiguity was checked: the confirmation
-hash matches the retained ranked-leads skill; the current working skill has changed.
+parser failed that requirement; bundled CPython now executes the unchanged
+reference helpers. [Runtime evidence](assets/python-runtime.md) records the
+completed integration, verification and interpreter-version limits. The Node-only
+user contract is unchanged. Do not normalize meaningful source or question order.
+The incumbent skill matches the retained accepted instructions apart from the
+executable rename; the separate skill experiment is not a production replacement.
 
 Recursive fog audit: parser compatibility has its own artifact (02); eligibility
-and snapshot integrity (03); service outcomes (05); freshness (06); numerical
-source budget (07); actual task quality (08). Each open implementation freedom is
+and snapshot integrity (03); service outcomes (05); freshness (06); preserved
+output policy (07); actual task quality (08). Each open implementation freedom is
 named in its owning slice. New behavior decisions outside those delegations reopen
 the spec instead of becoming silent defaults. No untested representation change,
 new recall heuristic or performance optimization hides in the integration slice.

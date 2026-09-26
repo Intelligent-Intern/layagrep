@@ -199,14 +199,15 @@ passing domain tests. Current also reproduces a broader warning-related failure
 in a pristine checkout. Its added regression covers fewer field variants than the
 spike, but no implementation defect was found. Evidence: `/tmp/jg-sphinx8638-paired/`.
 
-## Next focused experiment
+## Separate mechanism-first experiment
 
-Do not rerun or replace this cohort. Preserve the CLI, parser, traversal, thresholds,
-requests and skill as the recorded incumbent. Investigate query framing separately
-on Django, where solving the retained regression is the most direct unresolved
-quality question. The next bounded diagnostic holds a saved SQLite declaration
-request constant and varies only its query; any later skill candidate must be
-identified separately and validated on actual task outcomes. A classifier score
-increase is insufficient for promotion. Sol baselines remain immutable, and any
-new candidate must still preserve all eight baseline solves and achieve seven
-successful lower-cost solves before final acceptance.
+This cohort is terminal and failed acceptance; do not rerun or replace it. Keep
+its CLI, parser, traversal, thresholds, requests and skill as the recorded
+incumbent. The bounded Django query diagnostic is complete, and the separately
+identified skill trial now belongs to the
+[mechanism-first experiment](query-framing-study.md). That record owns the
+candidate, preregistered Django-first continuation rule and subsequent outcomes.
+A classifier score increase or one task solve is insufficient for promotion.
+Sol baselines remain immutable, and any new candidate must still preserve all
+eight baseline solves and achieve seven successful lower-cost solves before
+final acceptance.
