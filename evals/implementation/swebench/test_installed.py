@@ -31,7 +31,7 @@ class InstalledTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(runner.baseline_prompt(row).encode()).hexdigest(), '41c7e3cf7acbc19d0b24ab55e6ea29fe3cdbc2b777549d158488c6c55baaa643')
         prompt = runner.treatment_prompt(row)
         self.assertTrue(prompt.startswith('$jevgrep\n\n'))
-        self.assertIn('must run jg for initial repository research', prompt)
+        self.assertEqual(prompt, '$jevgrep\n\n' + runner.baseline_prompt(row))
         self.assertTrue(prompt.endswith(runner.baseline_prompt(row)))
 
     def fixture(self, root, all_tasks=False):

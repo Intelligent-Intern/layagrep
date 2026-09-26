@@ -10,8 +10,8 @@ Preparation installs the packed npm artifact and dependencies once, then checks
 that same installation offline in every selected runtime image. Each check
 verifies the original source, agent versions and canonical packaged skill.
 The coding agent receives the archived prefix and runs the real `jg` executable
-on an internal network. The unchanged benchmark prompt requires initial retrieval,
-even when the production skill would consider it optional. Retrieval limits come
+on an internal network. The benchmark explicitly invokes `$jevgrep`, matching the accepted spike prompt;
+the retained skill begins by requiring retrieval. Retrieval limits come
 from the frozen package's default policy.
 
 The plan binds one package, installed prefix, skill, safe task export, evaluator

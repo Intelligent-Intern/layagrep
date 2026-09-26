@@ -1,6 +1,9 @@
 import { expect } from "bun:test";
 import { resolve } from "node:path";
-export async function replay(mode: "healthy" | "missing" | "invalid" = "healthy") {
+export async function replay(
+  mode: "healthy" | "missing" | "invalid" = "healthy",
+  production = false,
+) {
   const requests: unknown[] = [];
   const server = Bun.serve({
     port: 0,
@@ -51,14 +54,22 @@ export async function replay(mode: "healthy" | "missing" | "invalid" = "healthy"
   });
   try {
     const child = Bun.spawn(
-      [
-        "node",
-        "/opt/jevgrep-reference.mjs",
-        "--root",
-        resolve("test/reference/tree"),
-        "--query",
-        "research how telemetry records event names",
-      ],
+      production
+        ? [
+            "node",
+            resolve("apps/cli/dist/bin/index.js"),
+            "research how telemetry records event names",
+            resolve("test/reference/tree"),
+            "--no-cache",
+          ]
+        : [
+            "node",
+            "/opt/jevgrep-reference.mjs",
+            "--root",
+            resolve("test/reference/tree"),
+            "--query",
+            "research how telemetry records event names",
+          ],
       {
         env: {
           PATH: process.env.PATH,

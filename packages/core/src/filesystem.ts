@@ -243,7 +243,7 @@ export async function createFilesystem(options: FilesystemOptions) {
       return issue(errorKind(error), relative(root, absolute));
     }
   }
-  async function eligibility(input: string): Promise<Eligibility> {
+  async function eligibility(input: string, allowMissing = false): Promise<Eligibility> {
     const named = pathName(input);
     if (!named) return excluded("outside_root");
     const interruption = stopped(named.path);
@@ -315,8 +315,15 @@ export async function createFilesystem(options: FilesystemOptions) {
       }
       return excluded("outside_root");
     } catch (error) {
+      if (allowMissing && (error as NodeJS.ErrnoException).code === "ENOENT")
+        return excluded("missing");
       return issue(errorKind(error), named.path);
     }
+  }
+  async function lookupFile(path: string) {
+    const result = await eligibility(path, true);
+    if (result.status !== "eligible") return result;
+    return result.stat.isFile() ? { status: "file" as const } : excluded("not_file");
   }
   async function readSnapshot(path: string): Promise<SnapshotResult> {
     const admitted = await eligibility(path);
@@ -427,6 +434,6 @@ export async function createFilesystem(options: FilesystemOptions) {
     closed = true;
     await Promise.all([...cursors.keys()].map(discard));
   }
-  return { root, readSnapshot, listPage, closeCursor: discard, close };
+  return { root, readSnapshot, lookupFile, listPage, closeCursor: discard, close };
 }
 export type FilesystemReader = Awaited<ReturnType<typeof createFilesystem>>;

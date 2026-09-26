@@ -1,23 +1,40 @@
-SYNTHETIC PRESENTATION EXAMPLE — not a captured Jev response.
+Jevgrep: 3 relevant files.
+AGENTS.md lookup (root and returned-file ancestors): none found.
+- "src/backend/events.ts" — implementation, caller, test, fixture, helper; selected source and structural context below
+  Reading lead source: lines 1-1
+  Reading lead BackendTelemetry.recordEvent: lines 4-6
+- "src/telemetry.ts" — implementation, caller, test, fixture, helper; selected source and structural context below
+  Reading lead Telemetry.recordEvent: lines 3-5
+- "tests/telemetry.test.ts" — implementation, caller, test, fixture, helper; selected source and structural context below
+  Reading lead source: lines 1-1
+  Reading lead testEventName: lines 3-5
+End file list.
 
-Jevgrep: 2 relevant files; discovery incomplete.
-Root: /example/project
-Query: research how telemetry records application events
-Incomplete: 1 directory could not be read. Source omitted for 1 lead.
+Source block "src/backend/events.ts" lines 1-8:
+1: import { Telemetry } from '../telemetry';
+2: // Backends preserve the same event contract.
+3: export class BackendTelemetry extends Telemetry {
+4:   recordEvent(name: string) {
+5:     return super.recordEvent(name);
+6:   }
+7: }
+8: 
 
-Files and reading leads:
-1. src/telemetry.ts — implementation
-   recordEvent:3-5 (source below)
-2. tests/telemetry.test.ts — test
-   records_application_events:10-24 (optional lead; source omitted)
+Source block "src/telemetry.ts" lines 1-7:
+1: // Events preserve the caller's name.
+2: export class Telemetry {
+3:   recordEvent(name: string) {
+4:     return { name, recorded: true };
+5:   }
+6: }
+7: 
 
-Source: src/telemetry.ts:1-5
-```typescript
-// Preserve the caller's event name when passing data to the transport.
+Source block "tests/telemetry.test.ts" lines 1-6:
+1: import { Telemetry } from '../src/telemetry';
+2: // Regression example: do not rename the caller's event.
+3: export function testEventName() {
+4:   return new Telemetry().recordEvent('opened').name === 'opened';
+5: }
+6: 
 
-export function recordEvent(name: string) {
-  transport.send({ name });
-}
-```
-
-Use the excerpts first; inspect optional leads or other files to fill remaining gaps.
+End context.

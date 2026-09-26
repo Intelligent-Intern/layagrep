@@ -1,4 +1,4 @@
-import type { FileEvidence, RetrievalResult } from "@repo/core";
+import type { RetrievalResult } from "@repo/core";
 
 function quote(value: string): string {
   return JSON.stringify(value).replace(
@@ -7,94 +7,76 @@ function quote(value: string): string {
   );
 }
 
-export const DEFAULT_MAX_SOURCE_BYTES = 1500;
+export const DEFAULT_MAX_SOURCE_BYTES = 0;
 
-type Excerpt = FileEvidence["excerpts"][number];
-function containsLead(excerpt: Excerpt, range: FileEvidence["leads"][number]["range"]): boolean {
-  if (range.startLine < excerpt.range.startLine || range.endLine > excerpt.range.endLine)
-    return false;
-  const start = excerpt.sourceByteStart ?? excerpt.range.sourceByteStart;
-  const end = excerpt.sourceByteEnd ?? excerpt.range.sourceByteEnd;
-  if (start !== undefined && range.sourceByteStart !== undefined && range.sourceByteStart < start)
-    return false;
-  if (end !== undefined && range.sourceByteEnd !== undefined && range.sourceByteEnd > end)
-    return false;
-  return true;
-}
-
-/** Whole excerpts keep coordinates truthful; unlimited rendering retains its original ordering. */
+/** Healthy default output retains the frozen reference's agent-facing packet. */
 export function renderResult(
   result: RetrievalResult,
   maxSourceBytes = DEFAULT_MAX_SOURCE_BYTES,
 ): string {
+  let remaining = maxSourceBytes || Infinity;
   const files = [...result.files]
-    .sort((a, b) => b.score - a.score || (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
-    .map((file) => ({ file, excerpts: file.excerpts, omitted: file.sourceOmitted }));
-  if (maxSourceBytes > 0) {
-    let remaining = maxSourceBytes;
-    const kept = files.map(() => new Set<number>());
-    const ranked = files.flatMap(({ file }, fileIndex) =>
-      file.excerpts.map((excerpt, excerptIndex) => ({
-        fileIndex,
-        excerptIndex,
-        bytes: Buffer.byteLength(excerpt.source),
-        // Context snippets have no reading-lead score: this prioritizes available evidence,
-        // not a complete confidence estimate for every selected or expanded source range.
-        score: file.leads.reduce(
-          (score, lead) =>
-            lead.score > 0.5 && containsLead(excerpt, lead.range)
-              ? Math.max(score, lead.score)
-              : score,
-          0,
-        ),
-      })),
-    );
-    // Stable sorting uses original file/excerpt order for equal or absent lead scores.
-    ranked.sort((a, b) => b.score - a.score);
-    for (const candidate of ranked)
-      if (candidate.bytes <= remaining) {
-        kept[candidate.fileIndex]!.add(candidate.excerptIndex);
-        remaining -= candidate.bytes;
-      }
-    for (const [index, entry] of files.entries()) {
-      entry.excerpts = entry.file.excerpts.filter((_, excerptIndex) =>
-        kept[index]!.has(excerptIndex),
-      );
-      entry.omitted ||= entry.excerpts.length !== entry.file.excerpts.length;
-    }
-  }
+    .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path))
+    .map((file) => {
+      let omitted = file.sourceOmitted;
+      const excerpts = file.excerpts.filter(({ source }) => {
+        const bytes = Buffer.byteLength(source);
+        if (bytes > remaining) {
+          omitted = true;
+          return false;
+        }
+        remaining -= bytes;
+        return true;
+      });
+      return { file, excerpts, omitted };
+    });
+  const context = result.repositoryContext;
+  const quoteArg = (value: string) => "'" + value.replaceAll("'", "'\\''") + "'";
+  const omittedCount = files.filter(({ omitted }) => omitted).length;
   const lines = [
-    `Status: ${result.status}`,
-    `Root: ${quote(result.root)}`,
-    `Relevant files: ${files.length}`,
-    `Source omitted: ${files.filter(({ omitted }) => omitted).length} file(s)`,
+    `Jevgrep: ${files.length} relevant files${result.status !== "complete" ? "; discovery incomplete" : ""}.`,
+    `AGENTS.md lookup (root and returned-file ancestors): ${context.instructionFiles.length ? context.instructionFiles.map(quote).join(", ") : "none found"}${context.instructionLookupIncomplete ? "; lookup incomplete" : ""}.`,
+    ...(result.status === "interrupted" ? ["Interrupted."] : []),
+    ...(omittedCount ? [`Source omitted: ${omittedCount} file(s).`] : []),
     ...(result.warnings ?? []).map(({ kind, count }) => `Warning: ${quote(kind)}: ${count}`),
     ...result.issues.map(({ kind, count }) => `Issue: ${quote(kind)}: ${count}`),
-    "",
-    "Reading leads (estimates; source below is evidence):",
+    ...context.pytestFiles.map((path) =>
+      [...path].some((character) => character.charCodeAt(0) < 32) ||
+      /[\u007f-\u009f\u2028-\u202e\u2066-\u2069]/.test(path)
+        ? `Suggested test arguments (not executed): [${["python", "-m", "pytest", "-q", path].map(quote).join(", ")}]`
+        : `Suggested test entry point (not executed): python -m pytest -q ${quoteArg(path)}`,
+    ),
+    ...files.flatMap(({ file, excerpts, omitted }) => [
+      `- ${quote(file.path)} — ${file.roles.join(", ") || "relevant; role uncertain"}; ${excerpts.length ? "selected source and structural context below" : omitted ? "source omitted; inspect this file directly" : "file passed relevance threshold; no confident excerpt selected — inspect this file directly"}`,
+      ...[...file.leads]
+        .sort((a, b) => a.range.startLine - b.range.startLine)
+        .map(
+          (lead) =>
+            `  Reading lead ${lead.name}: lines ${lead.range.startLine}-${lead.range.endLine}`,
+        ),
+      ...(omitted ? ["  Some source omitted; locations remain available."] : []),
+    ]),
+    "End file list.",
   ];
-  for (const { file, excerpts, omitted } of files) {
-    lines.push(
-      `- ${quote(file.path)} — ${file.roles.map(quote).join(", ") || "relevant; role uncertain"}`,
-    );
-    for (const lead of file.leads) {
-      lines.push(`  ${quote(lead.name)}: ${lead.range.startLine}-${lead.range.endLine}`);
-    }
-    if (omitted) lines.push("  Some source omitted; locations remain available.");
-    else if (!excerpts.length)
-      lines.push("  No confident excerpt selected; inspect this file if needed.");
-  }
-  lines.push("", "Source (verbatim; ranges may end within declarations):");
-  for (const { file, excerpts } of files) {
+  for (const { file, excerpts } of files)
     for (const { range, source, partial, sourceByteStart, sourceByteEnd } of excerpts) {
-      const location = `${quote(file.path)}:${range.startLine}-${range.endLine}`;
       const bytes =
         sourceByteStart === undefined ? "" : `; UTF-8 bytes [${sourceByteStart}, ${sourceByteEnd})`;
       const annotation =
         partial || sourceByteStart !== undefined ? ` (partial excerpt${bytes})` : "";
-      lines.push("", `${location}${annotation}`, source);
+      const sourceLines = source.split("\n");
+      if (
+        (partial || sourceByteStart !== undefined) &&
+        sourceLines.length > range.endLine - range.startLine + 1 &&
+        sourceLines.at(-1) === ""
+      )
+        sourceLines.pop();
+      lines.push(
+        "",
+        `Source block ${quote(file.path)} lines ${range.startLine}-${range.endLine}${annotation}:`,
+      );
+      for (const [index, line] of sourceLines.entries())
+        lines.push(`${range.startLine + index}: ${line}`);
     }
-  }
-  lines.push("", "End context.", "");
-  return lines.join("\n");
+  return lines.join("\n") + "\n\nEnd context.\n";
 }

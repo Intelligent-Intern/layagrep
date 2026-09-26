@@ -1,10 +1,10 @@
 # Deliver the installed CLI and agent workflow
 
-Status: verified (integration only). Depends on: 01, 02, 03. Read [contracts](../contracts.md) first.
+Status: reopened for faithful end-to-end reference parity. Depends on: 01, 02, 03. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
-Compose core `retrieve` and the CLI contract. Port hierarchy, file admission, source/lead decisions, accepted relationship pass and separate roles; copy exact accepted request builders. Add bounded directory source samples as an explicitly labeled production change. Keep one deterministic candidate ordering so cache inputs can later be reproducible; record its request difference from the spike.
+Compose core `retrieve` and the CLI contract. Port hierarchy, file admission, source/lead decisions, accepted relationship pass and separate roles; copy exact accepted request builders. Preserve the reference's metadata-only initial directory previews and content-informed relationship pass. Preserve its candidate processing and concurrent completion ordering; cache keys follow the resulting exact requests.
 
 CLI owns credentials, rendering, stdout-only errors, cancellation and exit codes. Core result carries selected versus rendered ranges and completeness. Ship `jg skill` and the canonical `skills/jevgrep/SKILL.md` following write-skills. Production invocation is selective, benchmark wrapper forces first retrieval. Implement initial finite evaluator attempts and 50k counter now; the later fault slice expands conformance rather than allowing runaway work here.
 
@@ -14,10 +14,11 @@ Build/pack/install outside checkout. Cache was integrated through the single eva
 
 One complete installed-product evidence bundle.
 
-`bun run test:e2e -- --case checkpoint`; then `bun run eval:swebench -- --task psf__requests-1142 --candidate installed --reuse-baseline` (commands to create, not currently available).
-
-Commands are implementation targets. Add them in this slice; do not imply they
-already exist. CLI transcripts replace visual/screenshot gates for this product.
+`bun run test:e2e -- --case checkpoint`; then the maintained runner's
+[`prepare` and task-scoped `run`](../../../evals/implementation/swebench/installed.md)
+against `psf__requests-1142`. The Requests cell of the frozen ten-task confirmation
+can supply this checkpoint; no extra diagnostic treatment or baseline rerun is
+needed. CLI transcripts replace visual/screenshot gates for this product.
 
 ## Verification and verdict
 

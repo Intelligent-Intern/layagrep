@@ -51,7 +51,6 @@ test("transient failures retry within the shared request guard and never become 
       baseURL: `http://127.0.0.1:${server.port}`,
       signal: new AbortController().signal,
       requestLimit: 2,
-      retryDelayMs: 0,
     });
     const request = {
       state: "test",
@@ -89,7 +88,6 @@ test("cancellation of a rate-limited request prevents further attempts", async (
       apiKey: "fixture",
       baseURL: `http://127.0.0.1:${server.port}`,
       signal: controller.signal,
-      retryDelayMs: 0,
     });
     const result = evaluator.evaluate({
       state: "test",
@@ -125,7 +123,6 @@ test("Retry-After delays a retry before the provider can recover", async () => {
       apiKey: "fixture",
       baseURL: `http://127.0.0.1:${server.port}`,
       signal: new AbortController().signal,
-      retryDelayMs: 0,
     });
     expect(
       await evaluator.evaluate({
@@ -156,7 +153,6 @@ test("stalled HTTP attempts time out without exceeding the evaluator attempt lim
       baseURL: `http://127.0.0.1:${server.port}`,
       signal: new AbortController().signal,
       timeoutMs: 100,
-      retryDelayMs: 0,
     });
     await expect(
       evaluator.evaluate({
@@ -164,8 +160,8 @@ test("stalled HTTP attempts time out without exceeding the evaluator attempt lim
         questions: { q: { type: "boolean", instructions: "Relevant?" } },
       }),
     ).rejects.toMatchObject({ kind: "provider" });
-    expect(calls).toBe(3);
-    expect(evaluator.requests).toBe(3);
+    expect(calls).toBe(2);
+    expect(evaluator.requests).toBe(2);
   } finally {
     server.stop(true);
   }
@@ -188,7 +184,6 @@ test("authentication failure stops other in-flight and subsequent query requests
       baseURL: `http://127.0.0.1:${server.port}`,
       signal: new AbortController().signal,
       timeoutMs: 1000,
-      retryDelayMs: 0,
     });
     const request = {
       state: "test",
@@ -232,7 +227,6 @@ test("authentication failure interrupts a sibling Retry-After wait", async () =>
       apiKey: "fixture",
       baseURL: `http://127.0.0.1:${server.port}`,
       signal: new AbortController().signal,
-      retryDelayMs: 0,
     });
     const request = {
       state: "test",

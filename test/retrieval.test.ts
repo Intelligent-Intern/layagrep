@@ -45,7 +45,6 @@ testIfDocker(
         apiKey: "fixture",
         baseURL: `http://127.0.0.1:${server.port}`,
         signal,
-        retryDelayMs: 0,
       });
       const result = await retrieve({ root, query: "research event recording", signal }, evaluator);
       expect(result.status).toBe("complete");

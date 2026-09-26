@@ -33,6 +33,11 @@ export type RetrievalResult = {
   files: FileEvidence[];
   issues: Array<{ kind: string; count: number }>;
   warnings?: Array<{ kind: string; count: number }>;
+  repositoryContext: {
+    instructionFiles: string[];
+    instructionLookupIncomplete: boolean;
+    pytestFiles: string[];
+  };
   counts: { requests: number; cacheHits: number; inspectedFiles: number };
 };
 export type SearchInput = {
@@ -46,5 +51,8 @@ export type Evaluator = {
   readonly requests: number;
   readonly cacheHits?: number;
   readonly cacheIssues?: Array<{ kind: string; count: number }>;
-  evaluate(request: EvaluationRequest): Promise<Record<string, number>>;
+  evaluate(
+    request: EvaluationRequest,
+    policy?: { navigation?: boolean },
+  ): Promise<Record<string, number>>;
 };

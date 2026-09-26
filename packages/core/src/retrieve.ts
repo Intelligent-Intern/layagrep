@@ -10,7 +10,8 @@ import {
   type NavigationItem,
   type Evidence,
 } from "./requests";
-import { selectFile } from "./selection";
+import { selectFile, type SelectionResult } from "./selection";
+import { repositoryContext } from "./repository-context";
 import type { Evaluator, FileEvidence, RetrievalResult, SearchInput } from "./types";
 
 /** Traversal owns admission; every stage reads through the same eligibility policy. */
@@ -25,6 +26,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   const inspected = new Set<string>();
   const candidates = new Map<string, { path: string; contentHash: string; score: number }>();
   const files = new Map<string, FileEvidence>();
+  const declarations = new Map<string, SelectionResult["declarations"]>();
   const visited = new Set<string>();
   const pruned = new Map<string, NavigationItem>();
   const previews = new Map<string, FilePreview>();
@@ -238,10 +240,10 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       /\.(?:pyi?|[cm]?[jt]s|[jt]sx)$/.test(source.path) &&
       bytes.length <= 1_000_000
     ) {
-      preview.declarations = (await inspect(source)).units.map((unit) => ({
-        name: unit.name,
-        ...unit.range,
-      }));
+      const syntax = await inspect(source, { maxUnitBytes: Math.max(4, bytes.length) });
+      preview.declarations = syntax.units
+        .filter((unit) => !unit.partial)
+        .map((unit) => ({ name: unit.name, ...unit.range }));
       while (preview.declarations.length && Buffer.byteLength(JSON.stringify(preview)) > 32000) {
         preview.declarations.pop();
         preview.declarationIndexTruncated = true;
@@ -391,7 +393,13 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       if (candidate.score <= 0.5 || stop) break;
       const source = await unchanged(candidate);
       if (!source) continue;
-      const units = (await inspect(source)).units;
+      const size = Buffer.byteLength(source.source);
+      const units = (
+        await inspect(source, {
+          maxParseBytes: Math.max(1, size),
+          maxUnitBytes: Math.max(4, size),
+        })
+      ).units;
       const classes = [
         ...new Set(
           units
@@ -432,6 +440,10 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       parallel(ordered, async (candidate) => {
         const source = await unchanged(candidate);
         if (!source) return;
+        if (Buffer.byteLength(source.source) > 1_000_000) {
+          issue("source_inspection_limit");
+          return;
+        }
         const selection = await selectFile(
           source,
           input.query,
@@ -447,6 +459,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           files.get(candidate.path),
         );
         files.set(candidate.path, selection.file);
+        declarations.set(candidate.path, selection.declarations);
         for (const entry of selection.issues) issue(entry.kind, entry.count);
       });
     await select();
@@ -489,11 +502,18 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       }
     });
     if (issues.has("authentication") && !files.size) throw new EvaluationFailure("authentication");
+    const context = await repositoryContext(
+      reader,
+      sortedCandidates().map((candidate) => files.get(candidate.path)!),
+      declarations,
+      (path) => unchanged(candidates.get(path)!),
+    );
     return {
       root: reader.root,
       query: input.query,
       status: input.signal.aborted ? "interrupted" : issues.size ? "incomplete" : "complete",
       files: sortedCandidates().map((candidate) => files.get(candidate.path)!),
+      repositoryContext: context,
       issues: [...issues].map(([kind, count]) => ({ kind, count })),
       warnings: evaluator.cacheIssues,
       counts: {

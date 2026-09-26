@@ -44,11 +44,7 @@ def baseline_prompt(row):
 
 
 def treatment_prompt(row):
-    return ('$jevgrep\n\nFor this benchmark, you must run jg for initial repository research before '
-            'independently inspecting implementation files, even when the affected path seems known. '
-            'Read and follow /home/agent/.agents/skills/jevgrep/SKILL.md, then invoke the installed jg '
-            'command. This benchmark requirement overrides the skill\'s optional invocation guidance.\n\n'
-            + baseline_prompt(row))
+    return '$jevgrep\n\n' + baseline_prompt(row)
 
 
 def digest(path):

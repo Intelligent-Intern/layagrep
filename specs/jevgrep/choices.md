@@ -139,21 +139,19 @@ boundary, so the implementation had to distinguish their effect on retained data
 Reach: partial output remains useful without claiming complete discovery or a
 filesystem lock. Verdict: sound. Confidence: high.
 
-### Use available declaration scores to allocate limited source
+### Superseded source-budget tuning before port parity
 
-When: source-budget trial. If a byte cap cannot fit every selected excerpt,
-prefer an excerpt containing a declaration Jev scored above 0.5, starting with
-the strongest score. Keep all file locations and reading leads, and explicitly
-mark source omissions. Equal scores preserve original ordering. A class-context
-snippet can be useful despite lacking such a score; this heuristic does not
-claim to measure the value of all context.
+When: source-budget trial. I ranked limited source by contained declaration scores
+and selected a 1,500-byte default after one task improved against the already
+changed production port. The winning spike itself was uncapped and expanded
+context differently; the experiment did not establish parity with that winner.
 
-Gap: numerical source allocation and tie breaks were delegated. Reach: finite
-budgets may omit useful surrounding context. The 1,500-byte trial preserved the
-Requests solve and lowered full Sol cost against the uncapped treatment, so it
-is selected for the frozen cohort; the cohort must still satisfy acceptance.
-Verdict: sound as a measured provisional policy, not a universal optimum.
-Confidence: medium.
+Gap: the spec delegated a measured budget but did not authorize treating an
+unverified port as equivalent to the accepted reference. Reach: the capped study
+and stopped cohort remain historical evidence only. Verdict: unsound sequencing.
+Corrected decision: restore exact reference retrieval/output/skill behavior and
+prove computed-request and output parity before introducing architecture changes.
+Confidence: high. The default is restored to uncapped.
 
 ### Freeze one installed package across the official cohort
 

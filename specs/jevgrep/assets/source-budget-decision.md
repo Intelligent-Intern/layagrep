@@ -1,6 +1,8 @@
 # Source-budget decision
 
-Choose **1,500 source bytes** for the frozen production cohort. This is the one
+**Superseded after user correction: restore the uncapped frozen reference.**
+
+The experiment selected 1,500 source bytes for a cohort subsequently stopped. This is the one
 bounded candidate required by slice 07, compared with the completed uncapped
 installed Requests checkpoint. Both officially solved; the smaller candidate
 lowered full Sol cost against the installed comparator. It did not beat baseline.
@@ -89,3 +91,30 @@ live classification/query variation and Sol behavior is unresolved. This needs
 an exact spike-versus-production trace/request comparison before attributing the
 regression to normal variance or calling the production policy a reproduced win.
 The active frozen cohort remains unchanged and must be reported in full.
+
+### Deterministic selection replay
+
+A no-model-call replay used pristine `requests/models.py` from official runtime
+image `sha256:2264606b0765897361bb392db8aa3226e171719ba97e82ce5205ba122a43eaff`,
+source SHA-256 `d9214453d8c7844deb50d985c79b89a30bacab6b3ffbd4079bcb81f7709da0b3`.
+The initial positive range was only `prepare_content_length:388–395`; the second
+pass introduced no new positives. Parser unit lists and initial neighborhood
+outputs matched the frozen reference exactly.
+
+One expansion returned 231–256 and 385–414 (1,681 bytes under reference serialization;
+production retains two final newlines and reports 1,683). Expanding that rendered
+context again returned 154–182, 210–217, 228–260, 262–269, 321–338 and 382–432
+(4,761 bytes). These exactly match all six models.py ranges in the accepted packet.
+This isolates the deterministic orchestration difference from classifier variance.
+
+The test-file control selected `httpbin:21–23`: one expansion gives 18–26 and two
+give 15–29. The accepted packet has 18–26, so it must not be described as a fully
+successful second expansion on that file. The spike reported incomplete discovery.
+The probe and machine-readable output are retained locally at
+`/tmp/jevgrep-expansion-parity.MP8Xgr/`; source identity and exact outcomes above
+are the durable evidence. No paid requests or baseline reruns were needed.
+
+The spec's once-only expansion rule is an intentional semantic difference from
+the accepted reference, despite its stated aim to preserve initial neighbor policy.
+The narrower helper/template gates did not assess that difference. Its quality
+impact remains open and must be considered before accepting production parity.

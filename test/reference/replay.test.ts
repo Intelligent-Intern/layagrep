@@ -40,3 +40,12 @@ test("reference source closure and historical skill retain their recorded identi
     ).toBe(digest);
   }
 });
+
+test("production CLI matches the frozen complete requests and stdout corpus", async () => {
+  const expected = JSON.parse(await readFile("test/reference/corpus.json", "utf8"));
+  const result = await replay("healthy", true);
+  expect(result.code).toBe(0);
+  expect(result.stderr).toBe("");
+  expect(result.requests).toEqual(expected.requests);
+  expect(result.stdout).toBe(expected.stdout);
+}, 120_000);

@@ -1,6 +1,9 @@
 # Bundle source inspection without Python
 
-Status: verified (2026-09-25). Depends on: 01. Read [contracts](../contracts.md) first.
+Status: verified against the frozen conformance cases (2026-09-26). Depends on: 01.
+Read [contracts](../contracts.md) first. Recognized syntax outside the reference's
+Python 3.11 boundary shares one fallback across inspection, previews and
+neighboring-method selection. TypeScript uses the reference comment traversal.
 
 ## Contract and owner
 
@@ -19,12 +22,13 @@ already exist. CLI transcripts replace visual/screenshot gates for this product.
 
 ## Verification and verdict
 
-`bun run test:parser` passes: 15 Node parser conformance tests followed by two
-packed-runtime journeys, printing the Python declaration units read by the real
-SDK fixture. The runtime has no Python, Bun or compiler. The frozen-helper corpus
-and intentional grammar differences are documented in
-[parser conformance](../../../test/parser/README.md). This proves source inspection
-and installed asset loading, not downstream task quality.
+The merged Docker gate passes 16 Node parser conformance tests and the whole-CLI
+HTTP comparisons for Python fallback, oversized declarations and TypeScript
+comment expansion. The [parser conformance guide](../../../test/parser/README.md)
+defines the reference version and coverage limits. Packaged runtime journeys
+verify asset loading without Python, Bun or a compiler. These checks prove the
+exercised inspection behavior, not universal grammar equivalence or downstream
+task quality.
 
 Assert source text and line coordinates, meaningful comments, bounded oversized units and fallback behavior. Inspect representative source from the saved official task trees without copying personal repos. Ensure no shell-out to python/Bun/compiler and no runtime asset download.
 

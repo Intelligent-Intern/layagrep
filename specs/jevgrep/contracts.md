@@ -104,10 +104,10 @@ plus declaration-locator native object representation and exact prompt builders
 until a recorded quality experiment approves a replacement. Do not stringify
 `state` before calling the SDK.
 
-The production target adds bounded content samples to the initial directory
-preview, alongside eligible child names, counts, extensions and truncation status.
-This differs from the frozen reference's initial metadata-only directory previews.
-Evaluate it separately; do not claim its quality is inherited from the winner.
+Initial directory previews and the relationship pass must match the frozen
+reference's computed inputs. Initial previews use its child metadata; relationship
+reconsideration adds its content samples. Do not introduce additional preview
+sampling or regrouping as an implementation optimization.
 Unseen preview entries are not negative evidence. Enumerate wide directories in
 bounded pages without silently dropping later pages; no global fixed file count.
 Reuse one bounded relationship pass from the reference, not an unbounded research
@@ -119,8 +119,14 @@ Use text chunks for unsupported languages or parse failure. Additional grammars
 are delegated only if they use this same adapter and tests without new runtimes.
 Units retain adjacent comments, decorators, docstrings and local context. Large
 units may be split and marked partial. Preserve accepted neighbor expansion as an
-explicit policy initially; keep selected ranges separate from rendered ranges so
-future tuning cannot accidentally expand expansion again.
+explicit policy, including its second-pass expansion of previously rendered
+ranges. Keep positive selections separately for provenance, but do not substitute
+once-only expansion for the reference's bounded two-pass behavior.
+Match the reference's separate source-selection ceiling: admitted files larger
+than 1,000,000 bytes retain locations and roles but receive no declaration
+evaluation, with an explicit incomplete-result issue. Structural class-anchor
+inspection still uses the admitted snapshot; the selection ceiling must not
+silently suppress relationship discovery.
 
 No generated answer or generated explanation of the repository. Roles describe
 retrieval estimates; source supplies evidence. Scoped instruction-file locations
@@ -156,9 +162,13 @@ No pre-upload of the whole root, persistent index, or filesystem watcher.
 
 One shared counter covers every actual network attempt, including retries and
 splits: 50,000 maximum, solely runaway protection. Set SDK retries to zero and own
-bounded retries at the evaluator seam. Initial policy: at most three attempts per
-unchanged request, 30-second attempt timeout, exponential backoff with jitter and
-bounded Retry-After handling. Do not retry invalid input or authentication failures.
+bounded retries at the evaluator seam. Match reference attempt policy: 15-second attempt timeout, two attempts for
+source/role groups; navigation multi-item groups get one attempt, singleton groups
+two. Navigation HTTP 429 permits a second attempt and honors shared Retry-After
+without splitting. Eligible exhausted transient navigation failures split into
+halves on the same worker queue. Invalid navigation answers/nontransient errors
+do not split. Do not add jitter or generic retries. Authentication stops the whole
+query, and caller cancellation interrupts requests and rate-limit waits.
 Delegated tuning: concurrency and batch sizing within explicit bounded memory;
 changing them must preserve healthy outcomes and forward progress. No repeated
 whole-search restart. Cancel queued and in-flight work on interruption/closed pipe.
@@ -187,17 +197,18 @@ not a global pause of other searches.
 
 ## Output and quality
 
-Summary: status, root, relevant file count, incompleteness reasons and omitted
-source count. Then all qualifying file locations, roles and optional declaration
-ranges, then source blocks. All-file directory evidence can exceed 200 lines;
+Match the reference summary, scoped instruction lookup, optional unexecuted test
+suggestions, then all qualifying file locations/roles/declaration ranges and
+numbered source blocks. Include failure reasons, interruptions and explicit-budget
+omissions without changing the healthy default packet. All-file directory evidence can exceed 200 lines;
 `head -200` must remain useful, not falsely claim exhaustive display. Escape paths
 without altering the quoted source. Source byte budget never caps files or leads.
-Default source allocation is 1,500 UTF-8 bytes, chosen from the bounded Requests
-trial against the uncapped installed checkpoint. Whole excerpts containing the
-strongest qualifying reading leads get priority; ties preserve original order.
-This is a provisional cohort policy, not a universal optimum: full ten-task
-acceptance remains required. See [the output trial](assets/source-budget-decision.md).
-`--max-source-bytes` overrides allocation only; 0 returns all selected excerpts.
+Default source allocation is uncapped, matching the accepted reference.
+The 1,500-byte experiment belongs to the superseded port and does not justify
+changing the winning architecture. Match reference source blocks and line
+numbering, scoped guidance lookup and suggested test entries. Source byte limits
+remain explicit caller overrides only. Any later policy change requires an
+isolated quality experiment after the faithful port is established.
 
 Official acceptance preserves every fixed baseline solve and reaches at least
 seven successful lower-cost solves out of the existing ten-task cohort with one

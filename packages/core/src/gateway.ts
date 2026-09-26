@@ -8,7 +8,10 @@ export type EvaluationRequest = {
 };
 
 export class EvaluationFailure extends Error {
-  constructor(public readonly kind: "authentication" | "request-limit" | "provider" | "cancelled") {
+  constructor(
+    public readonly kind: "authentication" | "request-limit" | "provider" | "cancelled",
+    public readonly splitEligible = false,
+  ) {
     super(`Jev evaluation failed: ${kind}`);
     this.name = "EvaluationFailure";
   }
@@ -22,7 +25,6 @@ export function createEvaluator(options: {
   signal: AbortSignal;
   requestLimit?: number;
   timeoutMs?: number;
-  retryDelayMs?: number;
 }) {
   let requests = 0;
   let cacheHits = 0;
@@ -44,15 +46,14 @@ export function createEvaluator(options: {
       if (response.status === 429) {
         const raw = response.headers.get("retry-after");
         const seconds = raw === null ? NaN : Number(raw);
-        const wait = Number.isFinite(seconds)
-          ? seconds * 1000
-          : raw
-            ? Date.parse(raw) - Date.now()
-            : 1000;
-        cooldownUntil = Math.max(
-          cooldownUntil,
-          Date.now() + Math.min(30_000, Math.max(0, Number.isFinite(wait) ? wait : 1000)),
-        );
+        const date = raw === null ? NaN : Date.parse(raw);
+        const wait =
+          Number.isFinite(seconds) && seconds >= 0
+            ? seconds * 1000
+            : Number.isFinite(date)
+              ? Math.max(0, date - Date.now())
+              : 1000;
+        cooldownUntil = Math.max(cooldownUntil, Date.now() + wait);
       }
       return response;
     },
@@ -67,7 +68,10 @@ export function createEvaluator(options: {
     get requests() {
       return requests;
     },
-    async evaluate(request: EvaluationRequest): Promise<Record<string, number>> {
+    async evaluate(
+      request: EvaluationRequest,
+      policy?: { navigation?: boolean },
+    ): Promise<Record<string, number>> {
       assertActive();
       const cacheInput: CacheInput = {
         request,
@@ -91,18 +95,16 @@ export function createEvaluator(options: {
         cacheHits++;
         return cached;
       }
-      for (let attempt = 0; attempt < 3; attempt++) {
+      const navigation = policy?.navigation === true;
+      const multiple = Object.keys(request.questions).length > 1;
+      let attemptLimit = navigation && multiple ? 1 : 2;
+      for (let attempt = 0; attempt < attemptLimit; attempt++) {
         assertActive();
         if (requests >= (options.requestLimit ?? 50_000))
           throw new EvaluationFailure("request-limit");
-        const wait = Math.max(
-          0,
-          cooldownUntil - Date.now(),
-          attempt ? (options.retryDelayMs ?? 500) * 2 ** (attempt - 1) * (0.5 + Math.random()) : 0,
-        );
-        if (wait) {
+        while (cooldownUntil > Date.now()) {
           try {
-            await delay(wait, undefined, {
+            await delay(Math.min(60_000, cooldownUntil - Date.now()), undefined, {
               signal: AbortSignal.any([options.signal, authenticationFailure.signal]),
             });
           } catch {
@@ -118,18 +120,27 @@ export function createEvaluator(options: {
             abortSignal: AbortSignal.any([
               options.signal,
               authenticationFailure.signal,
-              AbortSignal.timeout(options.timeoutMs ?? 30_000),
+              AbortSignal.timeout(options.timeoutMs ?? 15_000),
             ]),
           });
           const scores = Object.fromEntries(
-            Object.entries(result.answers).map(([id, answer]) => [id, answer.probability]),
+            Object.keys(request.questions).map((id) => {
+              const answer = result.answers[id];
+              if (
+                !answer ||
+                answer.type !== "boolean" ||
+                !Number.isFinite(answer.probability) ||
+                answer.probability < 0 ||
+                answer.probability > 1
+              )
+                throw new Error("Invalid answer");
+              return [id, answer.probability];
+            }),
           );
           await options.cache?.put(cacheInput, scores);
           return scores;
         } catch (error) {
           assertActive();
-          if (requests >= (options.requestLimit ?? 50_000))
-            throw new EvaluationFailure("request-limit");
           const status =
             error && typeof error === "object" && "statusCode" in error
               ? error.statusCode
@@ -138,15 +149,20 @@ export function createEvaluator(options: {
             authenticationFailure.abort();
             throw new EvaluationFailure("authentication");
           }
-          if (
-            typeof status === "number" &&
-            status >= 400 &&
-            status < 500 &&
-            status !== 408 &&
-            status !== 429
-          )
-            throw new EvaluationFailure("provider");
-          if (attempt === 2) throw new EvaluationFailure("provider");
+          if (requests >= (options.requestLimit ?? 50_000))
+            throw new EvaluationFailure("request-limit");
+          const name = error instanceof Error ? error.name : "unknown";
+          const transient =
+            status === 408 ||
+            status === 429 ||
+            (typeof status === "number" && status >= 500 && status <= 599) ||
+            ["GatewayInternalServerError", "GatewayTimeoutError", "TimeoutError"].includes(name);
+          if (navigation && status === 429) attemptLimit = Math.max(attemptLimit, 2);
+          if ((navigation && !transient) || attempt + 1 === attemptLimit)
+            throw new EvaluationFailure(
+              "provider",
+              navigation && multiple && transient && status !== 429,
+            );
         }
       }
       throw new EvaluationFailure("provider");

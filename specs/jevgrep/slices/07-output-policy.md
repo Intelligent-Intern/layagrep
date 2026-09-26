@@ -1,43 +1,34 @@
-# Choose source allocation using completed tasks
+# Preserve the accepted retrieval packet
 
-Status: verified; cohort acceptance remains open. Depends on: 06. Read [contracts](../contracts.md) first.
+Status: deterministic parity verified (2026-09-26); live quality belongs to 08.
+Depends on: 04–06.
 
-## Contract and owner
+The default is the accepted spike's uncapped source packet: ranked file locations,
+reading leads, numbered verbatim source blocks, scoped instruction lookup and
+unexecuted pytest suggestions. Source selection includes the reference's bounded
+second context expansion. Keep original positive selections separately for
+provenance without changing what the reference renders.
 
-The renderer owns byte allocation after selection; threshold-admitted file and lead locations are never dropped. Compare accepted allocation against one smaller bounded candidate while freezing query, prompts, model/harness and retrieval selection as far as the live service permits. Start with the saved Requests task for a cheap diagnostic; retain current policy if the candidate loses solve quality or does not lower full agent cost. Do not chase the old 8/10 research goal.
+The user rejected architecture changes during implementation. The 1,500-byte
+experiment and its stopped cohort are [superseded evidence](../assets/parity-restoration.md),
+not justification for changing the winning strategy. Explicit user-supplied
+`--max-source-bytes` remains a whole-excerpt override; it must preserve file/lead
+locations and mark omissions. Do not introduce a new allocation heuristic.
 
-Record the chosen default and all attempts in the spec before freezing the release candidate. Validate that omitted source is explicitly marked and head output conveys the most useful status/locations. Exact bytes count UTF-8, not JS string length. Do not cut source mid-codepoint; boundaries and partial-unit markers must stay truthful.
+The gate compares production's actual computed native requests and complete
+stdout with the frozen reference under identical source, query and model answers.
+Template equality alone is insufficient. Compare healthy and recoverable-failure
+trajectories; keep request-internal array order and control concurrent completion
+where it affects later requests. Verify the canonical skill differs from the
+accepted skill only in the executable name, and use the accepted benchmark prompt.
 
-## Human-runnable artifact
+Run the reference/production HTTP corpus and installed `--case output` journeys.
+The installed command must still handle `head -200`, byte-bounded partial units,
+stdout-only failures and all admitted locations. A green deterministic parity gate
+allows a new frozen official cohort; it does not itself prove cost or solve rate.
 
-Recorded source-budget decision.
-
-Use `bun run eval:swebench prepare --package /absolute/package.tgz --output /absolute/new-study --task psf__requests-1142`, then the maintained runner's `run`, `grade` and `account` operations on that plan. See [the runner workflow](../../../evals/implementation/swebench/installed.md). `bun run test:e2e -- --case output` verifies installed rendering and actual head truncation.
-
-Commands are implementation targets. Add them in this slice; do not imply they
-already exist. CLI transcripts replace visual/screenshot gates for this product.
-
-## Verification and verdict
-
-Inspect complete agent traces, official grade and full bill; Jev free/excluded, returned source counted. A smaller packet alone is not a win. Fixtures prove all qualified files survive either budget, duplicate ranges merge without unselected expansion, and large location lists remain honest under head truncation.
-
-## Delegated decisions
-
-Numerical output budget and ranking tie breaks, chosen from evidence and documented; exact source remains verbatim.
-
-## Keep green
-
-Full quality confirmation still required in 08; one-task tuning cannot establish generalization.
-
-## Review
-
-Show the artifact and summarize deviations. This is a non-blocking review checkpoint:
-continue on the evidence if the user does not respond. Feedback that changes the
-public contract or acceptance measure requires updating this slice before broadening
-implementation. Record new choices and update the README handoff before ending.
-
-The 1,500-byte candidate officially solved and reduced Sol cost against the
-uncapped installed checkpoint, while remaining more expensive than baseline.
-It is the chosen default for the final frozen cohort, not a demonstrated universal
-optimum. Exact artifacts, costs, confounders and rationale are in the
-[source-budget decision](../assets/source-budget-decision.md).
+The merged `bun run verify` gate passes, including the complete production HTTP
+comparisons and all 20 installed journeys. The preserved output contract passes
+both `head -200` and explicit byte-budget checks. The
+[preservation matrix](../assets/parity-restoration.md) records the tested behavior
+and deliberate product differences.

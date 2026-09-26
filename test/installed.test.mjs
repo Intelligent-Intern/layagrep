@@ -284,8 +284,8 @@ async function context(t, mode = "healthy") {
 
 function complete(result) {
   assert.equal(result.code, 0, result.stdout);
-  assert.match(result.stdout, /^Status: complete\n/);
-  assert.match(result.stdout, /Relevant files: 3\n/);
+  assert.match(result.stdout, /^Jevgrep: \d+ relevant files\.\n/);
+  assert.match(result.stdout, /^Jevgrep: 3 relevant files\.\n/);
   for (const [branch, file] of branches) {
     assert.ok(
       result.stdout.includes(`"${branch}/nested/${file}"`),
@@ -364,8 +364,8 @@ test("healthy negative evaluations produce a complete empty result", async (t) =
   const fixture = await context(t, "negative");
   const result = await fixture.run([query, fixture.tree, "--no-cache"]);
   assert.equal(result.code, 0, result.stdout);
-  assert.match(result.stdout, /^Status: complete\n/);
-  assert.match(result.stdout, /Relevant files: 0\n/);
+  assert.match(result.stdout, /^Jevgrep: \d+ relevant files\.\n/);
+  assert.match(result.stdout, /^Jevgrep: 0 relevant files\.\n/);
   assert.ok(fixture.requests.length > 0);
 });
 
@@ -377,7 +377,7 @@ test("malformed provider answers preserve useful source and return incomplete ex
     "The installed SDK must actually receive malformed answers",
   );
   assert.equal(result.code, 2, result.stdout);
-  assert.match(result.stdout, /^Status: incomplete\n/);
+  assert.match(result.stdout, /^Jevgrep: \d+ relevant files; discovery incomplete\.\n/);
   assert.ok(result.stdout.includes("py-evidence-alpha:"));
   assert.ok(result.stdout.includes("py-evidence-gamma:"));
   assert.match(result.stdout, /^Issue: /m);
@@ -443,16 +443,20 @@ test("provider authentication failure stops immediately with fatal exit 1", asyn
   const result = await fixture.run([query]);
   assert.equal(result.code, 1);
   assert.equal(fixture.requests.length, 1);
-  assert.ok(!result.stdout.includes("Status: complete"));
+  assert.ok(!/^Jevgrep: \d+ relevant files\.\n/.test(result.stdout));
   assert.ok(!result.stdout.includes("py-evidence-"));
 });
 
-test("a transient provider failure retries the same request and completes installed retrieval", async (t) => {
+test("a transient navigation failure splits the batch and recovers installed retrieval", async (t) => {
   const fixture = await context(t, "transient");
   const result = await fixture.run([query]);
   assert.equal(result.code, 0);
-  assert.match(result.stdout, /Status: complete/);
-  assert.deepEqual(fixture.requests[0].body, fixture.requests[1].body);
+  assert.match(result.stdout, /^Jevgrep: \d+ relevant files\.\n/);
+  const original = fixture.requests[0].body.state.items;
+  assert.ok(original.length > 1);
+  const recovered = fixture.requests.slice(1, 3).flatMap(({ body }) => body.state.items);
+  const withoutIds = (items) => items.map(({ id, ...item }) => JSON.stringify(item)).sort();
+  assert.deepEqual(withoutIds(recovered), withoutIds(original));
   for (const [branch] of branches) assert.ok(result.stdout.includes(`py-evidence-${branch}:`));
 });
 
@@ -460,29 +464,31 @@ test("interrupting an in-flight installed search exits 130 and stops requests", 
   const fixture = await context(t, "interrupt");
   const result = await fixture.run([query]);
   assert.equal(result.code, 130);
-  assert.match(result.stdout, /Status: interrupted/);
+  assert.match(result.stdout, /Interrupted\./);
   assert.equal(fixture.requests.length, 1);
 });
 
-test("invalid JSON remains incomplete with at most three attempts per request", async (t) => {
+test("invalid navigation JSON remains incomplete without retrying or splitting", async (t) => {
   const fixture = await context(t, "invalid-json");
   const result = await fixture.run([query]);
   assert.equal(result.code, 2);
-  assert.match(result.stdout, /Status: incomplete/);
+  assert.match(result.stdout, /^Jevgrep: \d+ relevant files; discovery incomplete\.\n/);
   const attempts = new Map();
   for (const { raw } of fixture.requests) attempts.set(raw, (attempts.get(raw) ?? 0) + 1);
   assert.ok(attempts.size > 0);
-  for (const count of attempts.values()) assert.equal(count, 3);
+  for (const count of attempts.values()) assert.equal(count, 1);
   assert.ok(!result.stdout.includes("py-evidence-"));
 });
 
-test("a disconnected provider request retries without losing installed source evidence", async (t) => {
+test("a disconnected navigation request recovers through reference-compatible splitting", async (t) => {
   const fixture = await context(t, "disconnect");
   const result = await fixture.run([query]);
-  assert.equal(result.code, 0);
-  assert.match(result.stdout, /Status: complete/);
-  assert.deepEqual(fixture.requests[0].body, fixture.requests[1].body);
-  for (const [branch] of branches) assert.ok(result.stdout.includes(`py-evidence-${branch}:`));
+  complete(result);
+  const original = fixture.requests[0].body.state.items;
+  assert.ok(original.length > 1);
+  const recovered = fixture.requests.slice(1, 3).flatMap(({ body }) => body.state.items);
+  const withoutIds = (items) => items.map(({ id, ...item }) => JSON.stringify(item)).sort();
+  assert.deepEqual(withoutIds(recovered), withoutIds(original));
 });
 
 test("failed provider answers are retried after recovery rather than reused from cache", async (t) => {
@@ -604,8 +610,8 @@ test(
     await writeFile(join(fixture.tree, "only.py"), source("only", "CollectorOnly"));
     const result = await fixture.run([query]);
     assert.equal(result.code, 2);
-    assert.match(result.stdout, /Status: incomplete/);
-    assert.equal(fixture.requests.length, 3);
+    assert.match(result.stdout, /^Jevgrep: \d+ relevant files; discovery incomplete\.\n/);
+    assert.equal(fixture.requests.length, 2);
   },
 );
 
@@ -621,7 +627,7 @@ test("a head -200 consumer closes the stdout pipe without leaving jg running", a
   await writeFile(join(fixture.tree, "only.py"), large);
   const result = await fixture.run([query], {}, true);
   assert.equal(result.code, 0);
-  assert.match(result.stdout, /Status: complete/);
+  assert.match(result.stdout, /^Jevgrep: \d+ relevant files\.\n/);
   assert.equal(result.stdout.trimEnd().split("\n").length, 200);
   assert.ok(!result.stdout.includes("End context."));
 });
@@ -645,8 +651,15 @@ test("source budget preserves every file and lead while explicitly omitting sour
   assert.match(bounded.stdout, /Source omitted: [1-9]/);
   assert.ok(!bounded.stdout.includes("py-evidence-"));
   const locations = (stdout) =>
-    stdout.split("\n").filter((line) => line.startsWith("- ") || /^  \"/.test(line));
-  assert.deepEqual(locations(bounded.stdout), locations(unlimited.stdout));
+    stdout.split("\n").flatMap((line) => {
+      const file = /^- ("(?:[^"\\]|\\.)*") —/.exec(line);
+      if (file) return [file[1]];
+      return line.startsWith("  Reading lead ") ? [line] : [];
+    });
+  const expectedLocations = locations(unlimited.stdout);
+  assert.equal(expectedLocations.filter((line) => line.startsWith('"')).length, branches.length);
+  assert.ok(expectedLocations.some((line) => line.startsWith("  Reading lead ")));
+  assert.deepEqual(locations(bounded.stdout), expectedLocations);
   assert.equal(
     fixture.requests.length,
     before,

@@ -50,9 +50,8 @@ continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
 
-The final cohort plan is frozen at
-`evals/runs/swebench/installed-jg-final-cohort-v1/plan.json` with the exact tarball
-from the measured output trial. All ten source/runtime/skill preflights and the
-no-call run validation passed. Treatment execution is underway, not acceptance.
-The plan includes all ten cells prospectively; the diagnostic Requests run is
-not pooled into this cohort. Saved baselines remain unchanged.
+The earlier `installed-jg-final-cohort-v1` study is stopped and superseded because
+its package changed the accepted spike's behavior. Its receipts remain historical
+evidence, not release acceptance. [Parity restoration](../assets/parity-restoration.md)
+owns the prerequisite for preparing another frozen cohort. Saved baselines remain
+unchanged; no result from the superseded package can be pooled into the new study.

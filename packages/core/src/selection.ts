@@ -15,6 +15,7 @@ type Span = { start: number; end: number };
 const sourceUnitBytes = 24_000;
 export type SelectionResult = {
   file: FileEvidence;
+  declarations: Array<Pick<SourceUnit, "name" | "range">>;
   issues: Array<{ kind: string; count: number }>;
 };
 
@@ -294,5 +295,9 @@ export async function selectFile(
     }),
     sourceOmitted: invalidated,
   };
-  return { file, issues: [...issues].map(([kind, count]) => ({ kind, count })) };
+  return {
+    file,
+    declarations: units.map(({ name, range }) => ({ name, range })),
+    issues: [...issues].map(([kind, count]) => ({ kind, count })),
+  };
 }

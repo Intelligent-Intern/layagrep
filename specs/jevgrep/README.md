@@ -6,25 +6,29 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 
 ## Next Agent Prompt
 
-You are implementing this spec. Status: **implementing**, updated **2026-09-25**.
-Next: monitor the running final cohort, then grade/account/aggregate each terminal
-cell using its frozen runner. The plan is
-`evals/runs/swebench/installed-jg-final-cohort-v1/plan.json`; all ten offline
-preflights passed, and the treatment runner executes them sequentially. The smaller
-Requests trial officially solved and reduced Sol cost against uncapped, but still
-cost more than baseline. See [source-budget decision](assets/source-budget-decision.md)
-and [the uncapped trace report](assets/installed-requests-checkpoint.md).
+You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
+Next: finish the restored package's supported-runtime verification, then freeze
+one new official cohort using the existing baselines.
+The user explicitly rejected architecture changes disguised as implementation
+cleanup. No further paid treatment should start before this parity gate passes.
+Selection, discovery, parser fallback, output, skill and guidance repairs are
+integrated. Matched HTTP comparisons exercise the production entry point against
+the frozen winner; the preservation matrix records their scope and limits.
 
-Slices 01–07 have their named evidence. Native macOS and both Linux architectures have
-focused [installed-runtime evidence](assets/runtime-verification.md). The full deterministic `verify` gate passes. Remaining work: diagnose the
-spike-versus-production expansion difference, finish frozen cohort acceptance,
-release closeout, whole-spec review and close-spec.
-The spike expands already expanded context on its second pass; production does
-not. Current helper/template tests do not establish full-pipeline parity. Diagnose
-this with identical-source/answer replay while the frozen cohort stays unchanged.
-Never rerun saved baselines or pool candidates. Report Jev API cost separately;
-only full Sol task cost is scored. See [integrated verification](assets/integration-verification.md),
-[contracts](contracts.md), and [decision map](map.md).
+The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
+superseded, retaining completed outcomes and interrupted traces. It is not a
+release acceptance cohort. Never rerun saved baselines or pool candidates.
+Report Jev observed API costs separately from scored full Sol cost.
+
+Restore reference expansion, discovery inputs/order, excerpt presentation, scoped
+guidance and exact accepted skill (only rename executable to `jg`). Required
+Node-only runtime, auth, cache, filesystem protections and truthful failure
+handling remain, but must not silently change healthy retrieval decisions.
+The earlier deterministic and platform gates passed for the deviating port;
+they do not prove parity. See [parity restoration](assets/parity-restoration.md) and the
+[source-budget investigation](assets/source-budget-decision.md).
+After parity: frozen quality confirmation, affected runtime gates, whole-spec
+review and close-spec. See [contracts](contracts.md) for the corrected contract.
 
 No user decision blocks starting. External verification dependencies are a working
 Docker daemon, explicit Gateway credentials for live tests, retained official task
@@ -41,10 +45,10 @@ not claims about the current scaffold.
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
 - [x] [02 — Bundled parser parity](slices/02-parser.md)
 - [x] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
-- [x] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
+- [ ] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
 - [x] [05 — Faults, cancellation and partial results](slices/05-failures.md)
 - [x] [06 — Default-on fresh cache](slices/06-cache.md)
-- [x] [07 — Measured source budget](slices/07-output-policy.md)
+- [x] [07 — Preserved output policy](slices/07-output-policy.md)
 - [ ] [08 — Frozen quality and release verification](slices/08-release.md)
 
 ## Product and scope
@@ -66,8 +70,8 @@ separate follow-ups. Keep personal-repository evals out of version control.
 [Contracts](contracts.md) own the exact CLI, data shapes, defaults and semantics.
 [Map](map.md) records the completed interview. [Research](research.md) owns
 reference distinctions and accepted numerical evidence. The
-[stdout sample](assets/stdout-example.txt) is synthetic proposed presentation,
-not an actual Jev response or another empirical prompt claim.
+[stdout sample](assets/stdout-example.txt) is the recorded frozen-reference HTTP-fixture packet,
+not a live Jev result or another empirical prompt claim.
 
 ## Ladder and review surfaces
 
