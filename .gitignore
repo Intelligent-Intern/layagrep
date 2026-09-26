@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.turbo/
+.env*
+!.env.example
+.DS_Store
+# Only the official benchmark workflow belongs in version control.
+# Historical experiments remain local and are fully deprecated.
+/evals/*
+!/evals/README.md
+!/evals/accounting.md
+!/evals/cost-quality-policy.md
+!/evals/implementation/
+/evals/implementation/*
+!/evals/implementation/swebench/
+__pycache__/
+
+# Deprecated personal-repository evaluation tooling stays local.
+/packages/evals/

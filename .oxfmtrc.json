@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    ".agents/**",
+    ".claude/**",
+    "evals/snapshots/**",
+    "evals/runs/**",
+    "evals/implementation/fixtures/**"
+  ]
+}

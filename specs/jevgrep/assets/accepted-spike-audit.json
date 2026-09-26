@@ -1,0 +1,195 @@
+{
+  "status": "complete: revised70percent target verified, final architecture documented, in-flight comparison terminal",
+  "target": 0.7,
+  "source_result": "unit-locators-confirmation/result.json",
+  "successful_cost_wins": 7,
+  "tasks": 10,
+  "candidate_hash_verified": true,
+  "source_hash_verified": true,
+  "skill_hash_verified": true,
+  "rows": [
+    {
+      "task": "scikit-learn__scikit-learn-13124",
+      "candidate": {
+        "official_resolved": true,
+        "cost_usd": 0.3188932,
+        "fully_accounted_requests": 13
+      },
+      "baseline": {
+        "official_resolved": true,
+        "cost_usd": 0.29443600000000003,
+        "fully_accounted_requests": 13
+      }
+    },
+    {
+      "task": "django__django-15629",
+      "candidate": {
+        "official_resolved": true,
+        "cost_usd": 0.7943038,
+        "fully_accounted_requests": 23
+      },
+      "baseline": {
+        "official_resolved": true,
+        "cost_usd": 1.5055472,
+        "fully_accounted_requests": 40
+      }
+    },
+    {
+      "task": "astropy__astropy-13579",
+      "candidate": {
+        "official_resolved": true,
+        "cost_usd": 0.3949924,
+        "fully_accounted_requests": 14
+      },
+      "baseline": {
+        "official_resolved": true,
+        "cost_usd": 0.428631,
+        "fully_accounted_requests": 17
+      }
+    },
+    {
+      "task": "pydata__xarray-3305",
+      "candidate": {
+        "official_resolved": true,
+        "cost_usd": 0.4107228,
+        "fully_accounted_requests": 16
+      },
+      "baseline": {
+        "official_resolved": true,
+        "cost_usd": 0.4937066,
+        "fully_accounted_requests": 23
+      }
+    },
+    {
+      "task": "psf__requests-1142",
+      "candidate": {
+        "official_resolved": true,
+        "cost_usd": 0.2597596,
+        "fully_accounted_requests": 10
+      },
+      "baseline": {
+        "official_resolved": true,
+        "cost_usd": 0.2685004,
+        "fully_accounted_requests": 11
+      }
+    },
+    {
+      "task": "sympy__sympy-16792",
+      "candidate": {
+        "official_resolved": true,
+        "cost_usd": 0.4503934,
+        "fully_accounted_requests": 15
+      },
+      "baseline": {
+        "official_resolved": true,
+        "cost_usd": 0.547975,
+        "fully_accounted_requests": 28
+      }
+    },
+    {
+      "task": "pytest-dev__pytest-6197",
+      "candidate": {
+        "official_resolved": true,
+        "cost_usd": 0.9782496,
+        "fully_accounted_requests": 24
+      },
+      "baseline": {
+        "official_resolved": true,
+        "cost_usd": 2.344458,
+        "fully_accounted_requests": 62
+      }
+    },
+    {
+      "task": "sphinx-doc__sphinx-8638",
+      "candidate": {
+        "official_resolved": true,
+        "cost_usd": 0.5524576,
+        "fully_accounted_requests": 17
+      },
+      "baseline": {
+        "official_resolved": true,
+        "cost_usd": 1.0594724,
+        "fully_accounted_requests": 25
+      }
+    },
+    {
+      "task": "matplotlib__matplotlib-26466",
+      "candidate": {
+        "official_resolved": false,
+        "cost_usd": 0.3335984,
+        "fully_accounted_requests": 16
+      },
+      "baseline": {
+        "official_resolved": false,
+        "cost_usd": 0.395716,
+        "fully_accounted_requests": 13
+      }
+    },
+    {
+      "task": "pylint-dev__pylint-4604",
+      "candidate": {
+        "official_resolved": false,
+        "cost_usd": 0.2487404,
+        "fully_accounted_requests": 10
+      },
+      "baseline": {
+        "official_resolved": false,
+        "cost_usd": 0.2836264,
+        "fully_accounted_requests": 13
+      }
+    }
+  ],
+  "limitations": [
+    "All ten tasks observed development/confirmation cases, not untouched holdout.",
+    "One frozen confirmation per task versus one fixed baseline; pilot excluded.",
+    "Small purposive Python-only sample; no statistical generalization claim.",
+    "Pylint collection caveat retained; Matplotlib actual assertion failure.",
+    "Full agent bill includes reasoning/implementation/testing variance, not retrieval-only attribution."
+  ],
+  "architecture": "docs/architecture.md",
+  "architecture_sha256": "f59eef80ea25a7297f9b1b8f0e2b20858cb08311c0538dfd97976686fadb5bdc",
+  "other_comparison_result": "evals/runs/swebench/auto-research-80/test-adaptation-confirmation/result.json",
+  "pending_jobs": false,
+  "pairing_checks": [
+    {
+      "task": "scikit-learn__scikit-learn-13124",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "django__django-15629",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "astropy__astropy-13579",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "pydata__xarray-3305",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "psf__requests-1142",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "sympy__sympy-16792",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "pytest-dev__pytest-6197",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "sphinx-doc__sphinx-8638",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "matplotlib__matplotlib-26466",
+      "source_model_harness_match": true
+    },
+    {
+      "task": "pylint-dev__pylint-4604",
+      "source_model_harness_match": true
+    }
+  ]
+}

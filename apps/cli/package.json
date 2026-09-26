@@ -1,0 +1,24 @@
+{
+  "name": "@jevgrep/cli",
+  "version": "0.0.0",
+  "private": true,
+  "bin": {
+    "jevgrep": "./dist/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "bun build src/index.ts --target=node --outfile=dist/index.js",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint src",
+    "test": "bun test src"
+  },
+  "dependencies": {
+    "@clack/prompts": "1.8.1",
+    "@repo/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}
