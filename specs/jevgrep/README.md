@@ -7,8 +7,10 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-25**.
-Next: freeze the final 1,500-byte package and run all ten official treatment
-cells once, then grade/account/aggregate with the frozen runner. The smaller
+Next: monitor the running final cohort, then grade/account/aggregate each terminal
+cell using its frozen runner. The plan is
+`evals/runs/swebench/installed-jg-final-cohort-v1/plan.json`; all ten offline
+preflights passed, and the treatment runner executes them sequentially. The smaller
 Requests trial officially solved and reduced Sol cost against uncapped, but still
 cost more than baseline. See [source-budget decision](assets/source-budget-decision.md)
 and [the uncapped trace report](assets/installed-requests-checkpoint.md).

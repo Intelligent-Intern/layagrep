@@ -1,6 +1,6 @@
 # Confirm quality and the release artifact
 
-Status: planned. Depends on: 07. Read [contracts](../contracts.md) first.
+Status: verifying. Depends on: 07. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -23,7 +23,10 @@ Cut over root eval commands to official workflow. Remove deprecated personal-eva
 
 One frozen release-candidate dossier.
 
-`bun run verify`; `bun run eval:swebench -- --cohort accepted-ten --candidate release --reuse-baseline`; native macOS installed smoke command documented by the harness.
+`bun run verify`; the maintained runner's `prepare`, `run --all`, `grade --all`,
+`account --all`, and `aggregate` operations on one frozen plan, as documented in
+[the runner workflow](../../../evals/implementation/swebench/installed.md); native
+macOS installed smoke command documented by the harness.
 
 Commands are implementation targets. Add them in this slice; do not imply they
 already exist. CLI transcripts replace visual/screenshot gates for this product.
@@ -46,3 +49,10 @@ Show the artifact and summarize deviations. This is a non-blocking review checkp
 continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
+
+The final cohort plan is frozen at
+`evals/runs/swebench/installed-jg-final-cohort-v1/plan.json` with the exact tarball
+from the measured output trial. All ten source/runtime/skill preflights and the
+no-call run validation passed. Treatment execution is underway, not acceptance.
+The plan includes all ten cells prospectively; the diagnostic Requests run is
+not pooled into this cohort. Saved baselines remain unchanged.
