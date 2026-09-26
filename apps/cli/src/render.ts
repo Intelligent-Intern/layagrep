@@ -7,7 +7,7 @@ function quote(value: string): string {
   );
 }
 
-export const DEFAULT_MAX_SOURCE_BYTES = 0;
+export const DEFAULT_MAX_SOURCE_BYTES = 1500;
 
 type Excerpt = FileEvidence["excerpts"][number];
 function containsLead(excerpt: Excerpt, range: FileEvidence["leads"][number]["range"]): boolean {

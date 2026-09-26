@@ -7,22 +7,18 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-25**.
-Next: finish the single 1,500-byte source-output treatment on the saved Requests
-task, then grade/account through its frozen runner and choose the output default. The installed Requests
-checkpoint is complete: official solve passed, but Sol cost exceeded baseline.
-See [the paired trace and billing report](assets/installed-requests-checkpoint.md).
-The result proves integration, not the final quality gate.
+Next: freeze the final 1,500-byte package and run all ten official treatment
+cells once, then grade/account/aggregate with the frozen runner. The smaller
+Requests trial officially solved and reduced Sol cost against uncapped, but still
+cost more than baseline. See [source-budget decision](assets/source-budget-decision.md)
+and [the uncapped trace report](assets/installed-requests-checkpoint.md).
 
-Parser, filesystem, failure and cache gates pass, including reviewed
-authentication-wait and pipeline cleanup corrections. See
-[integrated verification](assets/integration-verification.md).
-
-Priority: measure source allocation, freeze one
-policy for all ten tasks, then complete supported-platform and release gates.
-Never rerun saved baselines. Production source remains uncapped until slice 07
-has official grade and full cost evidence. Jev API cost is reported separately
-and excluded from scored Sol cost. See [contracts](contracts.md) and the
-[decision map](map.md).
+Slices 01–07 have their named evidence. Native macOS installed verification is
+being completed independently. Remaining work: frozen cohort acceptance, supported
+Linux architecture checks, release closeout, whole-spec review and close-spec.
+Never rerun saved baselines or pool candidates. Report Jev API cost separately;
+only full Sol task cost is scored. See [integrated verification](assets/integration-verification.md),
+[contracts](contracts.md), and [decision map](map.md).
 
 No user decision blocks starting. External verification dependencies are a working
 Docker daemon, explicit Gateway credentials for live tests, retained official task
@@ -42,7 +38,7 @@ not claims about the current scaffold.
 - [x] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
 - [x] [05 — Faults, cancellation and partial results](slices/05-failures.md)
 - [x] [06 — Default-on fresh cache](slices/06-cache.md)
-- [ ] [07 — Measured source budget](slices/07-output-policy.md)
+- [x] [07 — Measured source budget](slices/07-output-policy.md)
 - [ ] [08 — Frozen quality and release verification](slices/08-release.md)
 
 ## Product and scope

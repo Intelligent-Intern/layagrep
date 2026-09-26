@@ -1,6 +1,6 @@
 # Choose source allocation using completed tasks
 
-Status: measuring. Depends on: 06. Read [contracts](../contracts.md) first.
+Status: verified; cohort acceptance remains open. Depends on: 06. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -36,14 +36,8 @@ continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
 
-Current candidate: 1,500 source bytes, with whole excerpts ranked by contained
-reading leads scoring above 0.5; equal scores keep original order. It preserves
-all admitted paths and leads. This is a heuristic because class-context snippets
-have no reading-lead score. Production default remains 0 (uncapped) until measured.
-On the retained Requests packet it keeps the decisive method and test helper
-(1,208 source bytes) while omitting 689 bytes of scaffolding. Unlimited output
-is byte-identical to the retained 2,852-byte stdout. This is packet evidence only.
-
-The candidate package and skill are frozen in the single-task study
-`evals/runs/swebench/installed-jg-requests-budget1500-v1/plan.json`.
-No baseline execution is available in the maintained runner.
+The 1,500-byte candidate officially solved and reduced Sol cost against the
+uncapped installed checkpoint, while remaining more expensive than baseline.
+It is the chosen default for the final frozen cohort, not a demonstrated universal
+optimum. Exact artifacts, costs, confounders and rationale are in the
+[source-budget decision](../assets/source-budget-decision.md).

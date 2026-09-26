@@ -149,9 +149,11 @@ snippet can be useful despite lacking such a score; this heuristic does not
 claim to measure the value of all context.
 
 Gap: numerical source allocation and tie breaks were delegated. Reach: finite
-budgets may omit useful surrounding context, so the default stays uncapped until
-the official task and complete Sol bill support the candidate. Verdict: sound
-as a reversible trial, not an accepted default. Confidence: medium.
+budgets may omit useful surrounding context. The 1,500-byte trial preserved the
+Requests solve and lowered full Sol cost against the uncapped treatment, so it
+is selected for the frozen cohort; the cohort must still satisfy acceptance.
+Verdict: sound as a measured provisional policy, not a universal optimum.
+Confidence: medium.
 
 ### Freeze one installed package across the official cohort
 

@@ -192,11 +192,12 @@ source count. Then all qualifying file locations, roles and optional declaration
 ranges, then source blocks. All-file directory evidence can exceed 200 lines;
 `head -200` must remain useful, not falsely claim exhaustive display. Escape paths
 without altering the quoted source. Source byte budget never caps files or leads.
-Default budget is an evidence-backed implementation decision: compare accepted
-output with one bounded allocation candidate while freezing prompts/selection.
-Until evidence selects a cap, retain the accepted uncapped allocation (the spike
-validated its budget flag but never enforced it); do not guess a small
-budget and present it as optimized. `--max-source-bytes` overrides allocation only.
+Default source allocation is 1,500 UTF-8 bytes, chosen from the bounded Requests
+trial against the uncapped installed checkpoint. Whole excerpts containing the
+strongest qualifying reading leads get priority; ties preserve original order.
+This is a provisional cohort policy, not a universal optimum: full ten-task
+acceptance remains required. See [the output trial](assets/source-budget-decision.md).
+`--max-source-bytes` overrides allocation only; 0 returns all selected excerpts.
 
 Official acceptance preserves every fixed baseline solve and reaches at least
 seven successful lower-cost solves out of the existing ten-task cohort with one
