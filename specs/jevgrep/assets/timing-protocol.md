@@ -125,3 +125,15 @@ the compatibility issue established in the first faithful cohort: with shuffling
 disabled, invalid ignored seeds accepted before the patch now raise. The official
 solve remains recorded, alongside this broader-quality caveat. No agent or
 baseline is rerun. Astropy is the current active cell in the sequential runner.
+
+
+## Infrastructure interruption under investigation
+
+While Astropy was active, Docker Desktop stopped serving its engine. Host uptime
+continued; the backend log at 2026-09-26T11:36:02Z reports inability to write
+`Data/log/vm/init.log` with “no space left on device.” A subsequent host disk check
+showed about 5.8 GiB available. The original runner process remains alive, but no
+new Astropy events arrive. Docker restart is pending; neither Astropy nor another
+cell has been replaced. Check actual process/container state before classifying
+the attempt, collecting evidence, or continuing. Do not infer model failure from
+this service outage or silently exclude it from the cohort.
