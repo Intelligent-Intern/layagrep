@@ -172,3 +172,10 @@ package, canonical skill, archived runner/broker/registry, task inputs, dataset
 and timing policy match v1 byte-for-byte where applicable. Proof:
 `/tmp/jg-work-clock-v2-freeze-proof.json`. Independent recovery review verified
 all 1,198 manifest hashes and the unchanged failed receipt before paid continuation.
+
+
+V2's first cell, scikit-learn, officially resolved with zero infrastructure/errors.
+Its complete 10-generation Sol cost is **$0.2414888** versus **$0.2944360**
+baseline. Jev observed cost is complete at **$0.070983906** (277 client calls),
+separately excluded from scoring. The same unconditional random-state validation
+caveat applies to its patch. Django is running next; full acceptance remains open.
