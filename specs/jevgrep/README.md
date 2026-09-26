@@ -7,10 +7,11 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: assess whether the retained global Django request/completion trace supports
-a whole-pipeline no-model replay; do not manufacture missing response/state data.
-Both real SQLite first-pass replays match the frozen oracle, including positive
-source expansion. Their exact coverage and isolated second-pass limit are in the
+Next: assess the observed tool-output truncation with a no-model presentation
+counterfactual before any further paid experiment. Keep the production renderer
+and skill unchanged. Real SQLite replays match the frozen oracle, and an 81-request
+three-file replay proves both pipelines exceed the follow-up threshold and skip
+that pass. Exact coverage and whole-pipeline limits are in the
 [mechanism-first skill experiment](assets/query-framing-study.md). That candidate
 failed the same Django regression at Sol $1.2353512; its remaining nine tasks stay
 unrun and the production skill is unchanged. Packet-visibility comparison is

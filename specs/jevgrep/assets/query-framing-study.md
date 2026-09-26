@@ -132,10 +132,19 @@ the retained image's Python 3.11.5; production uses bundled 3.11.3. Source SHA-2
 
 The isolated extension stops at request index four: a proposed second pass uses
 file-local selected evidence, while the real pipeline's global selection state
-does not contain that retained SQLite request. No answer is fabricated. This is
-a replay-scope limit, not evidence of a production mismatch. Proof and scripts
-are retained in `/tmp/jg-django-parity/`. Whole-Django discovery, global completion
-order and role/output parity are not established by this single-file check.
+does not contain that retained SQLite request. No answer is fabricated. A bounded
+follow-up resolves that difference: replaying `test_operations.py` (31 requests),
+`test_autodetector.py` (46) and SQLite (4) produces identical first-pass results in
+both implementations. Those 15 evidence entries alone serialize to 74,563 bytes,
+above the 64,000-byte follow-up threshold. Reordering entries cannot change that
+length, and additional donors only increase it. Both pipelines therefore skip
+the additional pass for this unchanged admitted subset. The threshold never caps
+the returned source. This establishes the skip decision without reconstructing
+every file or completion order.
+
+Proof and scripts are retained in `/tmp/jg-django-parity/`, including
+`threshold-proof.json` and `replay-subset.sh`. Whole-Django discovery, global
+completion order and role/output parity are not established by this bounded check.
 
 Any wider replay must restore actual pipeline state and delivered-response order,
 preserve arrays, and stop at unmatched requests. Late responses the client never
