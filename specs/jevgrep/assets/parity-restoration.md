@@ -113,6 +113,16 @@ Historical live answers were not retained, and the coding agent generated its
 own query, so these live differences alone do not establish a port mismatch or
 explain the cost increase. Full traces and patch are retained for comparison.
 
+The paired trace comparison places the added cost after retrieval: the first two
+restored generations cost $0.0704952 versus $0.0713406 in the accepted spike.
+After an initial passing regression, the restored agent reread test definitions,
+changed assertion style and ran six methods; the spike ran its two added methods
+once. The restored implementation patch matches baseline, while the spike's
+branch arrangement differs. The tests cover different cases, so neither test set
+strictly contains the other. These observations identify downstream work; they
+do not establish that file-list differences caused it. The saved generation
+receipts fully account for the $0.064617 increase over baseline.
+
 The quality gate remains every baseline solve preserved and at least seven
 solved strict Sol-cost wins in this single frozen ten-task cohort. One restored
 solve and deterministic parity do not satisfy it.
