@@ -1,8 +1,8 @@
 # Product contracts
 
-These are intended v1 contracts, not descriptions of already-shipped behavior.
-User decisions are in [the map](map.md); defaults below are planning decisions
-unless explicitly delegated. No backward compatibility or migration layer.
+These contracts describe the implemented v1 interface and its invariants.
+[The map](map.md) records user decisions; [the ledger](choices.md) records
+implementation choices. No backward compatibility or migration layer is provided.
 
 ## CLI and installation
 
@@ -67,9 +67,9 @@ Keep `apps/cli` (credentials/process/rendering) and `packages/core` (retrieval)
 plus existing TypeScript configuration. Test helpers remain under `test/`.
 Official evaluation tools remain development-only and must not enter the package.
 
-The implemented schemas live in [retrieval types](../../packages/core/src/types.ts),
-[source units](../../packages/core/src/source.ts), and
-[filesystem snapshots](../../packages/core/src/filesystem.ts). `retrieve` accepts a
+The implemented schemas live in [retrieval types](../../../packages/core/src/types.ts),
+[source units](../../../packages/core/src/source.ts), and
+[filesystem snapshots](../../../packages/core/src/filesystem.ts). `retrieve` accepts a
 root, query, policy, cancellation signal and evaluator; it returns file evidence,
 completion status, counted issues and request/cache statistics. Cache warnings
 are separate from missing-evidence issues.
@@ -211,7 +211,7 @@ numbering, scoped guidance lookup and suggested test entries. Source byte limits
 remain explicit caller overrides only. Any later policy change requires an
 isolated quality experiment after the faithful port is established.
 
-Official acceptance preserves every fixed baseline solve and reaches at least
+The registered numerical gate requires preserving every fixed baseline solve and reaching at least
 seven successful lower-cost solves out of the existing ten-task cohort with one
 frozen production policy. Report aggregate costs including failures and unknown
 billing separately. No per-task strategy shopping. Unknown bills cannot count as
@@ -224,3 +224,8 @@ reasoning, edits, tests and retries count. Cold/warm cache does not earn a quali
 claim by itself. Record timing for diagnosis only; no speed acceptance gate.
 Untouched additional tasks, Claude Opus and DeepSWE are follow-up evaluation work,
 not prerequisites hidden inside this release. Keep all traces and official grades.
+
+The corrected candidate did not pass that numerical gate. The user explicitly
+accepted implementation closure with the documented tradeoff; this does not
+change the retained aggregate verdict. [Closure and evidence bounds](README.md)
+own that decision and the separately authorized pending variance repeat.

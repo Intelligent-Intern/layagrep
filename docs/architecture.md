@@ -1,6 +1,6 @@
 # Jevgrep architecture decision
 
-The [product spec](../specs/jevgrep/README.md) now owns implementation contracts
+The [implementation record](../specs/done/jevgrep/README.md) now owns implementation contracts
 and verification. This document records the accepted spike; production changes
 called out in the spec still require their own evidence.
 
@@ -11,9 +11,10 @@ second coding agent or a generated-answer layer.
 
 The accepted reference is the frozen
 [unit-locators spike](../evals/implementation/swebench/hierarchy-unit-locators-spike.ts)
-with the [ranked-leads skill](../evals/runs/swebench/ranked-leads/skill.md).
-The production CLI remains a scaffold. This decision closes the architecture
-spike; it does not claim production readiness or prescribe a full build plan.
+with the [canonical skill](../skills/jevgrep/SKILL.md).
+The production CLI implements this strategy with the product boundaries recorded
+in the implementation record. This document identifies the experimental reference,
+not a substitute for the corrected package's measured quality result.
 
 ## Hierarchical discovery
 
@@ -64,8 +65,8 @@ implementation and test declarations to different first-pass questions.
 Per-declaration source objects, separate test-example questions, broader semantic
 relationships, and reasons beside leads were investigated. They are not silently
 substituted into the accepted reference. The
-[experiment ledger](../evals/runs/swebench/auto-research-80/research.json) and
-[lessons](../evals/implementation/swebench/architecture-lessons.md) own their results.
+[restoration record](../specs/done/jevgrep/assets/parity-restoration.md) and
+[research boundaries](../specs/done/jevgrep/research.md) own their results.
 The reference still expands neighboring Python methods and reuses rendered
 context in its follow-up; the known precision tradeoff remains. A later change
 must preserve the measured quality rather than assume cleaner output is better.
@@ -96,7 +97,7 @@ Use TypeScript and the AI SDK evaluation interface through AI Gateway. Pass nati
 `state` and `questions` objects; source is a string field within that data. The
 SDK handles HTTP serialization. Keep provider authentication and model access at
 the core boundary so future providers do not reshape traversal or stdout.
-The existing auth scaffold handles the Gateway key; provider expansion is deferred.
+The CLI authentication module handles the Gateway key; provider expansion is deferred.
 
 Acceptance measures the entire downstream Sol task: an official solve at a lower
 full task cost than its fixed baseline, while preserving baseline solves. Jev
@@ -105,14 +106,15 @@ reasoning, edits, failed tests, and verification all count. Research spending is
 separate from per-task performance. Never rerun a baseline to favor a variant or
 combine each task's cheapest result from different strategies.
 
-The [acceptance audit](../evals/runs/swebench/auto-research-80/accepted-70-audit.json)
+The [acceptance audit](../specs/done/jevgrep/assets/accepted-spike-audit.json)
 rechecks the frozen artifacts, official grades, and complete bills against the
-user-revised target. The [cohort result](../evals/runs/swebench/auto-research-80/unit-locators-confirmation/result.json)
+user-revised target. The [cohort result](../specs/done/jevgrep/assets/accepted-spike-audit.json)
 is the canonical numerical evidence; its original unmet-target label refers to
 the former 80% target and is retained as history.
 
 This is a small, tuned, Python-only sample with one fixed baseline per task and
 model/harness. It supports accepting a useful retrieval architecture, not a
 statistical generalization claim, language-wide validation, or a guarantee of
-better cost on every task. Production reliability, output-size policy, provider
-support, and further language coverage belong to the implementation phase.
+better cost on every task. Production boundaries and the accepted quality tradeoff are recorded in the
+[implementation record](../specs/done/jevgrep/README.md); broader provider and
+language-quality claims remain outside its evidence.

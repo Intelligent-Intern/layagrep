@@ -9,7 +9,7 @@
     "test/reference/corpus.json",
     "test/reference/manifest.json",
     "test/parser/fixtures/**",
-    "specs/jevgrep/assets/**",
+    "specs/done/jevgrep/assets/**",
     "skills/**"
   ]
 }

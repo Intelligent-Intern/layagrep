@@ -5,8 +5,9 @@ matching `vVERSION` tag. The development version `0.0.0` is not publishable thro
 this workflow. Stable versions publish to `latest`; prereleases publish to `next`.
 The package is `@dzhng/jevgrep`, and its executable is `jg`.
 
-Complete the official quality confirmation and supported-runtime evidence before
-requesting a release. Ubuntu CI is not native macOS evidence and does not run paid
+Review the [recorded quality decision](../specs/done/jevgrep/README.md) and
+supported-runtime evidence before requesting a release. Implementation closure
+is not a claim that the original numerical quality gate passed. Ubuntu CI is not native macOS evidence and does not run paid
 model evaluations. The root `bun run verify` command is the common deterministic
 gate. Preparing a workflow or a candidate does not authorize creating a tag or
 publishing a development checkpoint.

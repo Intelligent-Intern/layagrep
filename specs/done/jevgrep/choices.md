@@ -43,7 +43,7 @@ A host crash can still leave an owned container behind. Each new study freezes
 its timing instruction and policy; old studies retain their original clock.
 **Verdict:** sound for the cost/quality objective. **Confidence:** medium, because
 observed events are an approximation and the changed instruction is part of the
-comparison. Owner: [installed runner](../../evals/implementation/swebench/installed.py).
+comparison. Owner: [installed runner](../../../evals/implementation/swebench/installed.py).
 
 ### Preserve order inside requests while comparing independent requests fairly
 
@@ -69,8 +69,8 @@ preserve every request's internal array and question order
 fixture. **Reach:** fixture equality is not a promise of identical arrival or
 completion order in a live repository. Production retains completion order for
 cross-file evidence. **Verdict:** sound because it avoids hiding a semantic input
-change. **Confidence:** medium. Owners: [retrieval](../../packages/core/src/retrieve.ts)
-and [reference tests](../../test/reference/).
+change. **Confidence:** medium. Owners: [retrieval](../../../packages/core/src/retrieve.ts)
+and [reference tests](../../../test/reference/).
 
 ### Use one child process for the bundled Python interpreter
 
@@ -103,7 +103,7 @@ lines, while excerpt extraction retains the reference's newline-splitting rule.
 and recovery were unspecified. **Reach:** the package owns runtime assets and one
 child process, without a system-Python dependency or an interpreter pool.
 **Verdict:** sound because cancellation has one owner and replay is confined to
-pure inspection. **Confidence:** medium. Owner: [Python host](../../packages/core/src/python.ts);
+pure inspection. **Confidence:** medium. Owner: [Python host](../../../packages/core/src/python.ts);
 [runtime rationale](assets/python-runtime.md) owns the version boundary.
 
 ### Keep directory enumeration order distinct from preview order
@@ -122,8 +122,8 @@ before sampling would show Jev different children.
 truncation or branch pruning, and close unused cursors. Streaming the reader does
 not bound all memory used by a caller that collects a whole directory.
 **Verdict:** sound because it preserves the reference's sampling distinction.
-**Confidence:** medium. Owners: [filesystem reader](../../packages/core/src/filesystem.ts)
-and [discovery](../../packages/core/src/retrieve.ts).
+**Confidence:** medium. Owners: [filesystem reader](../../../packages/core/src/filesystem.ts)
+and [discovery](../../../packages/core/src/retrieve.ts).
 
 ### Retain declaration questions even when their source overlaps
 
@@ -140,7 +140,7 @@ requirement to preserve unknown contributions of the winning strategy.
 **Reach:** preserving this behavior does not promise efficient whole-computer
 search or optimal treatment of minified source. A change to question grouping is
 a separate retrieval-policy experiment. **Verdict:** sound under the preservation
-constraint. **Confidence:** medium. Owner: [selection](../../packages/core/src/selection.ts).
+constraint. **Confidence:** medium. Owner: [selection](../../../packages/core/src/selection.ts).
 
 ### Enforce the cache bound by scanning stored entries
 
@@ -157,7 +157,7 @@ another stateful component to maintain.
 **Reach:** storage is best effort, and large-cache write throughput is limited by
 repeated scans. This mechanism makes no throughput claim. **Verdict:** sound as a
 simple bounded-storage owner with a disclosed cost. **Confidence:** medium.
-Owner: [cache](../../packages/core/src/cache.ts).
+Owner: [cache](../../../packages/core/src/cache.ts).
 
 ## Sound — high confidence
 
@@ -199,9 +199,9 @@ work remains concurrent; this is not a guarantee of network arrival or completio
 order. Checks are observations, not locks: changes after a check and bytes already
 transmitted cannot be undone. **Verdict:** sound for detected changes, without
 claiming atomic filesystem consistency. **Confidence:** high. Owners:
-[reader](../../packages/core/src/filesystem.ts),
-[retrieval](../../packages/core/src/retrieve.ts) and
-[attempt boundary](../../packages/core/src/gateway.ts).
+[reader](../../../packages/core/src/filesystem.ts),
+[retrieval](../../../packages/core/src/retrieve.ts) and
+[attempt boundary](../../../packages/core/src/gateway.ts).
 
 ### Separate cache trouble from missing retrieval evidence
 
@@ -225,7 +225,7 @@ retrieval, and concurrent clear needed an ownership rule. **Reach:** callers mus
 preserve warnings separately from incomplete-evidence issues; cache answers remain
 disposable and incompatible formats are discarded rather than migrated.
 **Verdict:** sound because the cache accelerates retrieval without becoming its
-source of truth. **Confidence:** high. Owner: [cache](../../packages/core/src/cache.ts).
+source of truth. **Confidence:** high. Owner: [cache](../../../packages/core/src/cache.ts).
 
 ### Cancel a query's sibling requests when authentication fails
 
@@ -241,7 +241,7 @@ could wait or make more requests after the query already knows its key cannot wo
 was unspecified. **Reach:** each request and retry wait must listen to both caller
 cancellation and the shared authentication signal. **Verdict:** sound because one
 authentication failure cannot leave siblings spending work independently.
-**Confidence:** high. Owner: [evaluator](../../packages/core/src/gateway.ts).
+**Confidence:** high. Owner: [evaluator](../../../packages/core/src/gateway.ts).
 
 ### Retain acquired evidence on interruption, but not on invalidation
 
@@ -259,8 +259,8 @@ but require different effects on stored evidence. **Reach:** later preparation
 paths must retain the distinction; partial output cannot claim complete discovery
 or an atomic filesystem snapshot. **Verdict:** sound because the reason for
 stopping determines which evidence remains usable. **Confidence:** high.
-Owners: [selection](../../packages/core/src/selection.ts) and
-[retrieval](../../packages/core/src/retrieve.ts).
+Owners: [selection](../../../packages/core/src/selection.ts) and
+[retrieval](../../../packages/core/src/retrieve.ts).
 
 ### Exclude deprecated evaluation packages from workspace discovery
 
@@ -275,7 +275,7 @@ Keeping the broad package glob would let deprecated tooling rejoin ordinary work
 **Gap:** removing deprecated entry points did not specify workspace discovery.
 **Reach:** new packages must be added deliberately. **Verdict:** sound because
 local historical evidence should not become an active dependency by proximity.
-**Confidence:** high. Owner: [workspace manifest](../../package.json).
+**Confidence:** high. Owner: [workspace manifest](../../../package.json).
 
 ### Rebuild bundled code and skill whenever a build is requested
 
@@ -291,7 +291,7 @@ input tracking to make the same guarantee.
 more work, but their outputs reflect current source and skill content. This does
 not replace checking the resulting archive. **Verdict:** sound because a stale
 embedded skill would change installed behavior. **Confidence:** high.
-Owners: [task configuration](../../turbo.json) and [build](../../scripts/build-cli.ts).
+Owners: [task configuration](../../../turbo.json) and [build](../../../scripts/build-cli.ts).
 
 ### Derive notices from bundled inputs and pin external runtime provenance
 
@@ -313,8 +313,8 @@ notice set. Jevgrep's own MIT license remains separate from these dependencies.
 were unspecified. **Reach:** dependency changes can require notice review; ordinary
 builds read retained texts without downloading licenses. **Verdict:** sound because
 notice ownership follows what is distributed. **Confidence:** high.
-Owners: [notice generator](../../scripts/package-notices.mjs) and
-[license provenance](../../scripts/licenses/README.md).
+Owners: [notice generator](../../../scripts/package-notices.mjs) and
+[license provenance](../../../scripts/licenses/README.md).
 
 ### Publish one archive, then verify that exact registry version separately
 
@@ -332,7 +332,7 @@ identity, channel selection and post-publication job layout required implementat
 choices. **Reach:** release checks follow one archive through publication. This
 workflow does not itself authorize a tag or publication. **Verdict:** sound because
 build-time and registry-install claims remain separately checkable.
-**Confidence:** high. Owner: [publish workflow](../../.github/workflows/publish.yml).
+**Confidence:** high. Owner: [publish workflow](../../../.github/workflows/publish.yml).
 
 ### Bind a benchmark cohort to one installed package
 
@@ -351,7 +351,7 @@ visible; a smaller diagnostic study cannot stand in for a full cohort. Schema
 changes retain older studies with their archived runners instead of reinterpreting
 them. **Verdict:** sound because artifact and attempt identity prevent result
 pooling. **Confidence:** high. Owner:
-[installed benchmark runner](../../evals/implementation/swebench/installed.py).
+[installed benchmark runner](../../../evals/implementation/swebench/installed.py).
 
 ### Reuse installed journeys for native macOS checks
 
@@ -368,4 +368,4 @@ Thus system Python cannot quietly satisfy a missing product dependency.
 filesystem and failure coverage is not claimed for the narrower native smoke;
 results identify the actual runtime and archive. **Verdict:** sound because the
 installation boundary is exercised without borrowing checkout tools.
-**Confidence:** high. Owner: [native harness](../../scripts/test-native.mjs).
+**Confidence:** high. Owner: [native harness](../../../scripts/test-native.mjs).

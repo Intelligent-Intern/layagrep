@@ -2,11 +2,11 @@
 
 Context retrieval for coding agents: ask a repository question and receive source
 context that helps the agent act without a long sequence of searches and reads.
-The architecture spike is complete enough for an implementation decision; the
-production CLI is implemented and undergoing installed and benchmark verification. See the
-[accepted architecture](docs/architecture.md) for the reference strategy, rationale,
-and evidence limits. The [full product spec](specs/jevgrep/README.md) owns the
-implementation plan and current product decisions.
+The production Node-only CLI is implemented and its installed package is verified
+on macOS and Linux. The [implementation record](specs/done/jevgrep/README.md)
+owns the rationale, invariants and evidence limits. The user accepted the documented
+quality tradeoff after the corrected candidate failed its original benchmark gate;
+one separately authorized identical-cohort variance check remains pending.
 
 ## Development
 
@@ -27,8 +27,8 @@ Future providers should enter at that boundary when supported, rather than leak
 provider concerns into repository traversal.
 
 The architecture spike uses a pinned SWE-bench subset with Codex Sol.
-Acceptance preserves baseline official solves while reducing full task cost; Jev
-usage is excluded. Claude and performance optimization are deferred. See [evaluations](evals/README.md) for the official benchmark
+The registered quality gate requires preserving baseline official solves while
+reducing full task cost; the corrected candidate did not pass it. Jev usage is excluded. Claude and performance optimization are deferred. See [evaluations](evals/README.md) for the official benchmark
 workflow and accounting rules. Older custom evals are deprecated and stay out of Git.
 
 ## Agent skill
@@ -43,4 +43,6 @@ configuration changes only when the user explicitly installs or exports it.
 The npm package is `@dzhng/jevgrep`; its executable is `jg`. The project uses the
 [MIT license](LICENSE). [Release guidance](scripts/RELEASING.md) describes the
 verified tarball and GitHub tag workflow. Publication requires the repository's
-`NPM_TOKEN` secret and a deliberate release tag after the quality gates pass.
+`NPM_TOKEN` secret and a deliberate release tag. The user authorized `0.1.0`
+publication after the pending repeat and closeout; the frozen benchmark archive
+remains `0.0.0` and is not a publication candidate.

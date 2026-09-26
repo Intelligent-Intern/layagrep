@@ -22,15 +22,13 @@ they do not supersede the product's measured retrieval policy.
 - [npm pack](https://docs.npmjs.com/cli/v11/commands/npm-pack/) supplies the release
   artifact boundary. Run the installed tarball, not a workspace-linked package.
 
-## Local reference patterns
+## Installed verification rationale
 
-[Duet-agent](../../../duet-agent/package.json) demonstrates Docker-isolated mutable
-state. [Photoctl](../../../photoctl/test/macos/packed-install.test.ts) demonstrates
-clean installs and shared user journeys through the real binary. Its
-[HTTP fixture](../../../photoctl/packages/test-harness/src/gateway-fixture.ts)
-validates request shape rather than bypassing the SDK. Its test driver disables
-ambient credentials. Borrow these mechanisms, not Photoctl's JSON/stderr protocol,
-native imaging dependencies or large package graph.
+Tests exercise packed installed processes with isolated writable state and real
+HTTP fixtures. Workspace imports and ambient credentials would bypass the
+installation and transport boundaries under test. The
+[installed journeys](../../../test/installed.test.mjs) own this verification;
+reference projects informed the pattern but are not required evidence dependencies.
 
 ## Frozen reference and limitations
 
@@ -54,8 +52,8 @@ speedup, language generality, or whole-computer scalability is established.
 File-list-only, per-declaration source-only representation, broader relationships,
 and test-example heuristics did not replace the accepted strategy. Preserve their
 lessons without making them defaults by documentation. See the
-[experiment lessons](../../evals/implementation/swebench/architecture-lessons.md).
+[retained restoration lessons](assets/parity-restoration.md).
 
 The frozen spike validates `--max-source-bytes` but never uses the parsed value
-to allocate output. Its measured output is uncapped. The product budget experiment
-must compare against that behavior, not treat the flag default as an enforced cap.
+to allocate output. Its measured output is uncapped. The product budget experiment compared against that uncapped behavior; it did
+not earn promotion. The parsed spike flag was never an enforced default cap.
