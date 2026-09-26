@@ -8,7 +8,7 @@ const metadata = {
   publishConfig: { access: "public" },
   license: "MIT",
   engines: { node: ">=22" },
-  dependencies: { typescript: "5.9.3", "web-tree-sitter": "0.25.10" },
+  dependencies: { typescript: "5.9.3", pyodide: "0.25.1" },
 };
 test("release tags select the authored version and keep prereleases off latest", () => {
   assert.deepEqual(releaseIdentity(metadata, "v1.2.3"), {
@@ -88,8 +88,13 @@ test("archive validation rejects changed skill bytes and accidental source paylo
     "apps/cli/package.json": JSON.stringify(metadata),
     LICENSE: "MIT canonical copyright\n",
     "skills/jevgrep/SKILL.md": "Use jg for unfamiliar code.\n",
-    "packages/core/assets/tree-sitter-python.wasm": "fixture wasm",
-    "packages/core/assets/tree-sitter-python.LICENSE": "fixture grammar license",
+    "packages/core/src/python-worker.mjs": "// worker fixture",
+    ...Object.fromEntries(
+      ["inspect", "preview", "neighborhood"].map((name) => [
+        `packages/core/assets/python/${name}.py`,
+        `# ${name} helper fixture`,
+      ]),
+    ),
   };
   for (const [path, text] of Object.entries(files)) {
     await mkdir(join(root, path, ".."), { recursive: true });
@@ -99,26 +104,45 @@ test("archive validation rejects changed skill bytes and accidental source paylo
     pkg = join(archiveRoot, "package");
   await mkdir(join(pkg, "dist/bin"), { recursive: true });
   await mkdir(join(pkg, "dist/skills/jevgrep"), { recursive: true });
-  await mkdir(join(pkg, "dist/assets"), { recursive: true });
+  await mkdir(join(pkg, "dist/assets/python"), { recursive: true });
   for (const [from, to] of [
     ["apps/cli/package.json", "package.json"],
     ["LICENSE", "dist/LICENSE"],
     ["skills/jevgrep/SKILL.md", "dist/skills/jevgrep/SKILL.md"],
-    ["packages/core/assets/tree-sitter-python.wasm", "dist/assets/tree-sitter-python.wasm"],
-    ["packages/core/assets/tree-sitter-python.LICENSE", "dist/assets/tree-sitter-python.LICENSE"],
+    ["packages/core/src/python-worker.mjs", "dist/bin/python-worker.mjs"],
+    ...["inspect", "preview", "neighborhood"].map((name) => [
+      `packages/core/assets/python/${name}.py`,
+      `dist/assets/python/${name}.py`,
+    ]),
   ])
     await cp(join(root, from), join(pkg, to));
   await writeFile(join(pkg, "dist/bin/index.js"), '#!/usr/bin/env node\nconsole.log("jg");\n');
   await chmod(join(pkg, "dist/bin/index.js"), 0o755);
+  const { pythonRuntimeNotices } = await import("../scripts/package-notices.mjs");
   await writeFile(
     join(pkg, "dist/THIRD_PARTY_NOTICES.txt"),
-    "Third-party notices for bundled JavaScript dependencies\n\n=== example@1.0.0 (MIT) ===\nFixture license\n",
+    "Third-party notices for bundled JavaScript dependencies\n\n=== example@1.0.0 (MIT) ===\nFixture license\n" +
+      (await pythonRuntimeNotices("0.25.1")),
   );
   const tarball = join(root, "package.tgz"),
     pack = () => execute("tar", ["-czf", tarball, "-C", archiveRoot, "package"]);
   const { validateRelease } = await import("../scripts/validate-release.mjs");
   await pack();
   assert.equal((await validateRelease(tarball, "v1.2.3", root)).version, "1.2.3");
+  await writeFile(join(pkg, "dist/bin/python-worker.mjs"), "changed worker");
+  await pack();
+  await assert.rejects(validateRelease(tarball, "v1.2.3", root), /canonical source/);
+  await cp(
+    join(root, "packages/core/src/python-worker.mjs"),
+    join(pkg, "dist/bin/python-worker.mjs"),
+  );
+  await rm(join(pkg, "dist/assets/python/inspect.py"));
+  await pack();
+  await assert.rejects(validateRelease(tarball, "v1.2.3", root), /Missing packaged file/);
+  await cp(
+    join(root, "packages/core/assets/python/inspect.py"),
+    join(pkg, "dist/assets/python/inspect.py"),
+  );
   await writeFile(join(pkg, "dist/skills/jevgrep/SKILL.md"), "Changed skill");
   await pack();
   await assert.rejects(validateRelease(tarball, "v1.2.3", root), /canonical source/);
@@ -131,4 +155,15 @@ test("archive validation rejects changed skill bytes and accidental source paylo
   await writeFile(join(pkg, "evals/personal.txt"), "Do not publish");
   await pack();
   await assert.rejects(validateRelease(tarball, "v1.2.3", root), /Unexpected published file/);
+});
+
+test("external Python runtime notices retain conflicting metadata and component provenance", async () => {
+  const { pythonRuntimeNotices } = await import("../scripts/package-notices.mjs");
+  const notices = await pythonRuntimeNotices("0.25.1");
+  assert.match(notices, /Mozilla Public License Version 2.0/);
+  assert.match(notices, /PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2/);
+  assert.match(notices, /CPython 3.11.3/);
+  assert.match(notices, /github.com\/pyodide\/pyodide\/tree\/0.25.1/);
+  assert.match(notices, /Apache License/);
+  await assert.rejects(pythonRuntimeNotices("0.26.0"), /Review Python runtime notices/);
 });

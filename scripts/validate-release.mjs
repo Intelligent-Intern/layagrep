@@ -4,6 +4,7 @@ import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { pythonRuntimeNotices } from "./package-notices.mjs";
 const execute = promisify(execFile);
 export const repository = fileURLToPath(new URL("../", import.meta.url));
 
@@ -29,7 +30,7 @@ export function releaseIdentity(metadata, tag) {
   for (const [name, version] of Object.entries(metadata.dependencies ?? {}))
     if (!/^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(version))
       throw new Error(`Runtime dependency ${name} must use an exact registry version`);
-  for (const name of ["typescript", "web-tree-sitter"])
+  for (const name of ["typescript", "pyodide"])
     if (!metadata.dependencies?.[name])
       throw new Error(`Missing runtime parser dependency ${name}`);
   return { name: metadata.name, version, distTag: match[4] ? "next" : "latest" };
@@ -47,7 +48,7 @@ export async function validateRelease(tarball, tag, root = repository) {
   if (new Set(files).size !== files.length) throw new Error("Duplicate archive entries");
   for (const path of files)
     if (
-      !/^package\/(?:package\.json|README(?:\.md)?|LICENSE|dist\/(?:bin\/index\.js|assets\/(?:tree-sitter-python\.wasm|tree-sitter-python\.LICENSE|README\.md)|skills\/jevgrep\/SKILL\.md|LICENSE|THIRD_PARTY_NOTICES\.txt))$/.test(
+      !/^package\/(?:package\.json|README(?:\.md)?|LICENSE|dist\/(?:bin\/(?:index\.js|python-worker\.mjs)|assets\/(?:python\/(?:inspect|preview|neighborhood)\.py|README\.md)|skills\/jevgrep\/SKILL\.md|LICENSE|THIRD_PARTY_NOTICES\.txt))$/.test(
         path,
       )
     )
@@ -75,15 +76,19 @@ export async function validateRelease(tarball, tag, root = repository) {
   for (const [packed, original] of [
     ["dist/LICENSE", "LICENSE"],
     ["dist/skills/jevgrep/SKILL.md", "skills/jevgrep/SKILL.md"],
-    ["dist/assets/tree-sitter-python.wasm", "packages/core/assets/tree-sitter-python.wasm"],
-    ["dist/assets/tree-sitter-python.LICENSE", "packages/core/assets/tree-sitter-python.LICENSE"],
+    ["dist/bin/python-worker.mjs", "packages/core/src/python-worker.mjs"],
+    ...["inspect", "preview", "neighborhood"].map((name) => [
+      `dist/assets/python/${name}.py`,
+      `packages/core/assets/python/${name}.py`,
+    ]),
   ])
     if (!(await extract(packed)).equals(await readFile(resolve(root, original))))
       throw new Error(`Packaged ${packed} differs from its canonical source`);
   const notices = (await extract("dist/THIRD_PARTY_NOTICES.txt")).toString();
   if (
     !notices.startsWith("Third-party notices for bundled JavaScript dependencies\n") ||
-    !notices.includes("=== ")
+    !notices.includes("=== ") ||
+    !notices.endsWith(await pythonRuntimeNotices(metadata.dependencies.pyodide))
   )
     throw new Error("Missing bundled dependency license notices");
   const integrity = `sha512-${createHash("sha512")

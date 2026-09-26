@@ -5,6 +5,7 @@ import { createServer } from "node:http";
 import {
   access,
   chmod,
+  cp,
   mkdir,
   mkdtemp,
   readFile,
@@ -37,7 +38,7 @@ const branches = [
 const source = (branch, name) =>
   `# Synthetic installed-package fixture\nclass ${name}:\n    """Records an event in the ${branch} package."""\n    @staticmethod\n    def record_event(value):\n        return "py-evidence-${branch}:" + value\n\n    def unrelated():\n        return "unrelated"\n`;
 
-async function context(t, mode = "healthy") {
+async function context(t, mode = "healthy", executable = binary) {
   let expectedQuery = query;
   const scratch = await mkdtemp(join(tmpdir(), "jg-installed-"));
   const tree = join(scratch, "repository");
@@ -213,8 +214,12 @@ async function context(t, mode = "healthy") {
   const run = async (args, overrides = {}, head = false) => {
     const result = await new Promise((resolve, reject) => {
       const child = spawn(
-        head ? "bash" : binary,
-        head ? ["-o", "pipefail", "-c", '"$@" | head -200', "jg-pipe", binary, ...args] : args,
+        head ? "bash" : executable === binary ? binary : process.execPath,
+        head
+          ? ["-o", "pipefail", "-c", '"$@" | head -200', "jg-pipe", executable, ...args]
+          : executable === binary
+            ? args
+            : [executable, ...args],
         {
           cwd: tree,
           detached: true,
@@ -690,4 +695,32 @@ test("source budget preserves every file and lead while explicitly omitting sour
   assert.ok(expectedLocations.some((line) => line.startsWith("  Reading lead ")));
   assert.deepEqual(locations(bounded.stdout), expectedLocations);
   assertCachedRequestsAreReused(fixture.requests, before);
+});
+
+test("missing or corrupt packaged Python assets fail closed without downloads", async (t) => {
+  const scratch = await mkdtemp(join(tmpdir(), "jg-missing-python-"));
+  t.after(() => rm(scratch, { recursive: true, force: true }));
+  for (const [asset, corrupt] of [
+    ["dist/bin/python-worker.mjs", false],
+    ["dist/assets/python/inspect.py", false],
+    ["node_modules/pyodide/pyodide.asm.wasm", false],
+    ["node_modules/pyodide/python_stdlib.zip", false],
+    ["node_modules/pyodide/pyodide.asm.wasm", true],
+  ]) {
+    const copy = join(scratch, "package");
+    await cp(packageDirectory, copy, { recursive: true, dereference: true });
+    await access(join(copy, asset));
+    if (corrupt) await writeFile(join(copy, asset), "corrupt runtime fixture");
+    else await rm(join(copy, asset));
+    const fixture = await context(t, "healthy", join(copy, "dist/bin/index.js"));
+    const result = await fixture.run([query, fixture.tree, "--no-cache"]);
+    assert.equal(result.code, 1, `${asset} (corrupt=${corrupt}): ${result.stdout}`);
+    assert.ok(result.stdout.trim(), "Asset failure must produce a diagnostic");
+    assert.ok(
+      !fixture.requests.some(({ body }) => body.state.declarations),
+      "Unavailable parser assets must not fabricate declaration evidence",
+    );
+    assert.equal((await fixture.run(["--help"], { AI_GATEWAY_API_KEY: "" })).code, 0);
+    await rm(copy, { recursive: true, force: true });
+  }
 });
