@@ -35,3 +35,10 @@ workflow and accounting rules. Older custom evals are deprecated and stay out of
 
 The canonical [Jevgrep skill](skills/jevgrep/SKILL.md) lives under `skills/` for
 agent discovery and installation through the skills CLI. It describes the `jg` search workflow and is embedded in the installed CLI.
+
+## Releases
+
+The npm package is `@dzhng/jevgrep`; its executable is `jg`. The project uses the
+[MIT license](LICENSE). [Release guidance](scripts/RELEASING.md) describes the
+verified tarball and GitHub tag workflow. Publication requires the repository's
+`NPM_TOKEN` secret and a deliberate release tag after the quality gates pass.

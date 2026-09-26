@@ -91,3 +91,26 @@ core module cannot yield a stale executable through incomplete cache inputs.
 Gap: the spec did not prescribe development build caching. Reach: local builds do
 more work; package verification always receives current source. Verdict: sound.
 Confidence: high; build caching can be reintroduced with complete input tracking.
+
+### Publish one validated archive and verify it separately after publication
+
+When: release workflow. Match the requested tag to the package version, build and
+validate one tarball, then test, dry-run and publish those same bytes. Fetch that
+exact registry version in a separate job and compare its integrity before testing
+it again. Stable releases use `latest`; prereleases use `next`.
+
+Gap: tag publishing was specified, but artifact identity, prerelease channel and
+post-publication retry layout were delegated. Reach: a failed registry check can
+be retried without trying to republish an immutable version. Verdict: sound.
+Confidence: high. Actual publication still requires a later user-triggered tag.
+
+### Derive dependency notices from the code actually bundled
+
+When: release packaging. Use Bun's emitted-input metadata to collect installed
+license notices. Retain a version-specific upstream license for the SDK package
+whose npm archive omits it; an unknown missing license fails the build. The user
+selected MIT for Jevgrep itself.
+
+Gap: the spec required licenses but left collection mechanics open. Reach: a
+new dependency can require a verified notice update, while ordinary builds need
+no network license lookup. Verdict: sound. Confidence: high.
