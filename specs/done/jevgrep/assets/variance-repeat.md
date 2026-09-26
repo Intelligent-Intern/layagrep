@@ -91,3 +91,14 @@ incorrect authored return-type expectation, it corrected the test and finished
 with 69 repository-runner tests passing. It used 25 generations versus fourteen
 and made no compiled-execution attempt. Evidence:
 `/tmp/jg-repeat-sympy-comparison.md`.
+
+Pytest solved again at $0.6108848 versus first-run $0.8116844 and baseline
+$2.3444580, retaining a successful cost win. Its complete observed Jev total
+is $0.059945634 and is excluded from scored cost.
+Its packet shrank from 16,695 bytes with four excerpts to 4,798 bytes without
+excerpts; both runs read Package directly. The final streaming implementation
+matches the first run apart from a local variable name. The repeat used two
+test selections (four passes, then 74 passes with one dependency-warning failure
+and one expected failure), without the first run's selector repairs. Own coverage
+remains a flat-package case, and the broad test scope is narrower. Evidence:
+`/tmp/jg-repeat-pytest-comparison.md`.
