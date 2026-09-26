@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare, execute and grade one frozen installed-package SWE-bench treatment."""
+"""Freeze and evaluate one installed package against the ten retained SWE-bench baselines."""
 import argparse
 import hashlib
 import json
@@ -16,13 +16,8 @@ import uuid
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-RUNS = ROOT / 'evals/runs/swebench'
-TOOLING = ROOT / 'evals/runs/tooling/swebench'
-TASK = 'psf__requests-1142'
-BASELINE_ID = 'lookahead-native-v88-psf__requests-1142-codex-baseline'
-RUNTIME_IMAGE = 'sha256:2264606b0765897361bb392db8aa3226e171719ba97e82ce5205ba122a43eaff'
+REGISTRY = json.loads((HERE / 'fixed-baselines.json').read_text())
 HARNESS_COMMIT = '02e7a74ffd0b707aab73d203fe87bdc7c76afc8e'
-BASELINE = RUNS / 'lookahead-native-v88' / TASK / 'codex-baseline'
 SAFE_FIELDS = {'instance_id', 'repo', 'base_commit', 'image', 'problem_statement'}
 VERSIONS = {'node': 'v24.14.0', 'codex': 'codex-cli 0.153.4', 'claude': '2.1.278 (Claude Code)'}
 VERIFICATION = (
@@ -75,8 +70,12 @@ def text(args):
 def load_pair(baseline, inputs, task):
     receipt = json.loads((baseline / 'receipt.json').read_text())
     cell = receipt['cell']
-    if task != TASK or cell['instance_id'] != task or cell['arm'] != 'baseline' or cell['id'] != BASELINE_ID or receipt['image'] != RUNTIME_IMAGE or cell['image'] != RUNTIME_IMAGE:
-        raise ValueError('This checkpoint reuses only the registered Requests baseline')
+    registered = next(item for item in REGISTRY['tasks'] if item['task'] == task)
+    if cell != registered['cell'] or receipt['image'] != cell['image']:
+        raise ValueError('Baseline differs from the fixed registry')
+    for name, expected in registered['files'].items():
+        if digest(baseline / name) != expected:
+            raise ValueError('Retained baseline evidence changed: ' + name)
     if (cell['model'], cell['effort'], cell['timeout_seconds']) != ('openai/gpt-5.6-sol', 'medium', 900):
         raise ValueError('Baseline model/effort/deadline differs from the registered harness')
     if receipt['versions'] != VERSIONS or receipt['provider_route'] != 'vercel-ai-gateway':
@@ -92,19 +91,25 @@ def load_pair(baseline, inputs, task):
     if hashlib.sha256(prompt).hexdigest() != receipt['prompt_sha256'] or (baseline / 'prompt.txt').read_bytes() != prompt:
         raise ValueError('Baseline prompt differs; do not rerun or overwrite it')
     grade = json.loads((baseline / 'grading-receipt.json').read_text())
-    if grade.get('resolved_instances') != 1:
-        raise ValueError('Expected the retained officially resolved Requests baseline')
+    if (grade.get('resolved_instances') == 1) != registered['resolved']:
+        raise ValueError('Retained official outcome changed')
     return receipt, row
 
 
 def check_image(image):
     if not re.fullmatch(r'sha256:[a-f0-9]{64}', image):
         raise ValueError('Use the immutable retained runtime image ID')
-    return text(['docker', 'image', 'inspect', image, '--format', '{{.Id}}'])
+    actual = text(['docker', 'image', 'inspect', image, '--format', '{{.Id}}'])
+    if actual != image:
+        raise ValueError('Runtime image identity changed')
+    return actual
 
 
 def prepare(args):
-    baseline, row = load_pair(args.baseline.resolve(), args.inputs.resolve(), args.task)
+    root = args.evidence_root.resolve()
+    selected = [item for item in REGISTRY['tasks'] if args.task in ('all', item['task'])]
+    pairs = [(item, *load_pair(root / item['baseline'], root / REGISTRY['inputs'], item['task'])) for item in selected]
+    baseline = pairs[0][1]
     image = check_image(baseline['image'])
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
@@ -136,48 +141,122 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
             raise ValueError('Installation changed source identity or installed the wrong package')
         if (out / 'skill.md').read_bytes() != args.skill.read_bytes():
             raise ValueError('Packaged skill differs from the canonical skill')
-        write_json(out / 'agent-inputs.json', [row])
-        cell = {**cell, 'id': 'installed-' + TASK + '-' + uuid.uuid4().hex[:12], 'arm': 'chunks', 'candidate': str(out / 'installed-prefix.tar')}
-        artifacts = [Path(__file__).resolve(), HERE / 'gateway_broker.py', package, out / 'installed-prefix.tar', out / 'skill.md', out / 'agent-inputs.json']
-        plan = {'status': 'frozen', 'purpose': 'Installed production Requests checkpoint; reuse the fixed baseline once, no baseline rerun.',
-                'cell': cell, 'baseline': str(args.baseline.resolve()), 'baseline_receipt_sha256': digest(args.baseline / 'receipt.json'),
-                'baseline_cost_usd': 0.2685004, 'baseline_resolved': True, 'inputs': str(out / 'agent-inputs.json'),
-                'skill': str(out / 'skill.md'), 'package': str(package), 'output': str(out / 'attempt'),
+        # Every image gets an offline check using the same installed bytes.
+        cells = []
+        for registered, fixed, _ in pairs:
+            runtime = check_image(fixed['image'])
+            check = 'jg-preflight-' + uuid.uuid4().hex[:12]
+            try:
+                command(['docker', 'create', '--platform', 'linux/amd64', '--network', 'none', '--name', check, runtime, 'sh', '-ec',
+                         'tar -xf /tmp/prefix.tar -C /opt; node --version; codex --version; claude --version; /opt/jg-install/bin/jg --version; /opt/jg-install/bin/jg skill; git -C /testbed rev-parse HEAD; git -C /testbed rev-parse HEAD^{tree}; git -C /testbed status --porcelain'])
+                command(['docker', 'cp', str(out / 'installed-prefix.tar'), check + ':/tmp/prefix.tar'])
+                output = command(['docker', 'start', '-a', check]).stdout
+                expected = ((''.join(value + '\n' for value in VERSIONS.values())).encode() + (out / 'version.txt').read_bytes() + (out / 'skill.md').read_bytes() +
+                            (fixed['cell']['expected_image_head'] + '\n' + fixed['cell']['expected_source_tree'] + '\n').encode())
+                if output != expected:
+                    raise ValueError('Offline runtime/source/skill preflight differs: ' + registered['task'])
+            finally:
+                subprocess.run(['docker', 'rm', '-f', check], capture_output=True)
+            cell = {**fixed['cell'], 'id': 'installed-' + registered['task'] + '-' + uuid.uuid4().hex[:12],
+                    'arm': 'chunks', 'candidate': str(out / 'installed-prefix.tar')}
+            cells.append({'cell': cell, 'baseline': str(root / registered['baseline']),
+                          'baseline_cost_usd': registered['cost_usd'], 'baseline_resolved': registered['resolved'],
+                          'output': str(out / 'attempts' / registered['task'])})
+        write_json(out / 'agent-inputs.json', [public for _, _, public in pairs])
+        frozen = out / 'runner'
+        frozen.mkdir(mode=0o700)
+        for source in [Path(__file__).resolve(), HERE / 'gateway_broker.py', HERE / 'fixed-baselines.json']:
+            shutil.copyfile(source, frozen / source.name)
+        artifacts = [*frozen.iterdir(), package, out / 'installed-prefix.tar', out / 'skill.md', out / 'agent-inputs.json', root / REGISTRY['dataset']]
+        plan = {'schema': 2, 'status': 'frozen', 'cells': cells,
+                'purpose': 'One prospective package cohort; reuse fixed baselines without execution.',
+                'inputs': str(out / 'agent-inputs.json'), 'skill': str(out / 'skill.md'), 'package': str(package),
+                'runner': str(frozen / 'installed.py'), 'broker': str(frozen / 'gateway_broker.py'),
+                'registry': str(frozen / 'fixed-baselines.json'), 'dataset': str(root / REGISTRY['dataset']),
+                'tooling': str(root / REGISTRY['tooling']),
                 'artifacts': {str(path): digest(path) for path in artifacts}}
         write_json(out / 'plan.json', plan)
-        print(json.dumps({'status': 'prepared', 'plan': str(out / 'plan.json'), 'cell': cell['id'], 'image': image}))
+        print(json.dumps({'status': 'prepared', 'plan': str(out / 'plan.json'), 'tasks': len(cells)}))
     finally:
         subprocess.run(['docker', 'rm', '-f', name], capture_output=True)
 
 
-def load_plan(path):
+def load_cohort(path):
     plan = json.loads(path.read_text())
-    if plan.get('status') != 'frozen':
-        raise ValueError('Plan must be frozen before execution')
+    if plan.get('schema') != 2 or plan.get('status') != 'frozen':
+        raise ValueError('Expected a frozen prospective cohort plan')
     for artifact, expected in plan['artifacts'].items():
         if digest(artifact) != expected:
             raise ValueError('Frozen artifact changed: ' + artifact)
-    required = [Path(__file__).resolve(), HERE / 'gateway_broker.py', Path(plan['inputs']), Path(plan['skill']), Path(plan['package']), Path(plan['cell']['candidate'])]
-    if any(str(path) not in plan['artifacts'] for path in required):
-        raise ValueError('Plan omits a required artifact')
-    base = Path(plan['baseline'])
-    if digest(base / 'receipt.json') != plan['baseline_receipt_sha256']:
-        raise ValueError('The retained baseline changed')
-    baseline, row = load_pair(base, Path(plan['inputs']), plan['cell']['instance_id'])
-    for key in ['instance_id', 'engine', 'invocation', 'source_image', 'source_pinned_ref', 'image', 'model', 'effort', 'timeout_seconds', 'gateway_model', 'expected_image_head', 'expected_source_tree']:
-        if plan['cell'][key] != baseline['cell'][key]:
-            raise ValueError('Treatment pairing changed: ' + key)
-    if plan['cell']['arm'] != 'chunks' or plan['cell']['id'] == baseline['cell']['id'] or not re.fullmatch(r'[A-Za-z0-9_.-]+', plan['cell']['id']):
-        raise ValueError('Treatment must use its own registered cell')
+    for key in ['runner', 'broker', 'registry', 'inputs', 'skill', 'package', 'dataset']:
+        if plan[key] not in plan['artifacts']:
+            raise ValueError('Plan omits required artifact: ' + key)
+    if digest(__file__) != digest(plan['runner']) or digest(HERE / 'gateway_broker.py') != digest(plan['broker']) or json.loads(Path(plan['registry']).read_text()) != REGISTRY:
+        raise ValueError('Use the frozen runner and registry')
+    prefixes = {item['cell']['candidate'] for item in plan['cells']}
+    identities = {item['cell']['id'] for item in plan['cells']}
+    outputs = {item['output'] for item in plan['cells']}
+    if len(prefixes) != 1 or len(identities) != len(plan['cells']) or len(outputs) != len(plan['cells']):
+        raise ValueError('Cohort requires one prefix and distinct attempt identities')
+    tasks = [item['cell']['instance_id'] for item in plan['cells']]
+    if not tasks or len(set(tasks)) != len(tasks):
+        raise ValueError('Plan tasks must be unique')
+    for item in plan['cells']:
+        cell = item['cell']
+        registered = next(row for row in REGISTRY['tasks'] if row['task'] == cell['instance_id'])
+        baseline, _ = load_pair(Path(item['baseline']), Path(plan['inputs']), cell['instance_id'])
+        expected = {**baseline['cell'], 'id': cell['id'], 'arm': 'chunks', 'candidate': cell['candidate']}
+        if cell != expected or not re.fullmatch(r'installed-[A-Za-z0-9_.-]+', cell['id']):
+            raise ValueError('Treatment pairing changed')
+        if cell['candidate'] not in plan['artifacts'] or item['baseline_cost_usd'] != registered['cost_usd'] or item['baseline_resolved'] != registered['resolved']:
+            raise ValueError('Treatment artifacts or baseline outcome changed')
+    return plan
+
+
+def load_plan(path, task=None):
+    cohort = load_cohort(path)
+    matches = [item for item in cohort['cells'] if task is None or item['cell']['instance_id'] == task]
+    if len(matches) != 1:
+        raise ValueError('Select one frozen task or use --all')
+    plan = {**cohort, **matches[0]}
+    _, row = load_pair(Path(plan['baseline']), Path(plan['inputs']), plan['cell']['instance_id'])
     return plan, row
 
 
+def existing_attempt(plan):
+    out = Path(plan['output'])
+    if not out.exists():
+        return False
+    path = out / 'receipt.json'
+    if not path.exists():
+        raise ValueError('Existing attempt lacks a lifecycle receipt; inspect it before continuing')
+    receipt = json.loads(path.read_text())
+    if receipt['cell'] != plan['cell']:
+        raise ValueError('Existing attempt belongs to another cell')
+    if receipt['status'] in ('completed', 'failed', 'interrupted'):
+        return True
+    try:
+        os.kill(receipt['host_pid'], 0)
+        alive = True
+    except ProcessLookupError:
+        alive = False
+    active = text(['docker', 'ps', '-q', '--filter', 'label=jg.cell=' + plan['cell']['id']])
+    if alive or active:
+        raise ValueError('Existing attempt is active; wait for its actual process to finish')
+    receipt.update(status='interrupted', interruption='Runner and labeled containers are no longer active')
+    write_json(path, receipt)
+    return True
+
+
 def run(args):
-    plan, row = load_plan(args.plan.resolve())
+    plan, row = load_plan(args.plan.resolve(), args.task)
     cell = plan['cell']
     image = check_image(cell['image'])
     if args.dry_run:
         print(json.dumps({'status': 'validated', 'paid_calls': 0, 'baseline_reused': plan['baseline'], 'image': image, 'cell': cell['id']}))
+        return
+    if existing_attempt(plan):
+        print(json.dumps({'status': 'retained', 'cell': cell['id']}))
         return
     if not os.environ.get('AI_GATEWAY_API_KEY'):
         raise ValueError('AI_GATEWAY_API_KEY is required; load it through the authorized credential workflow')
@@ -187,7 +266,8 @@ def run(args):
     tag = 'jg-native-' + uuid.uuid4().hex[:12]
     network, proxy = tag + '-net', tag + '-proxy'
     receipt = {'engine': 'codex', 'cell': cell, 'image': image, 'plan_sha256': digest(args.plan), 'started': time.time(), 'status': 'preparing',
-               'provider_route': 'vercel-ai-gateway', 'gateway_model': 'openai/gpt-5.6-sol', 'baseline': plan['baseline']}
+               'provider_route': 'vercel-ai-gateway', 'gateway_model': 'openai/gpt-5.6-sol', 'baseline': plan['baseline'], 'host_pid': os.getpid()}
+    write_json(out / 'receipt.json', receipt)
     def dx(argv, user=None):
         return command(['docker', 'exec', *(['-u', user] if user else []), tag, *argv])
     def put(container, path, data, owner='agent:agent', mode='600'):
@@ -196,9 +276,9 @@ def run(args):
         return subprocess.run(['docker', 'cp', remote, str(destination)], capture_output=True).returncode == 0
     try:
         command(['docker', 'network', 'create', '--internal', network])
-        command(['docker', 'run', '-d', '--name', proxy, '-e', 'JEVGREP_TRACE_DIR=/run/jev-traces', image, 'python3', '-u', '-c', (HERE / 'gateway_broker.py').read_text()])
+        command(['docker', 'run', '-d', '--name', proxy, '--label', 'jg.cell=' + cell['id'], '-e', 'JEVGREP_TRACE_DIR=/run/jev-traces', image, 'python3', '-u', '-c', (HERE / 'gateway_broker.py').read_text()])
         command(['docker', 'network', 'connect', '--alias', 'model-egress', network, proxy])
-        command(['docker', 'run', '-d', '--name', tag, '--network', network,
+        command(['docker', 'run', '-d', '--name', tag, '--label', 'jg.cell=' + cell['id'], '--network', network,
                  '-e', 'HTTP_PROXY=http://model-egress:3128', '-e', 'HTTPS_PROXY=http://model-egress:3128',
                  '-e', 'NO_PROXY=localhost,127.0.0.1,model-egress', image, 'sleep', '1800'])
         dx(['sh', '-c', 'useradd -m -u 1001 agent; mkdir -p /home/agent/.codex /home/agent/.claude /workspace; chown -R agent:agent /home/agent /workspace'])
@@ -244,6 +324,7 @@ def run(args):
                       '-e', 'AI_GATEWAY_API_KEY=' + token, '-e', 'AI_GATEWAY_BASE_URL=http://model-egress:3129', '-w', '/testbed', tag, *native]
         receipt['status'] = 'running'
         receipt['agent_started_at'] = time.time()
+        write_json(out / 'receipt.json', receipt)
         start = time.monotonic()
         with (out / 'events.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
             try:
@@ -283,6 +364,8 @@ def run(args):
         receipt['jev_traces_copied'] = capture(proxy + ':/run/jev-traces', out / 'jev-traces')
         for container in [tag, proxy]: subprocess.run(['docker', 'rm', '-f', container], capture_output=True)
         subprocess.run(['docker', 'network', 'rm', network], capture_output=True)
+        if receipt['status'] in ('preparing', 'running'):
+            receipt['status'] = 'interrupted'
         receipt['total_elapsed_seconds'] = time.time() - receipt['started']
         write_json(out / 'receipt.json', receipt)
     print(json.dumps({'status': receipt['status'], 'output': str(out), 'error_type': receipt.get('error_type')}))
@@ -290,14 +373,19 @@ def run(args):
 
 
 def grade(args):
-    plan, _ = load_plan(args.plan.resolve())
+    plan, _ = load_plan(args.plan.resolve(), args.task)
+    args.tooling = Path(plan['tooling'])
+    args.dataset = Path(plan['dataset'])
     out, cell = Path(plan['output']), plan['cell']
     receipt = json.loads((out / 'receipt.json').read_text())
-    if receipt['plan_sha256'] != digest(args.plan) or receipt['cell'] != cell:
+    if receipt['plan_sha256'] != digest(args.plan) or receipt['cell'] != cell or receipt['status'] not in ('completed', 'failed', 'interrupted'):
         raise ValueError('Attempt does not belong to this frozen plan')
     run_id = 'jg-' + cell['id']
     report = args.tooling.resolve() / 'logs/evaluation' / run_id / 'results.json'
-    if report.exists() or (out / 'grading-receipt.json').exists():
+    if (out / 'grading-receipt.json').exists():
+        print(json.dumps({'status': 'retained', 'grading': str(out / 'grading-receipt.json')}))
+        return
+    if report.exists():
         raise ValueError('Refusing to reuse an official grading run ID')
     harness = args.tooling.resolve() / 'repo'
     if text(['git', '-C', str(harness), 'rev-parse', 'HEAD']) != HARNESS_COMMIT or text(['git', '-C', str(harness), 'status', '--porcelain']):
@@ -306,7 +394,7 @@ def grade(args):
     if Path(module).parent.parent != harness:
         raise ValueError('Python environment does not use the pinned official harness')
     prediction = out / 'predictions.jsonl'
-    prediction.write_text(json.dumps({'instance_id': cell['instance_id'], 'model_name_or_path': cell['id'], 'model_patch': (out / 'agent.patch').read_text()}) + '\n')
+    prediction.write_text(json.dumps({'instance_id': cell['instance_id'], 'model_name_or_path': cell['id'], 'model_patch': (out / 'agent.patch').read_text() if (out / 'agent.patch').exists() else ''}) + '\n')
     start = time.monotonic()
     with (out / 'grading-console.log').open('w') as log:
         result = subprocess.run([str(args.tooling.resolve() / 'venv/bin/python'), '-m', 'swebench.harness.run_evaluation', '--dataset_name', str(args.dataset.resolve()), '--predictions_path', str(prediction), '--instance_ids', cell['instance_id'], '--max_workers', '1', '--timeout', '1800', '--run_id', run_id], cwd=args.tooling, stdout=log, stderr=subprocess.STDOUT)
@@ -323,9 +411,22 @@ def valid_cost(value):
 
 
 def account(args):
-    plan, _ = load_plan(args.plan.resolve())
+    plan, _ = load_plan(args.plan.resolve(), args.task)
     out = Path(plan['output'])
-    events = [json.loads(line) for line in (out / 'proxy.jsonl').read_text().splitlines()]
+    receipt = json.loads((out / 'receipt.json').read_text())
+    if receipt['cell'] != plan['cell'] or receipt['plan_sha256'] != digest(args.plan) or receipt['status'] not in ('completed', 'failed', 'interrupted'):
+        raise ValueError('Accounting requires this plan’s terminal attempt')
+    events = []
+    log = out / 'proxy.jsonl'
+    log_valid = log.exists()
+    for line in log.read_text().splitlines() if log.exists() else []:
+        try:
+            event = json.loads(line)
+            if not isinstance(event, dict):
+                raise ValueError('Invalid log event')
+            events.append(event)
+        except ValueError:
+            log_valid = False
     starts = [event for event in events if event.get('kind') == 'codex-request-start' and event.get('operation') == 'generation']
     request_ids = {event['requestId'] for event in starts}
     ends = [event for event in events if event.get('kind') == 'codex-gateway' and event.get('requestId') in request_ids]
@@ -335,7 +436,7 @@ def account(args):
     cached = {row['id']: row for row in json.loads(path.read_text())} if path.exists() else {}
     lookups = []
     for identifier in identifiers:
-        if identifier in cached and 'metadata' in cached[identifier]:
+        if identifier in cached and cached[identifier].get('metadata', {}).get('id') == identifier and cached[identifier].get('metadata', {}).get('model') == 'openai/gpt-5.6-sol':
             lookups.append(cached[identifier]); continue
         if not os.environ.get('AI_GATEWAY_API_KEY'): raise ValueError('Gateway credential required for uncached generation accounting')
         request = urllib.request.Request('https://ai-gateway.vercel.sh/v1/generation?' + urllib.parse.urlencode({'id': identifier}), headers={'Authorization': 'Bearer ' + os.environ['AI_GATEWAY_API_KEY']})
@@ -345,16 +446,62 @@ def account(args):
             lookups.append({'id': identifier, 'metadata': metadata})
         except (OSError, ValueError, KeyError) as error: lookups.append({'id': identifier, 'error_type': type(error).__name__})
     write_json(path, lookups)
-    complete = bool(identifiers) and len(starts) == len(ends) == len(identifiers) == len(lookups) and request_ids == {event.get('requestId') for event in ends} == {event.get('requestId') for event in observations} and all(event.get('streamTerminal') == 'response.completed' and not event.get('incompleteStream') and not event.get('transportError') and event.get('status') == 200 for event in ends) and all(valid_cost(row.get('metadata', {}).get('total_cost')) for row in lookups)
+    complete = log_valid and bool(identifiers) and len(request_ids) == len(starts) == len(ends) == len(identifiers) == len(lookups) and request_ids == {event.get('requestId') for event in ends} == {event.get('requestId') for event in observations} and all(event.get('streamTerminal') == 'response.completed' and not event.get('incompleteStream') and not event.get('transportError') and event.get('status') == 200 for event in ends) and all(valid_cost(row.get('metadata', {}).get('total_cost')) for row in lookups)
     known = sum(row.get('metadata', {}).get('total_cost', 0) for row in lookups if valid_cost(row.get('metadata', {}).get('total_cost')))
     result = {'cell': plan['cell']['id'], 'request_starts': len(starts), 'generation_ids': len(identifiers), 'all_requests_accounted': complete, 'known_gateway_cost_usd': known, 'gateway_cost_usd': known if complete else None, 'baseline_cost_usd': plan['baseline_cost_usd'], 'jev_cost_usd': 0}
     grading = out / 'grading-receipt.json'
     if grading.exists():
-        result['official_resolved'] = json.loads(grading.read_text()).get('resolved_instances') == 1
-        result['protocol_valid'] = json.loads((out / 'receipt.json').read_text()).get('required_retrieval_observed') is True
+        grade_receipt = json.loads(grading.read_text())
+        result['official_resolved'] = grade_receipt.get('run_id') == 'jg-' + plan['cell']['id'] and grade_receipt.get('exit_code') == 0 and grade_receipt.get('resolved_instances') == 1
+        result['protocol_valid'] = protocol_valid(receipt)
         result['successful_cost_win'] = complete and result['official_resolved'] and result['protocol_valid'] and known < plan['baseline_cost_usd']
     write_json(out / 'generation-accounting.json', result)
     print(json.dumps(result))
+
+
+def protocol_valid(receipt):
+    return (receipt.get('status') == 'completed' and receipt.get('exit_code') == 0 and
+            receipt.get('native_completed') is True and receipt.get('required_retrieval_observed') is True and
+            receipt.get('timing_valid') is True)
+
+
+def aggregate(args):
+    plan = load_cohort(args.plan.resolve())
+    rows = []
+    for item in plan['cells']:
+        out = Path(item['output'])
+        def read(name):
+            path = out / name
+            return json.loads(path.read_text()) if path.exists() else {}
+        receipt, grading, billing = read('receipt.json'), read('grading-receipt.json'), read('generation-accounting.json')
+        belongs = receipt.get('cell') == item['cell'] and receipt.get('plan_sha256') == digest(args.plan)
+        terminal = belongs and receipt.get('status') in ('completed', 'failed', 'interrupted')
+        grade_attempted = terminal and grading.get('run_id') == 'jg-' + item['cell']['id'] and type(grading.get('exit_code')) is int
+        graded = grade_attempted and grading['exit_code'] == 0
+        protocol = terminal and protocol_valid(receipt)
+        solved = graded and grading.get('resolved_instances') == 1
+        billed = (terminal and billing.get('cell') == item['cell']['id'] and
+                  billing.get('all_requests_accounted') is True and valid_cost(billing.get('gateway_cost_usd')))
+        cost = billing.get('gateway_cost_usd') if billed else None
+        rows.append({'task': item['cell']['instance_id'], 'status': receipt.get('status', 'not-started'),
+                     'terminal': terminal, 'grading_attempted': grade_attempted, 'graded': graded, 'protocol_valid': protocol, 'official_resolved': solved, 'resolved': solved and protocol,
+                     'baseline_resolved': item['baseline_resolved'], 'baseline_cost_usd': item['baseline_cost_usd'],
+                     'fully_billed': billed, 'gateway_cost_usd': cost,
+                     'known_gateway_cost_usd': billing.get('known_gateway_cost_usd') if belongs and billing.get('cell') == item['cell']['id'] and valid_cost(billing.get('known_gateway_cost_usd')) else None,
+                     'successful_cost_win': solved and protocol and billed and cost < item['baseline_cost_usd']})
+    full = {row['task'] for row in rows} == {item['task'] for item in REGISTRY['tasks']}
+    preserved = sum(row['baseline_resolved'] and row['resolved'] and row['protocol_valid'] for row in rows)
+    wins = sum(row['successful_cost_win'] for row in rows)
+    complete = full and all(row['terminal'] and row['grading_attempted'] for row in rows)
+    result = {'prospective_full_cohort': full, 'complete': complete, 'baseline_solves_preserved': preserved,
+              'fully_billed_solved_cost_wins': wins,
+              'accepted': complete and preserved == REGISTRY['baseline_solves'] and wins >= REGISTRY['required_cost_wins'],
+              'known_gateway_subtotal_usd': sum(row['known_gateway_cost_usd'] for row in rows if row['known_gateway_cost_usd'] is not None),
+              'fully_billed_total_usd': sum(row['gateway_cost_usd'] for row in rows) if all(row['fully_billed'] for row in rows) else None,
+              'cells': rows}
+    write_json(args.plan.resolve().parent / 'aggregate.json', result)
+    print(json.dumps(result))
+    return result
 
 
 def main():
@@ -363,21 +510,37 @@ def main():
     prep = sub.add_parser('prepare', help='Install a package in the retained image and freeze a new treatment; no model calls')
     prep.add_argument('--package', type=Path, required=True)
     prep.add_argument('--output', type=Path, required=True)
-    prep.add_argument('--task', default=TASK)
-    prep.add_argument('--baseline', type=Path, default=BASELINE)
-    prep.add_argument('--inputs', type=Path, default=RUNS / 'auto-research-80/ten-agent-inputs.json')
+    prep.add_argument('--task', default='all', choices=['all', *[item['task'] for item in REGISTRY['tasks']]])
+    prep.add_argument('--evidence-root', type=Path, default=ROOT)
     prep.add_argument('--skill', type=Path, default=ROOT / 'skills/jevgrep/SKILL.md')
     execute = sub.add_parser('run', help='Run the paid coding-agent treatment once, or validate without calls')
     execute.add_argument('--plan', type=Path, required=True)
     execute.add_argument('--dry-run', action='store_true')
     grading = sub.add_parser('grade', help='Run the official evaluator under a new run ID')
     grading.add_argument('--plan', type=Path, required=True)
-    grading.add_argument('--dataset', type=Path, default=RUNS / 'auto-research-80/evaluator-only/ten-dataset.json')
-    grading.add_argument('--tooling', type=Path, default=TOOLING)
     billing = sub.add_parser('account', help='Reconcile full Sol billing; never count unknown charges as zero')
     billing.add_argument('--plan', type=Path, required=True)
+    summary = sub.add_parser('aggregate', help='Evaluate the prospective ten-task acceptance rule without model calls')
+    summary.add_argument('--plan', type=Path, required=True)
+    for operation in [execute, grading, billing]:
+        choice = operation.add_mutually_exclusive_group(required=True)
+        choice.add_argument('--task', choices=[item['task'] for item in REGISTRY['tasks']])
+        choice.add_argument('--all', action='store_true')
     args = parser.parse_args()
-    {'prepare': prepare, 'run': run, 'grade': grade, 'account': account}[args.operation](args)
+    if args.operation in ('prepare', 'aggregate'):
+        {'prepare': prepare, 'aggregate': aggregate}[args.operation](args)
+        return
+    cohort = load_cohort(args.plan.resolve())
+    tasks = [item['cell']['instance_id'] for item in cohort['cells']] if args.all else [args.task]
+    failed = False
+    for task in tasks:
+        args.task = task
+        try:
+            {'run': run, 'grade': grade, 'account': account}[args.operation](args)
+        except SystemExit:
+            failed = True
+    if failed:
+        raise SystemExit(1)
 
 
 if __name__ == '__main__':
