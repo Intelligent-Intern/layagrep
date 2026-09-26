@@ -190,3 +190,18 @@ whole-computer throughput or optimal cache maintenance. Verdict: sound for this
 confirmation, with medium confidence: retain measured retrieval behavior and
 report the cache limitation; test any later optimization as a separately identified
 artifact rather than silently changing the candidate being confirmed.
+
+### Isolate bundled CPython in one Node child process
+
+Gap: the spec requires no system Python and cancelable inspection but leaves the
+interpreter isolation mechanism open. Use the spike's unchanged helpers inside
+bundled CPython, with one Node child process owning interpreter state. A worker
+thread passed Node checks but its Pyodide loader failed under the existing Bun
+development runner; attempting to normalize its environment did not solve it.
+A single Node process path avoids patching the dependency or retaining two parsers.
+
+Reach: the package gains runtime assets and a child process; pure pending helper
+jobs may need replay when cancellation terminates that process. The product still
+requires only Node. Verdict: provisional pending merged lifecycle and parity
+verification. Confidence: medium. Version coverage and footprint rationale live
+in [runtime evidence](assets/python-runtime.md).

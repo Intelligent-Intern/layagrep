@@ -71,7 +71,7 @@ installed-process/provider tests. No whole-repo security or performance audit cl
 
 ## Facts implementation must establish
 
-Pinned Python grammar/WASM and license compatibility, Node runtime asset loading,
+Bundled CPython version and component-license compatibility, Node runtime asset loading,
 exact SDK evaluation HTTP shape, and initial directory sampling quality must be
 proved at the owning slice before its consumer lands. Excerpt budget is delegated
 to comparative task evidence, not another product interview. An unavailable external

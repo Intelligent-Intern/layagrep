@@ -154,3 +154,13 @@ Finish whole-product review before paid confirmation, in addition to matched
 HTTP tests and supported-runtime gates. The quality target remains every fixed
 baseline solve preserved and at least seven solved strict Sol-cost wins in one
 prospective ten-task cohort. Historical or interrupted attempts cannot be pooled.
+
+## Python runtime parity remains open
+
+Further whole-product review found Python decorator, line-ending and invalid-AST
+mismatches beyond the already corrected TS/JS comments and selection ordering.
+The grammar approximation is being replaced with unchanged reference helpers
+executed in bundled CPython. [Runtime evidence](python-runtime.md) owns the bounded
+probe and remaining integration requirements. Neither stopped paid cohort is
+reactivated by this change; merged verification and a clean full review must
+precede a new prospective confirmation.

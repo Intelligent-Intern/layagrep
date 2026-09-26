@@ -7,12 +7,13 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: finish the merged gate and whole-product review before freezing another
-package or starting paid confirmation. The two reproduced defects are fixed:
-second-pass evidence follows selection-completion order, and invalid TS/JS retains
-reference comment ranges. Their whole-CLI regressions passed red/green comparisons.
-Passing the earlier exercised fixtures was insufficient; the earlier paid start
-was premature. No additional paid run may precede a clean whole-product review.
+Next: integrate the bundled CPython parser and its packaging, then finish the
+merged gate and whole-product review before freezing another package or starting
+paid confirmation. Review found Python AST differences beyond the previously
+fixed evidence-order and TS/JS comment defects. The smaller grammar parser did
+not preserve the winner; use its unchanged Python helpers with bundled CPython.
+See [runtime evidence](assets/python-runtime.md). No additional paid run may
+precede a clean whole-product review.
 
 `installed-jg-reference-parity-v1` is stopped and superseded. Requests and
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted
@@ -144,11 +145,10 @@ This plan keeps two production packages, moves parser/filesystem risks before th
 first task, and separates failures/cache/output evidence instead of bundling them
 into a vague hardening phase.
 
-Claude proposed Pyodide for closer CPython parity. Prefer the smaller WASM grammar
-mechanism initially; its prerequisite conformance gate must expose changes across
-all three Python uses. A failed gate reopens that choice, not the Node-only user
-contract. Do not require zero textual diffs by normalizing semantically meaningful
-source or question order. The skill-path ambiguity was checked: the confirmation
+Claude proposed Pyodide for closer CPython parity. The initial smaller grammar
+parser failed that requirement; the measured fallback is now being integrated.
+This reopens the parser mechanism, not the Node-only user contract. Do not
+normalize semantically meaningful source or question order. The skill-path ambiguity was checked: the confirmation
 hash matches the retained ranked-leads skill; the current working skill has changed.
 
 Recursive fog audit: parser compatibility has its own artifact (02); eligibility

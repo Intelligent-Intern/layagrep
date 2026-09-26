@@ -12,12 +12,9 @@ they do not supersede the product's measured retrieval policy.
   validates answers, defaults to two retries and logs warnings. Pin the current SDK;
   explicitly own retries and warning routing so hidden retries do not escape the
   50k guard and SDK logs do not violate stdout-only output.
-- [Web Tree-sitter](https://github.com/tree-sitter/tree-sitter/blob/master/lib/binding_web/README.md)
-  supports WASM grammar assets in Node and documents ABI/loading constraints.
-  [Python grammar](https://github.com/tree-sitter/tree-sitter-python) provides the
-  candidate bundled parser. Use a pinned runtime/grammar pair with license notices;
-  verify the actual packed assets load without Python or build tools installed.
-  This is a proposed production mechanism, not the winning spike's parser.
+- The initial Tree-sitter Python port failed exact AST compatibility during
+  whole-product review. [Bundled CPython evidence](assets/python-runtime.md)
+  records the measured replacement and its remaining verification boundary.
 - [Git ignore semantics](https://git-scm.com/docs/gitignore) distinguish tracked
   files and explain nested pattern precedence and excluded-parent negation.
   Jevgrep must document its traversal policy explicitly rather than claim to be

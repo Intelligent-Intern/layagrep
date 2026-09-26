@@ -113,10 +113,11 @@ bounded pages without silently dropping later pages; no global fixed file count.
 Reuse one bounded relationship pass from the reference, not an unbounded research
 loop. Deduplicate repeated stage/input work within an invocation.
 
-Parse Python with packaged Tree-sitter WASM and TS/JS with the TypeScript parser;
-ship assets/licenses in the tarball. Check parser compatibility before final pin.
-Use text chunks for unsupported languages or parse failure. Additional grammars
-are delegated only if they use this same adapter and tests without new runtimes.
+Parse Python using the frozen helpers unchanged in bundled CPython, and TS/JS
+with the TypeScript parser. Ship local runtime assets and component notices;
+no system Python or runtime download is required. See the
+[runtime rationale](assets/python-runtime.md) for the measured version boundary.
+Use reference text fallback for unsupported languages or parse failure.
 Units retain adjacent comments, decorators, docstrings and local context. Large
 units may be split and marked partial. Preserve accepted neighbor expansion as an
 explicit policy, including its second-pass expansion of previously rendered
