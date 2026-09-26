@@ -1,0 +1,82 @@
+import type { RetrievalResult } from "@repo/core";
+
+function quote(value: string): string {
+  return JSON.stringify(value).replace(
+    /[\u007f-\u009f\u2028-\u202e\u2066-\u2069]/g,
+    (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`,
+  );
+}
+
+export const DEFAULT_MAX_SOURCE_BYTES = 0;
+
+/** Healthy default output retains the frozen reference's agent-facing packet. */
+export function renderResult(
+  result: RetrievalResult,
+  maxSourceBytes = DEFAULT_MAX_SOURCE_BYTES,
+): string {
+  let remaining = maxSourceBytes || Infinity;
+  const files = [...result.files]
+    .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path))
+    .map((file) => {
+      let omitted = file.sourceOmitted;
+      const excerpts = file.excerpts.filter(({ source }) => {
+        const bytes = Buffer.byteLength(source);
+        if (bytes > remaining) {
+          omitted = true;
+          return false;
+        }
+        remaining -= bytes;
+        return true;
+      });
+      return { file, excerpts, omitted };
+    });
+  const context = result.repositoryContext;
+  const quoteArg = (value: string) => "'" + value.replaceAll("'", "'\\''") + "'";
+  const omittedCount = files.filter(({ omitted }) => omitted).length;
+  const lines = [
+    `Jevgrep: ${files.length} relevant files${result.status !== "complete" ? "; discovery incomplete" : ""}.`,
+    `AGENTS.md lookup (root and returned-file ancestors): ${context.instructionFiles.length ? context.instructionFiles.map(quote).join(", ") : "none found"}${context.instructionLookupIncomplete ? "; lookup incomplete" : ""}.`,
+    ...(result.status === "interrupted" ? ["Interrupted."] : []),
+    ...(omittedCount ? [`Source omitted: ${omittedCount} file(s).`] : []),
+    ...(result.warnings ?? []).map(({ kind, count }) => `Warning: ${quote(kind)}: ${count}`),
+    ...result.issues.map(({ kind, count }) => `Issue: ${quote(kind)}: ${count}`),
+    ...context.pytestFiles.map((path) =>
+      [...path].some((character) => character.charCodeAt(0) < 32) ||
+      /[\u007f-\u009f\u2028-\u202e\u2066-\u2069]/.test(path)
+        ? `Suggested test arguments (not executed): [${["python", "-m", "pytest", "-q", path].map(quote).join(", ")}]`
+        : `Suggested test entry point (not executed): python -m pytest -q ${quoteArg(path)}`,
+    ),
+    ...files.flatMap(({ file, excerpts, omitted }) => [
+      `- ${quote(file.path)} — ${file.roles.join(", ") || "relevant; role uncertain"}; ${excerpts.length ? "selected source and structural context below" : omitted ? "source omitted; inspect this file directly" : "file passed relevance threshold; no confident excerpt selected — inspect this file directly"}`,
+      ...[...file.leads]
+        .sort((a, b) => a.range.startLine - b.range.startLine)
+        .map(
+          (lead) =>
+            `  Reading lead ${lead.name}: lines ${lead.range.startLine}-${lead.range.endLine}`,
+        ),
+      ...(omitted ? ["  Some source omitted; locations remain available."] : []),
+    ]),
+    "End file list.",
+  ];
+  for (const { file, excerpts } of files)
+    for (const { range, source, partial, sourceByteStart, sourceByteEnd } of excerpts) {
+      const bytes =
+        sourceByteStart === undefined ? "" : `; UTF-8 bytes [${sourceByteStart}, ${sourceByteEnd})`;
+      const annotation =
+        partial || sourceByteStart !== undefined ? ` (partial excerpt${bytes})` : "";
+      const sourceLines = source.split("\n");
+      if (
+        (partial || sourceByteStart !== undefined) &&
+        sourceLines.length > range.endLine - range.startLine + 1 &&
+        sourceLines.at(-1) === ""
+      )
+        sourceLines.pop();
+      lines.push(
+        "",
+        `Source block ${quote(file.path)} lines ${range.startLine}-${range.endLine}${annotation}:`,
+      );
+      for (const [index, line] of sourceLines.entries())
+        lines.push(`${range.startLine + index}: ${line}`);
+    }
+  return lines.join("\n") + "\n\nEnd context.\n";
+}

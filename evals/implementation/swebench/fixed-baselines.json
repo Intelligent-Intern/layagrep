@@ -1,0 +1,300 @@
+{
+  "inputs": "evals/runs/swebench/auto-research-80/ten-agent-inputs.json",
+  "dataset": "evals/runs/swebench/auto-research-80/evaluator-only/ten-dataset.json",
+  "tooling": "evals/runs/tooling/swebench",
+  "baseline_solves": 8,
+  "required_cost_wins": 7,
+  "tasks": [
+    {
+      "task": "scikit-learn__scikit-learn-13124",
+      "baseline": "evals/runs/swebench/ranked-leads-additional/scikit-learn__scikit-learn-13124-baseline",
+      "cell": {
+        "id": "ranked-additional-scikit-learn__scikit-learn-13124-baseline",
+        "instance_id": "scikit-learn__scikit-learn-13124",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.scikit-learn_1776_scikit-learn-13124:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.scikit-learn_1776_scikit-learn-13124@sha256:bdeb5e17bf55616082bf65f2b83de5cfc92556f3548fb38f4095ed1f802a7ec0",
+        "image": "sha256:ad9300592673fe015a1cea83a5697685b2b1c8068cf5f44126aad1531fadb851",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "aec0d00a29e5283d5a134489e27dcdfc92f350e3",
+        "expected_source_tree": "72e1da048a03e5f2d1728e17a93b7b687ae78b80"
+      },
+      "cost_usd": 0.29443600000000003,
+      "resolved": true,
+      "requests": 13,
+      "files": {
+        "receipt.json": "10f9381d2ab45233f935f318a0a6753c2634308e57d136b33f5cffadf2150ab7",
+        "prompt.txt": "e1662a59921f366d1e98b0c0f4d317e65dda11d10268a066a28fb6ce08f0d0e8",
+        "grading-receipt.json": "a323f3720d7acb68b91d46e3b39b0e47322fc5358256e2702be3a063ec8c33cf",
+        "generation-lookups.json": "1233a1be3db32a2e32a18555132741a499b3236d195672734faae9b561a98836"
+      }
+    },
+    {
+      "task": "django__django-15629",
+      "baseline": "evals/runs/swebench/lookahead-native-v88/django__django-15629/codex-baseline",
+      "cell": {
+        "id": "lookahead-native-v88-django__django-15629-codex-baseline",
+        "instance_id": "django__django-15629",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.django_1776_django-15629:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.django_1776_django-15629@sha256:70d0f93a3891c6d334c7cc3028b2bf1de51b64a216c3d99712608cc9a0e501ae",
+        "image": "sha256:514e444b11b59fe02f003eca0253c59c3a28a8b6377c65e64d021176d180dffe",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "9b70bb1938e97614e57443bbade13b71730f813e",
+        "expected_source_tree": "ae7d451039d57611fc1269a6167d55fe1f4d49be"
+      },
+      "cost_usd": 1.5055472,
+      "resolved": true,
+      "requests": 40,
+      "files": {
+        "receipt.json": "7eb3d68ad77860a0d8978ffa754836e40f6830a19aa3cd7a92220a3da6b28af9",
+        "prompt.txt": "4b22482d501f6fbd977344ba5309a928f57ac7809f59713cb191c99ab7c04640",
+        "grading-receipt.json": "c5a4b7649c658b1f5f149c8e452b72a33b34b83457b968fc4175a93e684c6d51",
+        "generation-lookups.json": "9ab4210b09194ac149d083668fe70743e7a17c42e855457b01f5ccb7841a8b1f"
+      }
+    },
+    {
+      "task": "astropy__astropy-13579",
+      "baseline": "evals/runs/swebench/ranked-leads-additional/astropy__astropy-13579-baseline",
+      "cell": {
+        "id": "ranked-additional-astropy__astropy-13579-baseline",
+        "instance_id": "astropy__astropy-13579",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.astropy_1776_astropy-13579:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.astropy_1776_astropy-13579@sha256:3a4b8059992d3eed81046bd4b3bd3450993a237a909c2298ce69b59bb5b9c863",
+        "image": "sha256:2dd8342d0335721880149fa975922d788a13523f44273c6165e3057bc4da0322",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "62194260181d107f2f6630d4588887fbf46f5a0c",
+        "expected_source_tree": "55a69b663232a3ee49ae06632d535dd3b1ced6c8"
+      },
+      "cost_usd": 0.428631,
+      "resolved": true,
+      "requests": 17,
+      "files": {
+        "receipt.json": "2dc42050943fc27a131a5f59c8c9375a75a76af29688a56be08a3ee0c95a7bed",
+        "prompt.txt": "33c6e22d8f2072d941c0a0f3d513494646cdaaa58bf354404121ab565c062bf9",
+        "grading-receipt.json": "1052eb2459ce64de6b4b451ecbb169d231246a69ffbb60dd8222e3497ccbb5dc",
+        "generation-lookups.json": "b95664cf3aebb15f8a08788854707719b28a273dc75d6b5e5f2ba01eb5ffe9a9"
+      }
+    },
+    {
+      "task": "pydata__xarray-3305",
+      "baseline": "evals/runs/swebench/auto-research-80/reserved-check/pydata__xarray-3305-baseline",
+      "cell": {
+        "id": "auto80-reserved-pydata__xarray-3305-baseline",
+        "instance_id": "pydata__xarray-3305",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.pydata_1776_xarray-3305:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.pydata_1776_xarray-3305@sha256:0e234daddf9a42b85a77ba0436f3fcbad90759921c978b127dff90d55cba0f89",
+        "image": "sha256:e0188f9a67225bf0fbb0bad90f5751a751e42002b690396695f25fa8f30741e3",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "cad44a667322dadb32d09f1db9ed62d9875ac43e",
+        "expected_source_tree": "f0cc03a70ee44542b9f21046fbb5fe3305e36c77"
+      },
+      "cost_usd": 0.4937066,
+      "resolved": true,
+      "requests": 23,
+      "files": {
+        "receipt.json": "55ed7868a65323413496849d2fca6547fdb8ff5895da9036645a84738319dd12",
+        "prompt.txt": "5e3fe2093c9948dca235a26fce9825a7f8e9c89fc9da953fe270c61682bdf3f6",
+        "grading-receipt.json": "c75fdec46bcd1bbe2c5bdca098119d1137ae8201b009a8385b422ce0b8ec8f20",
+        "generation-lookups.json": "fd0ee68b0ddf51cc8488db797ec48eda7ef02b701af2d9477d7bbc1335a5862d"
+      }
+    },
+    {
+      "task": "psf__requests-1142",
+      "baseline": "evals/runs/swebench/lookahead-native-v88/psf__requests-1142/codex-baseline",
+      "cell": {
+        "id": "lookahead-native-v88-psf__requests-1142-codex-baseline",
+        "instance_id": "psf__requests-1142",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.psf_1776_requests-1142:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.psf_1776_requests-1142@sha256:fa9c859412109d003a68c2bbe3c65541ca4714526afeb6906fe589c18af0b30d",
+        "image": "sha256:2264606b0765897361bb392db8aa3226e171719ba97e82ce5205ba122a43eaff",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "546130c8c878adabd16ac5221a36e39e4dab3645",
+        "expected_source_tree": "3b8ba30961592000c9a9a73b41d8452c871f47b4"
+      },
+      "cost_usd": 0.2685004,
+      "resolved": true,
+      "requests": 11,
+      "files": {
+        "receipt.json": "ee0d055679453e5c236a6a4d6a34e53b3deb9ca0436e2d37357df4d0c40ca88d",
+        "prompt.txt": "12ba196760c861377a033958d9d1a3cd3cc25dd4a1fa6cf877425001a14bae5c",
+        "grading-receipt.json": "5ec41b60522d4f4bd16d55f96991c4f4a53af4df7f9a13096e53597357c8d7f1",
+        "generation-lookups.json": "d7e657c0ff71b2279cb1dabfea058de6a914c3f68b2eab473fdbfc6f6af0e757"
+      }
+    },
+    {
+      "task": "sympy__sympy-16792",
+      "baseline": "evals/runs/swebench/lookahead-native-v88/sympy__sympy-16792/codex-baseline",
+      "cell": {
+        "id": "lookahead-native-v88-sympy__sympy-16792-codex-baseline",
+        "instance_id": "sympy__sympy-16792",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.sympy_1776_sympy-16792:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.sympy_1776_sympy-16792@sha256:3064872f9fef7139d864d821938635b2798232942db1dbe1b95bc085b45bfc61",
+        "image": "sha256:664a16898db69c3ad4d85d6db4dc0cf50cdbacc34a58ec5b6465ec9cc20eb771",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "4d0daaed7f939d3a8fbacfcb571561b7c3745e05",
+        "expected_source_tree": "5b2ea26c6ef59f15dc46c0e9b5c90d8935101ce7"
+      },
+      "cost_usd": 0.547975,
+      "resolved": true,
+      "requests": 28,
+      "files": {
+        "receipt.json": "0daf2c17c6fc7a13258722b5fe5d7657d0e8a862ba2d289a6392367da5ca26d0",
+        "prompt.txt": "bda6bd748dfb21a74c6ea7298a66937da2e530621918ac0bb2426f406b2d3d5c",
+        "grading-receipt.json": "62e0af48d4353b5d4ecf600fe040350c4f06fe41a1ae941f4a6af72642173d3b",
+        "generation-lookups.json": "431a34b987ed2f117c077dfb5fae22633fcccaabbc234df2fe49d49935052e95"
+      }
+    },
+    {
+      "task": "pytest-dev__pytest-6197",
+      "baseline": "evals/runs/swebench/ranked-leads-additional/pytest-dev__pytest-6197-baseline",
+      "cell": {
+        "id": "ranked-additional-pytest-dev__pytest-6197-baseline",
+        "instance_id": "pytest-dev__pytest-6197",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-6197:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.pytest-dev_1776_pytest-6197@sha256:15d39592171743355fdade433454d2dbd5cd7d7db21bdcf0e2f125edecabaf09",
+        "image": "sha256:77ae3ccb908cc80d961c74e8351029382ab74fa171b2f5387eceb10da2c2b23f",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "4eecc51564648be4823fcc5f6f7ef208a4f84a8c",
+        "expected_source_tree": "4024da6943c752a72e2ed45b8b57c03ccd047371"
+      },
+      "cost_usd": 2.344458,
+      "resolved": true,
+      "requests": 62,
+      "files": {
+        "receipt.json": "1997160d2bb3c3bb2da69b948ca36a836022309c4e6b81d8275d7325cfc59187",
+        "prompt.txt": "04386d2e8c1845f42ab6d26f77b6daf1ea7a320dc6df5b1c4c005fd5044a9bc6",
+        "grading-receipt.json": "e4d4ee179321ec72d3ede2a69e94eb2396734d1c3b9bf9e002c2938db9c47f87",
+        "generation-lookups.json": "66de257f7f8e0ca6aaadc9a8d268faf12763a298843ae5393e99861238f002da"
+      }
+    },
+    {
+      "task": "sphinx-doc__sphinx-8638",
+      "baseline": "evals/runs/swebench/auto-research-80/reserved-check/sphinx-doc__sphinx-8638-baseline",
+      "cell": {
+        "id": "auto80-reserved-sphinx-doc__sphinx-8638-baseline",
+        "instance_id": "sphinx-doc__sphinx-8638",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-8638:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-8638@sha256:3f2d3335613ab578fc026ddf8cda2a835e8f0f24ba6c0605e53241ec518bf78a",
+        "image": "sha256:98e6227437c5cdc843e663065b3118603afac2239de969097735a564e82705e9",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "27a63c4bbe23e14896382548356d2f9c880812d5",
+        "expected_source_tree": "742277e5b9486c9781a497aad5da88b8b0d5bb96"
+      },
+      "cost_usd": 1.0594724,
+      "resolved": true,
+      "requests": 25,
+      "files": {
+        "receipt.json": "ced56c0bcc21d699cf7d1dd9616a47453293a7687f8d5ae43d0a5f273f368dcf",
+        "prompt.txt": "78e276ae82c6252b2e1b0a1ac8b9833271bc0be79f9a0310d3d9b4b82da12be8",
+        "grading-receipt.json": "2a86f9fe4dcf991a7e24af4c566d31b8be1148828379883e67193e326605a218",
+        "generation-lookups.json": "30ebe7af2afb540a067e364b68056e3cca16011384ddbaee3d258c31a425f9f0"
+      }
+    },
+    {
+      "task": "matplotlib__matplotlib-26466",
+      "baseline": "evals/runs/swebench/auto-research-80/reserved-check/matplotlib__matplotlib-26466-baseline",
+      "cell": {
+        "id": "auto80-reserved-matplotlib__matplotlib-26466-baseline",
+        "instance_id": "matplotlib__matplotlib-26466",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.matplotlib_1776_matplotlib-26466:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.matplotlib_1776_matplotlib-26466@sha256:35be1078dc800d0bfcb32fef52650b1915480bca8778f2ed0a5528d4b6929784",
+        "image": "sha256:969a5ccf3f34af256d0ee9bbf87422c9483eef96c32687281f472dd66729a239",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "20e9c8c37ec0e0bb36f0bc6b1761200ffaa846fd",
+        "expected_source_tree": "92c6a499aede7b947b743b5c89ca08e9ac523c0d"
+      },
+      "cost_usd": 0.395716,
+      "resolved": false,
+      "requests": 13,
+      "files": {
+        "receipt.json": "dd8e284ee2a077bc42166b5b0765bdefde4336293dd44d4569a72a626d6fbc94",
+        "prompt.txt": "e15b7bc7bdaa1c59ac44f6904b4b0892e48bfea57e37589dae302b3cf8737d2f",
+        "grading-receipt.json": "8ae2c27b62aa3c7144fe3b932b023b182dde3389c72658dac0288651bf73a3d2",
+        "generation-lookups.json": "ddbe18196d46f27bece8efbff069ba4c19ea80f50941b2e0390436582b7b2b9f"
+      }
+    },
+    {
+      "task": "pylint-dev__pylint-4604",
+      "baseline": "evals/runs/swebench/auto-research-80/reserved-check/pylint-dev__pylint-4604-baseline",
+      "cell": {
+        "id": "auto80-reserved-pylint-dev__pylint-4604-baseline",
+        "instance_id": "pylint-dev__pylint-4604",
+        "engine": "codex",
+        "arm": "baseline",
+        "invocation": "required",
+        "source_image": "swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-4604:latest",
+        "source_pinned_ref": "swebench/sweb.eval.x86_64.pylint-dev_1776_pylint-4604@sha256:e24d647f8421c551d60da005ce2272910c0aae8bb37f9de870b10c5e70b840ce",
+        "image": "sha256:802e9a848f7268b436980bc4305ea815d89a30219e3dd4727f26a1f38ae7563b",
+        "model": "openai/gpt-5.6-sol",
+        "effort": "medium",
+        "timeout_seconds": 900,
+        "gateway_model": "openai/gpt-5.6-sol",
+        "expected_image_head": "0f266873c24f8f7270d257c8c8a8676930be0c72",
+        "expected_source_tree": "05a6b93fcb973fb72fe368b7d43eee00ed6635da"
+      },
+      "cost_usd": 0.2836264,
+      "resolved": false,
+      "requests": 13,
+      "files": {
+        "receipt.json": "54b00479be48fc888e7f2ce51082ebf41d0de1a3e8e9677dabcc6dd949cac611",
+        "prompt.txt": "7b88082c7bdcd31b3ecde24fd7a56e1d8261d2ffb4129828931e87178a2e6928",
+        "grading-receipt.json": "e380e835bebd324b81942208c526405d45e8b8c7b2e76167e4947da63b1cedb2",
+        "generation-lookups.json": "73bd2ed7d04398ade9954f7d2768357f5e91ee7127239c0ed24df1f33981acea"
+      },
+      "caveat": "Retained official nonpass: test collection fails on missing IS_PYPY export; not a demonstrated behavioral failure."
+    }
+  ]
+}

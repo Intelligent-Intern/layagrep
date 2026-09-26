@@ -4,18 +4,21 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./source": "./src/source.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "lint": "oxlint src"
   },
   "dependencies": {
-    "ai": "7.0.107"
+    "ai": "7.0.107",
+    "ignore": "7.0.5",
+    "pyodide": "0.25.1",
+    "typescript": "5.9.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/bun": "catalog:",
-    "typescript": "catalog:"
+    "@types/node": "22"
   }
 }

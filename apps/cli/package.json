@@ -1,24 +1,45 @@
 {
-  "name": "@jevgrep/cli",
-  "version": "0.0.0",
-  "private": true,
-  "bin": {
-    "jevgrep": "./dist/index.js"
+  "name": "@dzhng/jevgrep",
+  "version": "0.1.0",
+  "description": "Content-aware source retrieval for coding agents",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dzhng/jevgrep.git",
+    "directory": "apps/cli"
   },
+  "bin": {
+    "jg": "./dist/bin/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "os": [
+    "darwin",
+    "linux"
+  ],
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "bun build src/index.ts --target=node --outfile=dist/index.js",
+    "build": "bun ../../scripts/build-cli.ts",
     "check-types": "tsc --noEmit",
-    "lint": "oxlint src",
-    "test": "bun test src"
+    "lint": "oxlint src test",
+    "test": "bun test test"
   },
   "dependencies": {
-    "@clack/prompts": "1.8.1",
-    "@repo/core": "workspace:*"
+    "pyodide": "0.25.1",
+    "typescript": "5.9.3"
   },
   "devDependencies": {
+    "@clack/prompts": "1.8.1",
+    "@repo/core": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/bun": "catalog:",
-    "typescript": "catalog:"
+    "@types/node": "22.20.4"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

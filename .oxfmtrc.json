@@ -3,8 +3,13 @@
   "ignorePatterns": [
     ".agents/**",
     ".claude/**",
-    "evals/snapshots/**",
-    "evals/runs/**",
-    "evals/implementation/fixtures/**"
+    "evals/**",
+    "test/reference/tree/**",
+    "test/reference/accepted-skill.md",
+    "test/reference/corpus.json",
+    "test/reference/manifest.json",
+    "test/parser/fixtures/**",
+    "specs/done/jevgrep/assets/**",
+    "skills/**"
   ]
 }

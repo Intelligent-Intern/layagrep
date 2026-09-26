@@ -1,42 +1,134 @@
 #!/usr/bin/env node
-import { authenticate, loadApiKey } from "./auth";
-import { checkGateway } from "@repo/core";
+import { authenticate, configDirectory, loadApiKey } from "./auth";
+import { help, parseCommand } from "./args";
+import { CliError } from "./errors";
+import { renderResult } from "./render";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { version } from "../package.json";
+import skill from "../../../skills/jevgrep/SKILL.md" with { type: "text" };
 
-const args = process.argv.slice(2);
-try {
-  if (args.length === 0 || (args.length === 1 && ["--help", "-h"].includes(args[0]!))) {
-    console.log(`jevgrep — context retrieval for coding agents (scaffold)
+globalThis.AI_SDK_LOG_WARNINGS = false;
 
-Commands:
-  auth [--stdin]   Save a Vercel AI Gateway key; interactive input is hidden
-  doctor          Verify Jev access with a synthetic evaluation
+const controller = new AbortController();
+let pipeClosed = false;
+let interrupted = false;
+process.stdout.on("error", (error: NodeJS.ErrnoException) => {
+  pipeClosed = true;
+  controller.abort();
+  process.exitCode = error.code === "EPIPE" ? 0 : 1;
+});
+const interrupt = () => {
+  interrupted = true;
+  controller.abort();
+};
+process.on("SIGINT", interrupt);
 
-Repository search is not implemented yet.`);
-  } else if (
-    args[0] === "auth" &&
-    (args.length === 1 || (args.length === 2 && args[1] === "--stdin"))
-  ) {
-    await authenticate(args[1] === "--stdin");
-  } else if (args[0] === "doctor" && args.length === 1) {
-    const apiKey = await loadApiKey();
-    try {
-      console.log(JSON.stringify(await checkGateway(apiKey), null, 2));
-    } catch {
-      // SDK errors can contain request metadata; never print them alongside credentials.
-      throw new Error(
-        "Jev connection check failed. Check your AI Gateway key, model access, and network.",
-      );
+async function write(text: string) {
+  if (pipeClosed) return;
+  await new Promise<void>((resolve, reject) => {
+    process.stdout.write(text, (error) => (error ? reject(error) : resolve()));
+  });
+}
+
+function cacheDirectory() {
+  return join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "jevgrep");
+}
+
+async function main() {
+  const command = parseCommand(process.argv.slice(2));
+  switch (command.kind) {
+    case "help":
+      return write(help);
+    case "version":
+      return write(`${version}\n`);
+    case "skill":
+      return write(skill);
+    case "auth":
+      return authenticate(command.fromStdin, controller.signal);
+    case "cache-clear": {
+      const { createEvaluationCache } = await import("@repo/core");
+      const cache = createEvaluationCache({ directory: cacheDirectory() });
+      await cache.clear();
+      if (cache.stats().issues.length)
+        throw new CliError("Could not completely clear the cache. Check its permissions.");
+      return write("Cache cleared.\n");
     }
-  } else {
-    throw new Error("Unknown command or options. Run jevgrep --help.");
+    case "doctor": {
+      const apiKey = await loadApiKey();
+      const { createEvaluator } = await import("@repo/core");
+      const evaluator = createEvaluator({
+        apiKey,
+        signal: controller.signal,
+        baseURL: process.env.AI_GATEWAY_BASE_URL,
+      });
+      try {
+        const answers = await evaluator.evaluate({
+          state: { source: "export function recordEvent(event) { events.push(event); }" },
+          questions: {
+            relevant: {
+              type: "boolean",
+              instructions: "Does this source implement recording an event?",
+            },
+          },
+        });
+        if (!(answers.relevant! > 0.5))
+          throw new CliError("Jev returned an unexpected answer to the connection check.");
+        await write("Jev connection verified.\n");
+      } catch (error) {
+        if (error instanceof CliError) throw error;
+        throw new CliError(
+          "Jev connection check failed. Check your Gateway key, model access, and network.",
+        );
+      }
+      return;
+    }
+    case "search": {
+      const apiKey = await loadApiKey();
+      const { retrieve, createEvaluator, createEvaluationCache } = await import("@repo/core");
+      const cache = createEvaluationCache({
+        directory: cacheDirectory(),
+        enabled: !command.noCache,
+      });
+      const evaluator = createEvaluator({
+        cache,
+        policyVersion: JSON.stringify(command.policy),
+        apiKey,
+        signal: controller.signal,
+        baseURL: process.env.AI_GATEWAY_BASE_URL,
+      });
+      const result = await retrieve(
+        {
+          root: command.root,
+          query: command.query,
+          policy: command.policy,
+          signal: controller.signal,
+          protectedPaths: [configDirectory(), cacheDirectory()],
+        },
+        evaluator,
+      );
+      if (pipeClosed) return;
+      await write(renderResult(result, command.maxSourceBytes));
+      process.exitCode =
+        result.status === "interrupted" ? 130 : result.status === "incomplete" ? 2 : 0;
+    }
   }
+}
+
+try {
+  await main();
 } catch (error) {
-  console.error(
-    error instanceof SyntaxError
-      ? "Invalid credentials file. Run jevgrep auth again."
-      : error instanceof Error
+  if (!pipeClosed) {
+    const aborted = interrupted || (error instanceof Error && error.name === "AbortError");
+    process.exitCode = aborted ? 130 : 1;
+    const message = aborted
+      ? "Interrupted."
+      : error instanceof CliError
         ? error.message
-        : "Command failed.",
-  );
-  process.exitCode = 1;
+        : "Command failed. Check the root, permissions, credentials, and network.";
+    await write(`${message}\n`).catch(() => {});
+  }
+} finally {
+  process.removeListener("SIGINT", interrupt);
+  if (interrupted && !pipeClosed) process.exitCode = 130;
 }
