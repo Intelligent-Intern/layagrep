@@ -103,3 +103,13 @@ Before a final streaming refinement, the broad suite passed 220 with two
 verification passed nine with one such dependency failure after correcting test
 selectors. Official evaluation separately resolved the task. Evidence:
 `/tmp/jg-freshness-v1-pytest-comparison/findings.md`.
+
+Sphinx returned 100 files and 14 test/fixture blocks in 31,851 bytes, fully visible
+to the agent. Follow-up reads supplied the Python-domain implementation; its final
+production fix matches all successful comparators. Eight pre-patch read/search
+calls and three corrections to the authored test accompanied a higher bill than
+baseline. The new test covers typed instance variables, without the preceding
+cohort's class-variable and explicit-reference assertions. Final domain tests
+passed 35; broader autodoc tests passed 74 with the same meta-registration warning
+failure previously reproduced in a pristine checkout. Official grading resolved
+the task. Evidence: `/tmp/jg-freshness-v1-sphinx-comparison/findings.md`.
