@@ -12,10 +12,11 @@ its frozen artifact: eight baseline solves preserved, eight cost wins, 33.21%
 lower total Sol cost. [Confirmation evidence](assets/work-clock-confirmation.md)
 owns all ten results and their limits. That prior study has no active jobs.
 
-Next: observe the running `installed-jg-freshness-v1` cohort, then grade and account
-each retained attempt and aggregate the whole study. Root execution session
-`16656` writes `/tmp/jg-freshness-v1-run.log`; revalidate that handle before any
-resume. The correction is integrated in `92ca7f9`; its isolated worktree is removed.
+Next: finish Pylint grading/accounting and retain the complete
+`installed-jg-freshness-v1` aggregate. All ten coding attempts are complete; root
+execution session `16656` exited successfully and must not be restarted. Observer
+session `12752` owns remaining grading/accounting, with
+`/tmp/jg-freshness-observer.log`. The correction is integrated in `92ca7f9`; its isolated worktree is removed.
 Full merged verification and exact archive platform checks passed, followed by
 all ten frozen no-call validations. [Freshness evidence](assets/source-freshness.md)
 owns the archive identity, failure reproductions and verification results. Do not
