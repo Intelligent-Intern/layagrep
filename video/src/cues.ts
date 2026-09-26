@@ -9,6 +9,8 @@ export const FPS = 60;
 export const DURATION = 30;
 // Key-art hold before the cold open: feeds (X) thumbnail an early frame, so it must be the poster.
 export const PRE = 0.5;
+// The reveal-scene moment shown during that hold: logo, tagline, and a completed `jg` run.
+export const THUMB_T = 7.8;
 
 export const SCENE = { problem: 0, reveal: 4, engine: 8, jev: 14, bench: 20, outro: 26, end: 30 };
 

@@ -22,8 +22,9 @@ same cues to place every kick, riser, impact, and UI sound. Retime something the
 and both picture and sound move together. Scene code takes absolute time `t`
 (seconds) rather than local frames so cue values stay literal.
 
-The video opens on a short hold of the poster (`PRE`) because social feeds
-thumbnail an early frame, not strictly frame 0. `pre.wav` covers that hold and
+The video opens on a short hold (`PRE`) of a finished `jg` run from the reveal
+scene (`THUMB_T`), because social feeds thumbnail an early frame, not strictly
+frame 0. The `Poster` composition is separate key art for the README. `pre.wav` covers that hold and
 `music.wav` starts at the cold open.
 
 ## Reviewing changes

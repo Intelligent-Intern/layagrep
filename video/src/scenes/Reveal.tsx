@@ -120,14 +120,15 @@ const JDot: React.FC<{ t: number; at: number; size: number; ringAt?: number }> =
   );
 };
 
-export const Reveal: React.FC<{ t: number }> = ({ t }) => {
+/** hold: freeze without the dive into the terminal (used as the video's thumbnail frame). */
+export const Reveal: React.FC<{ t: number; hold?: boolean }> = ({ t, hold }) => {
   const shift = sp(t, R.shift, { damping: 16, stiffness: 120, mass: 0.9 });
   const termIn = sp(t, R.shift + 0.05, { damping: 14, stiffness: 120, mass: 0.9 });
   const typed = Math.floor(
     R.command.length * clamp01((t - R.typeStart) / (R.typeEnd - R.typeStart)),
   );
   const enterP = pulse(t, [R.enter], 0.08);
-  const zoom = ramp(t, R.zoom, 8.0, EASE.in);
+  const zoom = hold ? 0 : ramp(t, R.zoom, 8.0, EASE.in);
   const sh = shake(
     t,
     [
@@ -300,7 +301,7 @@ export const Reveal: React.FC<{ t: number }> = ({ t }) => {
           width: 1920,
           height: 1080,
           background: C.night,
-          opacity: ramp(t, 7.82, 8.0, (x) => x),
+          opacity: hold ? 0 : ramp(t, 7.82, 8.0, (x) => x),
         }}
       />
     </div>
