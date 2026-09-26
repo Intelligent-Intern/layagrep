@@ -89,3 +89,12 @@ The focused Docker gateway/retrieval/selection gate passes 22 tests and 118
 assertions, including preserving already-selected source when cancellation occurs
 between declaration groups. Typecheck and lint pass. These failure fixes preserve
 the healthy request construction used by the retained Requests checkpoint.
+
+The corrected `head -200` installed journey passes after process-group cleanup.
+The named cache gate passes all four selected journeys; the core cache gate passes
+eight tests and 45 assertions. The named output gate passes both whole-budget
+location preservation and actual head truncation. The exact 1,500-byte candidate
+tarball additionally passes installed runtime, source-budget and head checks.
+Maintained cohort accounting passes 14 Docker tests, including retained response
+costs when transport logs are missing. Missing coverage leaves total Jev cost
+unknown while preserving its known subtotal; Sol scoring is unchanged.

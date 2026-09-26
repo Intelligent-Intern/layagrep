@@ -1,6 +1,6 @@
 # Reuse healthy evaluations without stale context
 
-Status: planned. Depends on: 05. Read [contracts](../contracts.md) first.
+Status: verified. Depends on: 05. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -35,3 +35,5 @@ Show the artifact and summarize deviations. This is a non-blocking review checkp
 continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
+
+The named installed cache gate passes four journeys; the core cache gate passes eight tests with 45 assertions. Together they cover the freshness and recovery matrix above. See [integration evidence](../assets/integration-verification.md).

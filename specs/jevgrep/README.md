@@ -7,18 +7,17 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-25**.
-Next: finish the reviewed failure fixes, then integrate and measure the one
-bounded source-output candidate on the saved Requests task. The installed Requests
+Next: finish the single 1,500-byte source-output treatment on the saved Requests
+task, then grade/account through its frozen runner and choose the output default. The installed Requests
 checkpoint is complete: official solve passed, but Sol cost exceeded baseline.
 See [the paired trace and billing report](assets/installed-requests-checkpoint.md).
 The result proves integration, not the final quality gate.
 
-Parser and filesystem gates pass. Installed cache mutation, failure recovery,
-real timeout and head-pipe journeys have passed; the latest authentication-wait
-and pipeline-cleanup corrections are undergoing focused verification. See
+Parser, filesystem, failure and cache gates pass, including reviewed
+authentication-wait and pipeline cleanup corrections. See
 [integrated verification](assets/integration-verification.md).
 
-Priority: finish fault/cache acceptance, measure source allocation, freeze one
+Priority: measure source allocation, freeze one
 policy for all ten tasks, then complete supported-platform and release gates.
 Never rerun saved baselines. Production source remains uncapped until slice 07
 has official grade and full cost evidence. Jev API cost is reported separately
@@ -41,8 +40,8 @@ not claims about the current scaffold.
 - [x] [02 — Bundled parser parity](slices/02-parser.md)
 - [x] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
 - [x] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
-- [ ] [05 — Faults, cancellation and partial results](slices/05-failures.md)
-- [ ] [06 — Default-on fresh cache](slices/06-cache.md)
+- [x] [05 — Faults, cancellation and partial results](slices/05-failures.md)
+- [x] [06 — Default-on fresh cache](slices/06-cache.md)
 - [ ] [07 — Measured source budget](slices/07-output-policy.md)
 - [ ] [08 — Frozen quality and release verification](slices/08-release.md)
 

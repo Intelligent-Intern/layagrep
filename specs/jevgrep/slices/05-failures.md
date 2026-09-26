@@ -1,6 +1,6 @@
 # Preserve honest results under service and process failures
 
-Status: planned. Depends on: 04. Read [contracts](../contracts.md) first.
+Status: verified. Depends on: 04. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -12,7 +12,7 @@ CLI maps complete/incomplete/fatal/interrupted to their specified exit codes. Cl
 
 Deterministic installed failure matrix.
 
-`bun run test:e2e -- --case failures` prints a compact case/status/exit table.
+`bun run test:e2e -- --case failures` prints TAP case/status results; each case asserts its exit code and stdout/stderr contract.
 
 Commands are implementation targets. Add them in this slice; do not imply they
 already exist. CLI transcripts replace visual/screenshot gates for this product.
@@ -35,3 +35,5 @@ Show the artifact and summarize deviations. This is a non-blocking review checkp
 continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
+
+The installed failure gate passed ten journeys. Focused Docker HTTP and retrieval tests cover the small request guard, concurrent authentication failure, interrupted retry waits and retained partial source; the corrected process-group head test passes. See [integration evidence](../assets/integration-verification.md).
