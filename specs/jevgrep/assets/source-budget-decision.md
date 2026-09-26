@@ -47,3 +47,22 @@ checks cover UTF-8, partial-byte containment, whole-excerpt allocation, stable
 ordering and exact unlimited output.
 
 Candidate tarball SHA-256: `98bcf47e7de30ad82c8b452a86b958505c3befe6512d00f98486101c6a9fc802`. Returned stdout: 2,183 UTF-8 bytes; source allocation counts source only.
+
+## Paired trace findings
+
+The production patch is identical across baseline, uncapped and capped runs.
+The capped run used 10 Sol requests and eight shell commands; uncapped used 13
+and 24; baseline used 11 and nine. Capped still read `models.py` ranges 280–420
+and 1–280, `test_requests.py` 1–360, adapters, sessions, auth and setup, and searched
+docs and the repository. Both retrieval packets supplied the faulty helper and
+authentication recalculation, but only the `httpbin` helper as test-source evidence.
+Broad subsequent inspection persisted despite the shorter packet.
+
+Baseline ran four new tests and then seven broader tests. Capped ran four new
+tests and then nine broader tests. Uncapped ran six tests twice with a test edit
+between runs. Relative to baseline, the capped bill adds 3,456 cache-creation
+tokens and 349 generated/reasoning tokens; these explain approximately $0.017280
+and $0.006980 respectively. Fewer turns and less generated text explain much of
+the saving against uncapped, but their causal connection to the byte cap remains
+uncertain. Better test evidence is a possible future hypothesis, not an untested
+change folded into this frozen policy.
