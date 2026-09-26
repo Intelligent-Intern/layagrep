@@ -5,7 +5,7 @@ dist/
 !.env.example
 .DS_Store
 # Only the official benchmark workflow belongs in version control.
-# Raw runs stay local; superseded official experiments live on the research archive branch.
+# Raw runs stay local; superseded official experiments live on the research archive tag.
 /evals/*
 !/evals/README.md
 !/evals/accounting.md

@@ -1,7 +1,7 @@
 # Research preservation
 
-The official SWE-bench spike history is committed in this repository on
-`codex/archive-swebench-spikes-2026-09-26`. It is deliberately separate from the
+The official SWE-bench spike history is committed in this repository under the archive tag
+`archive/swebench-spikes-2026-09-26`. The temporary archival branch was deleted. It is deliberately separate from the
 maintained CLI and installed-package harness on `main`; do not merge its obsolete
 runners or historical instructions into the product.
 
