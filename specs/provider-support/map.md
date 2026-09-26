@@ -1,8 +1,9 @@
 # TypeSafe and OpenRouter support: decision map
 
 Completed explore-unknowns walk, 2026-09-26. Territory inspected at `3cd6dc8`.
-This is the agreed map for implementation; it does not claim the providers have
-been implemented or live-tested.
+This preserves the exploration decisions. The [implementation spec](README.md)
+now owns sequencing and verification; no provider implementation or live testing
+is claimed here.
 
 ## Known knowns
 
@@ -104,22 +105,15 @@ broker, package metadata, and README/skill onboarding.
   billing metadata. Preserve available raw observations and report unavailable
   totals as unknown, never zero. Jev remains excluded from scored agent task cost.
 - **Model identity and live behavior — OPEN verification.** Provider model names
-  and aliases differ, and aliases can change their backing model. Before coding
-  presets, confirm accepted IDs and the published adapter version's response/error
-  contract. Before claiming live support, run bounded synthetic doctor checks
+  and aliases differ, and aliases can change their backing model. The subsequent [research record](research.md) resolves documented model IDs;
+  slice 1 still verifies the published adapter response/error contract. Before claiming live support, run bounded synthetic doctor checks
   with each provider's credentials when available. No keys were read and no live
   model calls were made during this walk. Missing access must be reported, not
   replaced with a claim that fixtures prove service access or equal solve quality.
 
-## Implementation handoff
+## Superseded implementation handoff
 
-Keep this map updated if implementation uncovers a conflicting API contract.
-No paid benchmark repeat or release version is selected by this walk. Historical
-savings are evidence for their frozen candidates, not a guarantee for new routes.
-
-Copyable next request:
-
-> Implement this provider-support map. Preserve the retrieval policy, legacy saved
-> Vercel credentials, and the agreed single-provider auth flow. Verify protocol
-> parity, all-provider Docker journeys and native smoke; review, commit and push
-> cleanly to main. Report live-provider checks separately from fixture tests.
+The earlier request to implement directly from this map is superseded by the
+[spec README and Next Agent Prompt](README.md#next-agent-prompt). Follow its slice
+order and preservation gates. Keep this map as user-decision rationale, not a
+competing build plan. No paid benchmark repeat or release version was selected.
