@@ -54,9 +54,12 @@ whole directory just to alphabetize it. The caller must keep reading even when a
 page contains only excluded names, and must close a cursor when pruning a branch.
 
 Gap: the plan required bounded pages but did not prescribe reader ordering.
-Reach: this streaming behavior belongs to the filesystem reader. Retrieval gathers
-the pages and alphabetizes entries before constructing requests, preserving the
-frozen strategy. It may not treat a page boundary as the end of a directory.
+Reach: this streaming behavior belongs to the filesystem reader. Full directory
+expansion sorts the collected entries. A directory preview instead takes a bounded
+prefix in native order, then sorts only those sampled entries. Sorting the entire
+directory first could change which children Jev sees, so retain that distinction.
+A page boundary alone does not end enumeration; deliberate preview truncation or
+branch pruning does.
 Verdict: sound. Confidence: medium; this does not claim bounded total retrieval
 memory for an arbitrarily wide directory.
 
@@ -127,8 +130,8 @@ cannot accidentally broaden a follow-up upload. Verdict: sound. Confidence: high
 ### Revalidate selected evidence before sharing it across files
 
 When: installed retrieval integration. Files can change or become ignored while
-Jev evaluates other files. Before each declaration evaluation, check that the target and every cross-file
-donor are still eligible and have the same content hash. Remove stale
+Jev evaluates other files. Before each declaration-group request, check that the target and each distinct
+cross-file donor are still eligible and have the same content hash. Remove stale
 excerpts and report incomplete results while retaining admitted file locations.
 
 Gap: the spec required fresh snapshots but did not prescribe the per-request
@@ -140,7 +143,8 @@ Confidence: high. This is a bounded snapshot check, not an atomic filesystem loc
 
 When: cache integration. An unreadable cache should fall back to the provider.
 Report the cache problem as a warning; mark the search incomplete only when an
-actual retrieval step fails. Cached entries contain only validated numeric answers.
+actual retrieval step fails. Cache payloads contain validated numeric answers plus schema and creation-time
+metadata; exact requests and their namespace appear only as a digest filename.
 
 Gap: the result schema did not distinguish cache warnings from evidence failures.
 Reach: callers can trust a complete search even if it ran without persistence.
