@@ -14,14 +14,17 @@ the remaining frozen cells continue to characterize the same policy.
 | scikit-learn 13124 | Solved, no evaluator errors | $0.2161638 | $0.2944360 | −26.58% | $0.061259100 |
 | Django 15629 | Unresolved; one required test failed | $1.0015696 | $1.5055472 | −33.47%, **not a win** | Known $0.179557602; full total unknown |
 | Astropy 13579 | Solved, no evaluator errors | $0.5697514 | $0.4286310 | +32.92%, **not a win** | Known $0.093963408; full total unknown |
+| Xarray 3305 | Solved, no evaluator errors | $0.3963624 | $0.4937066 | −19.72% | Known $0.173733546; full total unknown |
+| SymPy 16792 | Solved, no evaluator errors | $0.4377728 | $0.5479750 | −20.11% | $0.085087926 |
+| pytest 6197 | Solved, no evaluator errors | $0.5946860 | $2.3444580 | −74.63% | $0.100513098 |
+| Sphinx 8638 | Solved, no evaluator errors | $0.7531188 | $1.0594724 | −28.92% | Known $0.106778952; full total unknown |
 
-All four Sol bills are complete: nine generations each for Requests and
-scikit-learn, 24 for Django and 21 for Astropy. Jev response-cost
-coverage is complete: Requests has 72 client calls and 81 provider attempts;
-scikit-learn has 215 calls and 233 provider attempts. These are observed API
-metadata, not invoice reconciliation. Unknown or failed remaining outcomes cannot
-be counted as wins. Original grading and accounting receipts live beside each
-attempt in the study; remaining cells continue under the same frozen policy.
+All eight listed Sol bills are complete. Officially, seven tasks solved and six
+are cost wins; Django still violates baseline solve preservation. Matplotlib and
+Pylint are unfinished. Unknown or failed outcomes cannot count as wins. Jev
+costs are observed API metadata rather than invoice reconciliation; incomplete
+transport coverage keeps full totals unknown without discarding known subtotals.
+Original grading and accounting receipts live beside each attempt in the study.
 
 ## Requests paired trace finding
 
@@ -147,3 +150,24 @@ contract, exact request/response artifacts and hashes are retained in
 `/tmp/jg-query-sensitivity/`. A next experiment must remain separately identified,
 retain the same official solve/cost gate, and test actual task outcomes before any
 candidate adoption. No Sol or baseline agent was rerun for this diagnostic.
+
+## Xarray and SymPy paired traces
+
+Xarray returns 19 files and nine excerpts (9,107 source bytes); its decisive
+`Variable.quantile` blocks are byte-identical to the accepted spike. Three batched
+exploration commands replace the baseline's 15 pre-patch reads. The new agent
+makes a shell mistake after five tests pass: Bash-only `PIPESTATUS` fails under
+`/bin/sh`, requiring a proper Bash rerun. Its added attribute-preservation test is
+narrower than baseline/spike coverage, and it omits the spike's broad three-module
+run. No new functional defect was established, but lower verification coverage
+is part of the cost comparison. Evidence: `/tmp/jg-cpython-xarray-comparison/`.
+
+SymPy returns 28 files, five leads and no excerpts. Both it and the spike identify
+`CodeGen.routine`; the new packet adds two useful declaration leads. The new
+implementation patch is byte-identical to baseline. It passes 69 tests in one
+native-suite run; baseline first attempts unavailable pytest, then repeats the
+native suite while correcting its new expected fixture. The spike also repairs
+expected import order before passing. All test generated wrapper code but lack
+NumPy/Cython for a compiled reproduction. No implementation regression was found.
+Evidence: `/tmp/jg-sympy-paired/`. These trace differences are observed associations,
+not isolated causal estimates of retrieval's contribution.
