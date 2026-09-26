@@ -62,8 +62,25 @@ Promotion still requires every one of eight baseline solves preserved and seven
 successful strict Sol-cost wins across this single candidate cohort. Never pool
 results with earlier candidates or label these tuned tasks untouched validation.
 
-## Status
+## Registered candidate
 
-Offline visibility check passes. Isolated implementation and focused checks are
-in progress. No package identity is registered yet; no paid calls are authorized
-by an unrecorded artifact. No production change or promotion has occurred.
+Commit: `a88c4895d2c547b444607ca147c663fed1ea6308`, isolated branch
+`codex/interleaved-presentation`. Normal-build package SHA-256:
+`367878fcb86551ce85c7417089b584196c294405e6490247504698b1e302eb76`.
+Canonical skill SHA-256 remains
+`bb73b4638cdd7dc757100ddeff295251c7d3643f4e2f5ca80bc141ab54aa86a6`.
+Exactly one of eleven package payloads differs from the failed query parent:
+the CLI bundle. Every bundle byte outside the renderer module is identical;
+metadata, skill, parser assets and dependency declarations are unchanged.
+Proof and logs: `/tmp/jg-interleaved-artifacts/`.
+
+The built renderer reproduces the independently checked offline counterfactual
+byte-for-byte. Exact complete-block multisets, per-file block order and ownership,
+and ranked path order pass, in addition to line and byte conservation. Seven
+focused renderer tests (24 assertions), typecheck, lint and build pass; the new
+multi-file regression fails against the parent before the edit. Expected frozen
+presentation differences are explicit; production tests are unchanged.
+
+Version remains the unpublishable development checkpoint `0.0.0`; release
+validation correctly rejects it. No release or promotion occurs. Next: prepare
+and no-call validate the frozen plan before its one Django attempt.
