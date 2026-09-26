@@ -7,8 +7,10 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: verify and review the prospective [agent-work timing protocol](assets/timing-protocol.md),
-then freeze the faithful production package under that protocol for Django first.
+Next: collect the running Django attempt in `installed-jg-cpython-work-clock-v1`,
+then grade/account and apply the registered Django-first continuation rule.
+The [agent-work timing protocol](assets/timing-protocol.md) passed review and
+merged Docker checks; all ten cells are frozen and no-call validated.
 The [source placement experiment](assets/presentation-study.md) is terminal and
 failed; its remaining nine cells stay unrun. Keep production renderer and skill unchanged.
 The no-model counterfactual preserves all evidence while moving first-ranked
@@ -20,7 +22,8 @@ failed the same Django regression at Sol $1.2353512; its remaining nine tasks st
 unrun and the production skill is unchanged. Packet-visibility comparison is
 complete: initial truncation hid selected source, but a later read and explicit
 recognition preceded replacing the failing regression with a type-changing test.
-Do not infer another query-breadth fix. No paid task is active.
+Do not infer another query-breadth fix. Django under the work-time protocol is
+the only active paid task; do not launch a replacement attempt.
 The frozen `installed-jg-cpython-parity-v1` cohort is complete and not accepted:
 7/10 solves versus 8/10 baseline, six cost wins, and 35.27% lower full Sol cost.
 [Confirmation evidence](assets/cpython-confirmation.md) owns all outcomes, trace

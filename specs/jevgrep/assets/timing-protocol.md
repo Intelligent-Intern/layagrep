@@ -67,6 +67,11 @@ final cleanup removes the container after evidence capture. Timeouts cannot coun
 as completed treatments even when the native process exited zero. Nonterminal
 error messages do not prematurely end an active retrieval interval.
 
-Next study: `installed-jg-cpython-work-clock-v1`, all ten cells frozen before any
-run, Django first under the rule above. No new paid attempt is running yet.
-Production CLI and canonical skill remain unchanged.
+Study `installed-jg-cpython-work-clock-v1` is frozen and all ten no-call checks
+pass. Its 179 installed files match the original bundled-CPython cohort exactly;
+the skill hash is
+`1a6b29ca8855d3538883c6dada289db68dd2dfca90f466e39407902dc000dd50`.
+Proof: `/tmp/jg-work-clock-freeze-proof.json`. Django is running first under the
+registered rule. Collect its terminal receipt, official grade and complete bill
+before any continuation. No other cell has started. Production CLI and canonical
+skill remain unchanged.
