@@ -9,6 +9,7 @@ import io
 import json
 import os
 import sys
+import subprocess
 from pathlib import Path
 import tempfile
 import threading
@@ -61,6 +62,18 @@ class InstalledTests(unittest.TestCase):
         self.assertGreater(result['retrieval_wait_seconds'], 3)
         self.assertLess(result['work_seconds'], 2)
         self.assertEqual(result['credit_intervals'][0]['command_ids'], ['search'])
+        self.assertIn('turn.completed', events)
+
+    def test_nonterminal_error_during_retrieval_preserves_credit_until_completion(self):
+        command = 'jg "research"'
+        result, events = self.monitor([self.event('search', command), 0.3,
+                                       {'type':'error','message':'stream reconnecting'}, 3.2,
+                                       self.event('search', command, True), {'type':'turn.completed'}])
+        self.assertEqual(result['exit_code'], 0)
+        self.assertFalse(result['timed_out'])
+        self.assertEqual(result['timing_event_errors'], 0)
+        self.assertGreater(result['retrieval_wait_seconds'], 3)
+        self.assertEqual(len(result['credit_intervals']), 1)
         self.assertIn('turn.completed', events)
 
     def test_unrelated_command_reaches_work_deadline(self):
@@ -169,6 +182,59 @@ class InstalledTests(unittest.TestCase):
         runner.write_json(out/'receipt.json',{'plan_sha256':runner.digest(path),'cell':plan['cell'],'status':status,
                                             'required_retrieval_observed':True,'timing_valid':True,'native_completed':True,'exit_code':0,'host_pid':os.getpid()})
         return out
+
+    def test_timeout_with_zero_exit_retains_patch_but_cannot_complete_treatment(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path, plan = self.fixture(Path(temporary))
+            calls, elapsed, lifetime = [], [0], [float('inf')]
+            def docker(argv, checked=True, **kwargs):
+                calls.append(argv)
+                if argv[:3] == ['docker', 'run', '-d'] and argv[-2] == 'sleep':
+                    lifetime[0] = float(argv[-1])
+                if argv[:2] == ['docker', 'exec'] and elapsed[0] >= lifetime[0]:
+                    if checked:
+                        raise subprocess.CalledProcessError(1, ['docker', 'exec'])
+                    return subprocess.CompletedProcess(argv, 1, b'', b'container stopped')
+                output = b''
+                if argv[-2:] == ['rev-parse', 'HEAD']:
+                    output = plan['cell']['expected_image_head'].encode()
+                elif argv[-2:] == ['rev-parse', 'HEAD^{tree}']:
+                    output = plan['cell']['expected_source_tree'].encode()
+                elif argv[-1:] == ['--version'] and argv[-2] in runner.VERSIONS:
+                    output = runner.VERSIONS[argv[-2]].encode()
+                elif 'sha256sum' in argv:
+                    output = (runner.digest(plan['skill']) + ' skill').encode()
+                elif 'diff' in argv:
+                    output = b'fixture patch'
+                return subprocess.CompletedProcess(argv, 0, output, b'')
+            def expired(invocation, stdout, stderr, policy):
+                # Native completion can already be in the pipe when the work
+                # deadline is noticed. A zero OS exit cannot override that clock.
+                # Simulate an hour of retrieval plus expired work. Docker's
+                # task container must remain available for patch extraction.
+                elapsed[0] = 4501
+                events = [self.event('search', 'jg "research"', True), {'type':'turn.completed'}]
+                stdout.write(('\n'.join(json.dumps(e) for e in events) + '\n').encode())
+                return {'exit_code':0,'timed_out':True,'timeout_kind':'work',
+                        'wall_seconds':4501,'work_seconds':901,'retrieval_wait_seconds':3600,
+                        'credit_intervals':[],'timing_event_errors':0}
+            with patch.object(runner, 'check_image', return_value=plan['cell']['image']), \
+                 patch.object(runner, 'command', side_effect=docker), \
+                 patch.object(runner.subprocess, 'run', side_effect=lambda argv, **kw: docker(argv, checked=False, **kw)), \
+                 patch.object(runner, 'monitor_native', side_effect=expired), \
+                 patch.dict(os.environ, {'AI_GATEWAY_API_KEY':'fixture-only'}), contextlib.redirect_stdout(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    runner.run(argparse.Namespace(plan=path, dry_run=False, task=None))
+            out = Path(plan['output'])
+            receipt = json.loads((out/'receipt.json').read_text())
+            self.assertEqual(receipt['exit_code'], 0)
+            self.assertTrue(receipt['timed_out'])
+            self.assertTrue(receipt['native_completed'])
+            self.assertTrue(receipt['required_retrieval_observed'])
+            self.assertEqual(receipt['status'], 'failed')
+            self.assertFalse(runner.protocol_valid(receipt))
+            self.assertEqual((out/'agent.patch').read_bytes(), b'fixture patch')
+            self.assertEqual(sum(call[:3] == ['docker', 'rm', '-f'] for call in calls), 2)
 
     def test_dry_run_validates_pair_without_credentials_or_agent(self):
         with tempfile.TemporaryDirectory() as temporary:

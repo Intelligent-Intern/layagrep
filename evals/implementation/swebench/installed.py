@@ -324,7 +324,7 @@ def monitor_native(invocation, stdout, stderr, policy):
             value = json.loads(line)
             item = value.get('item', {})
             kind = value.get('type')
-            if kind in ('turn.completed', 'turn.failed', 'error'):
+            if kind in ('turn.completed', 'turn.failed'):
                 close_credit(now)
                 active.clear()
             elif kind in ('item.started', 'item.completed') and item.get('type') == 'command_execution':
@@ -421,9 +421,11 @@ def run(args):
         command(['docker', 'network', 'create', '--internal', network])
         command(['docker', 'run', '-d', '--name', proxy, '--label', 'jg.cell=' + cell['id'], '-e', 'JEVGREP_TRACE_DIR=/run/jev-traces', image, 'python3', '-u', '-c', (HERE / 'gateway_broker.py').read_text()])
         command(['docker', 'network', 'connect', '--alias', 'model-egress', network, proxy])
+        # The monitor owns the deadline; keep the container alive for setup and
+        # artifact capture too, then remove it in finally.
         command(['docker', 'run', '-d', '--name', tag, '--label', 'jg.cell=' + cell['id'], '--network', network,
                  '-e', 'HTTP_PROXY=http://model-egress:3128', '-e', 'HTTPS_PROXY=http://model-egress:3128',
-                 '-e', 'NO_PROXY=localhost,127.0.0.1,model-egress', image, 'sleep', '1800'])
+                 '-e', 'NO_PROXY=localhost,127.0.0.1,model-egress', image, 'sleep', 'infinity'])
         dx(['sh', '-c', 'useradd -m -u 1001 agent; mkdir -p /home/agent/.codex /home/agent/.claude /workspace; chown -R agent:agent /home/agent /workspace'])
         receipt['official_image_head'] = dx(['git', '-C', '/testbed', 'rev-parse', 'HEAD']).stdout.decode().strip()
         receipt['official_source_status'] = dx(['git', '-C', '/testbed', 'status', '--porcelain']).stdout.decode()
@@ -495,7 +497,8 @@ def run(args):
         sessions = list((out / 'codex-sessions').rglob('*.jsonl'))
         if len(sessions) == 1:
             shutil.copyfile(sessions[0], out / 'raw-rollout.jsonl')
-        receipt['status'] = 'completed' if receipt.get('exit_code') == 0 and receipt['native_completed'] and receipt['required_retrieval_observed'] else 'failed'
+        receipt['status'] = 'completed' if (not receipt['timed_out'] and receipt.get('exit_code') == 0 and
+                                            receipt['native_completed'] and receipt['required_retrieval_observed']) else 'failed'
     except Exception as error:
         receipt['status'] = 'failed'
         # Tool output may contain environment arguments: retain error types, never raw commands or keys.

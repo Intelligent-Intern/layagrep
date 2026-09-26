@@ -78,10 +78,15 @@ billing, cohort acceptance and exact body capture through a synthetic provider.
 
 New schema-3 plans freeze a 900-second treatment **work** budget. The monitor uses
 host monotonic observation of native `command_execution` started/completed events.
+Only native command-execution events establish concurrent work for this clock.
 It excludes the union of standalone `jg` search waits only while no other command
 is active. Overlapping retrieval calls earn no double credit; unrelated concurrent
 commands count as work. Completion, cancellation, terminal turns and process EOF
-end credit. A separate 24-hour wall limit protects against a runaway retrieval.
+end credit. Nonterminal error/reconnect events do not end an active command.
+A separate 24-hour wall limit protects against a runaway retrieval. The task
+container stays alive for setup and artifact capture until lifecycle cleanup; it
+has no competing shorter sleep deadline. An expired clock always records a failed
+attempt, even if the native process has already exited zero while output drains.
 Receipts retain work, credited retrieval and wall durations plus the disjoint
 credit intervals and native command IDs, so timing remains auditable.
 
