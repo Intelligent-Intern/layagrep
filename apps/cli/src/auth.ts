@@ -3,28 +3,52 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { isCancel, password } from "@clack/prompts";
+import { CliError } from "./errors";
 
-function configDirectory() {
+export function configDirectory() {
   return join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "jevgrep");
 }
 
-export async function authenticate(fromStdin: boolean) {
+function validateKey(raw: string): string {
+  const key = raw.trim();
+  if (!key || /\s/.test(key) || Buffer.byteLength(key) > 8192) {
+    throw new CliError("Provide one non-empty API key without whitespace (maximum 8 KiB).");
+  }
+  return key;
+}
+
+export async function authenticate(fromStdin: boolean, signal: AbortSignal) {
   let key: string;
   if (fromStdin) {
     const chunks: Buffer[] = [];
-    for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
-    key = Buffer.concat(chunks).toString("utf8").trim();
-  } else {
-    if (!process.stdin.isTTY) throw new Error("Use auth --stdin to read a piped key.");
-    const answer = await password({ message: "Paste your Vercel AI Gateway API key" });
-    if (isCancel(answer)) {
-      process.exitCode = 130;
-      return;
+    let bytes = 0;
+    const abort = () => process.stdin.destroy(new DOMException("Interrupted", "AbortError"));
+    signal.throwIfAborted();
+    signal.addEventListener("abort", abort, { once: true });
+    try {
+      for await (const chunk of process.stdin) {
+        bytes += chunk.length;
+        if (bytes > 8192) throw new CliError("Auth input exceeds 8 KiB.");
+        chunks.push(Buffer.from(chunk));
+      }
+      key = validateKey(Buffer.concat(chunks).toString("utf8"));
+    } finally {
+      signal.removeEventListener("abort", abort);
     }
-    key = answer.trim();
+  } else {
+    if (!process.stdin.isTTY) throw new CliError("Use auth --stdin to read a piped key.");
+    const answer = await password({
+      message: "Paste your Vercel AI Gateway API key",
+      output: process.stdout,
+      signal,
+    });
+    if (isCancel(answer)) {
+      throw new DOMException("Interrupted", "AbortError");
+    }
+    key = validateKey(answer);
   }
-  if (!key || /\s/.test(key)) throw new Error("Provide one non-empty API key.");
   const directory = configDirectory();
+  signal.throwIfAborted();
   await mkdir(directory, { recursive: true, mode: 0o700 });
   await chmod(directory, 0o700);
   const temporary = join(directory, `.credentials-${randomUUID()}.json`);
@@ -34,24 +58,28 @@ export async function authenticate(fromStdin: boolean) {
   } finally {
     await rm(temporary, { force: true });
   }
-  console.error("AI Gateway key saved. Run jevgrep doctor to verify access.");
+  process.stdout.write("AI Gateway key saved. Run jg doctor to verify access.\n");
 }
 
 export async function loadApiKey(): Promise<string> {
-  const fromEnvironment = process.env.AI_GATEWAY_API_KEY?.trim();
-  if (fromEnvironment) return fromEnvironment;
+  const fromEnvironment = process.env.AI_GATEWAY_API_KEY;
+  if (fromEnvironment !== undefined) {
+    if (!fromEnvironment.trim())
+      throw new CliError("AI_GATEWAY_API_KEY is empty; saved credentials are disabled.");
+    return validateKey(fromEnvironment);
+  }
   try {
     const credentials = JSON.parse(
       await readFile(join(configDirectory(), "credentials.json"), "utf8"),
     );
     if (typeof credentials.apiKey !== "string" || !credentials.apiKey.trim()) {
-      throw new Error("Invalid credentials. Run jevgrep auth again.");
+      throw new CliError("Invalid credentials. Run jg auth again.");
     }
-    return credentials.apiKey;
+    return validateKey(credentials.apiKey);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new Error("Run jevgrep auth or set AI_GATEWAY_API_KEY.");
+      throw new CliError("Run jg auth or set AI_GATEWAY_API_KEY.");
     }
-    throw error;
+    throw new CliError("Could not read valid credentials. Run jg auth again.");
   }
 }

@@ -1,0 +1,68 @@
+import { expect } from "bun:test";
+import { execFile } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
+import { testInDocker } from "./cli";
+
+const execute = promisify(execFile);
+
+testInDocker(
+  "npm tarball installs the jg executable and canonical skill outside the checkout",
+  async () => {
+    const scratch = await mkdtemp(join(tmpdir(), "jevgrep-package-"));
+    const env = { ...process.env, HOME: scratch, AI_GATEWAY_API_KEY: "", NODE_PATH: "" };
+    try {
+      const { stdout } = await execute(
+        "npm",
+        ["pack", "--ignore-scripts", "--json", "--pack-destination", scratch],
+        {
+          cwd: fileURLToPath(new URL("../", import.meta.url)),
+          env,
+        },
+      );
+      const packed = JSON.parse(stdout)[0];
+      const filenames = packed.files.map((file: { path: string }) => file.path);
+      expect(filenames).toContain("dist/bin/index.js");
+      expect(filenames).toContain("dist/assets/tree-sitter-python.wasm");
+      expect(filenames).toContain("dist/assets/tree-sitter-python.LICENSE");
+      expect(filenames).toContain("dist/skills/jevgrep/SKILL.md");
+      expect(filenames.some((path: string) => /^(evals|src|node_modules|test)\//.test(path))).toBe(
+        false,
+      );
+      const prefix = join(scratch, "install");
+      await execute(
+        "npm",
+        [
+          "install",
+          "--prefix",
+          prefix,
+          "--ignore-scripts",
+          "--no-audit",
+          "--no-fund",
+          join(scratch, packed.filename),
+        ],
+        { cwd: scratch, env, timeout: 120000 },
+      );
+      const binary = join(prefix, "node_modules/.bin/jg");
+      const help = await execute(binary, ["--help"], { cwd: scratch, env });
+      expect(help.stderr).toBe("");
+      expect(help.stdout).toContain('Usage: jg "question" [root]');
+      const skill = await execute(binary, ["skill"], { cwd: scratch, env });
+      expect(skill.stderr).toBe("");
+      expect(skill.stdout).toBe(
+        await readFile(new URL("../../../skills/jevgrep/SKILL.md", import.meta.url), "utf8"),
+      );
+      const manifest = JSON.parse(
+        await readFile(join(prefix, "node_modules/@dzhng/jevgrep/package.json"), "utf8"),
+      );
+      expect(manifest.bin).toEqual({ jg: "./dist/bin/index.js" });
+      expect(manifest.dependencies["@repo/core"]).toBeUndefined();
+    } finally {
+      await rm(scratch, { recursive: true, force: true });
+    }
+  },
+  150000,
+);
