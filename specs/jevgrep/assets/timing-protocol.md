@@ -124,7 +124,7 @@ The production patch again calls `check_random_state` unconditionally. It repeat
 the compatibility issue established in the first faithful cohort: with shuffling
 disabled, invalid ignored seeds accepted before the patch now raise. The official
 solve remains recorded, alongside this broader-quality caveat. No agent or
-baseline is rerun. Astropy is the current active cell in the sequential runner.
+baseline is rerun. Astropy was the next active cell before the outage described below.
 
 
 ## Infrastructure interruption under investigation
@@ -132,8 +132,43 @@ baseline is rerun. Astropy is the current active cell in the sequential runner.
 While Astropy was active, Docker Desktop stopped serving its engine. Host uptime
 continued; the backend log at 2026-09-26T11:36:02Z reports inability to write
 `Data/log/vm/init.log` with “no space left on device.” A subsequent host disk check
-showed about 5.8 GiB available. The original runner process remains alive, but no
-new Astropy events arrive. Docker restart is pending; neither Astropy nor another
-cell has been replaced. Check actual process/container state before classifying
-the attempt, collecting evidence, or continuing. Do not infer model failure from
-this service outage or silently exclude it from the cohort.
+showed about 5.8 GiB available. At that observation the original runner remained alive without new Astropy
+events, and Docker restart was pending. The recovery below supersedes that
+process status. Do not infer model failure from this service outage or silently
+exclude it from the cohort.
+
+
+### Recovery and prospective replacement study
+
+The original runner terminated: Astropy has `status=failed`, exit 255 and no
+completed native turn. Its remaining seven cells were never started. No patch
+existed in the recovered working tree. This cohort cannot satisfy acceptance and
+will not be resumed or have its interrupted cell replaced.
+
+Docker recovered after its stuck shutdown processes were cleared. Native sessions,
+597 Jev request/response pairs and broker logs were copied from stopped containers
+into `installed-jg-cpython-work-clock-v1/recovery/astropy__astropy-13579`, with a
+hashed recovery manifest. Original attempt receipts are unchanged. Recovery-only
+accounting retains known Sol **$0.2080088** (full bill unknown) and known Jev
+**$0.126530544** (also not asserted complete). The two owned containers and their
+network were removed only after copying evidence and checking the clean source.
+No coding agent resumed. `/tmp/jg-docker-outage/` retains recovery procedure/logs.
+
+Unused build cache older than an hour was pruned (9.721 GB); images, volumes,
+baselines and research evidence were preserved. Host free space then measured
+approximately 24 GiB. The preceding older-than-24-hours prune removed zero bytes.
+
+Prepare `installed-jg-cpython-work-clock-v2` as a new full ten-task study using
+the exact same production tarball, skill, runtime and work-clock procedure. The
+reason is the documented host failure, not a quality or cost selection. Freeze
+and validate all cells before calls. Run the full fixed cohort once; include all
+its outcomes and costs, and never pool v1's two wins into it. Retain the interrupted
+v1 cohort and its costs alongside the new result. Baselines remain immutable and
+are executed zero additional times. No product behavior changes are introduced.
+
+
+V2 preparation and all ten no-call validations passed. The 179 installed files,
+package, canonical skill, archived runner/broker/registry, task inputs, dataset
+and timing policy match v1 byte-for-byte where applicable. Proof:
+`/tmp/jg-work-clock-v2-freeze-proof.json`. Independent recovery review verified
+all 1,198 manifest hashes and the unchanged failed receipt before paid continuation.

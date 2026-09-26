@@ -7,15 +7,14 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-The only active confirmation is `installed-jg-cpython-work-clock-v1`.
-Django officially solved below its immutable baseline; the registered rule now
-permits the other nine tasks in that same frozen plan. Scikit-learn also officially solved below baseline; the sequential runner is
-now on Astropy, where Docker has stopped after a disk-space error. Restore the
-engine and inspect the existing attempt before any continuation; no replacement.
-The runner and Docker restart are still pending. Collect every terminal receipt, official grade and complete
-Sol bill, then aggregate the full cohort. Never replace an attempt or rerun a
-baseline. [Timing protocol and current evidence](assets/timing-protocol.md) own
-this study's procedure and results.
+The work-clock v1 confirmation stopped after Docker's disk-space failure during
+Astropy. That attempt is failed and recovered separately; two completed wins and
+seven unstarted cells remain retained. Do not resume or replace its failed cell.
+Docker is recovered and disposable build cache was cleared. The new full `installed-jg-cpython-work-clock-v2` study is prepared and all ten
+no-call validations pass with identical package and protocol. Execute each cell
+once and grade/account all outcomes.
+Never pool studies or rerun a baseline. [Timing protocol and evidence](assets/timing-protocol.md)
+own the outage, recovered bills and prospective replacement rationale.
 
 Keep production retrieval and the canonical skill unchanged. The installed
 package matches the restored bundled-CPython candidate; only the prospective
