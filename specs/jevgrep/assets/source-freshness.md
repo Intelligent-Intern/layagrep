@@ -47,8 +47,9 @@ tests, 24 benchmark-harness tests and 24 installed tests, plus typecheck and lin
 Evidence: `/tmp/jg-freshness-merged-verify-serial.log`; no test allowance was changed.
 
 The accepted work-clock cohort measured the preceding archive. A separate frozen
-ten-task treatment cohort is running at
+ten-task treatment cohort completed at
 `evals/runs/swebench/installed-jg-freshness-v1/`. Preparation and all ten no-call
 validations passed before execution. Its archived runner owns the frozen inputs;
 saved baselines remain immutable and earlier treatment cells cannot be pooled
-into its result. Run log: `/tmp/jg-freshness-v1-run.log`.
+into its result. The [completed confirmation](freshness-confirmation.md) failed
+the quality gate despite passing deterministic verification. Run log: `/tmp/jg-freshness-v1-run.log`.

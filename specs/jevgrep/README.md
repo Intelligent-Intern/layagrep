@@ -7,31 +7,29 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-The full `installed-jg-cpython-work-clock-v2` study is complete and accepted for
-its frozen artifact: eight baseline solves preserved, eight cost wins, 33.21%
-lower total Sol cost. [Confirmation evidence](assets/work-clock-confirmation.md)
-owns all ten results and their limits. That prior study has no active jobs.
+The corrected package's `installed-jg-freshness-v1` cohort is complete and
+**rejected**: six of eight baseline solves preserved, four successful cost wins,
+and 27.30% lower full Sol cost. [Current confirmation](assets/freshness-confirmation.md)
+owns the complete aggregate and all ten trace comparisons. No coding, grading or
+accounting process remains active; do not restart terminal sessions or attempts.
 
-Next: finish Pylint grading/accounting and retain the complete
-`installed-jg-freshness-v1` aggregate. All ten coding attempts are complete; root
-execution session `16656` exited successfully and must not be restarted. Observer
-session `12752` owns remaining grading/accounting, with
-`/tmp/jg-freshness-observer.log`. The correction is integrated in `92ca7f9`; its isolated worktree is removed.
-Full merged verification and exact archive platform checks passed, followed by
-all ten frozen no-call validations. [Freshness evidence](assets/source-freshness.md)
-owns the archive identity, failure reproductions and verification results. Do not
-transfer the previous cohort's measured results to this corrected archive.
-[Current confirmation](assets/freshness-confirmation.md) records completed cells;
-scikit-learn solved officially but exceeded baseline cost, and Django and Requests
-failed official grading, contradicting acceptance for this cohort. Finish the registered
-attempts and diagnose that failure; do not replace or pool cells. The choices ledger has
-been consolidated against current code; final reconciliation and archive remain.
+The freshness correction is integrated in `92ca7f9`. Full merged verification,
+healthy reference parity and exact archive checks on all supported platforms
+passed; [freshness evidence](assets/source-freshness.md) owns that proof and its
+limits. Django and Requests still failed official behavior cases despite the
+agent receiving the relevant code. This does not prove the correction or model
+variance alone caused the losses.
 
-Preserve healthy retrieval semantics and the canonical skill while fixing
-filesystem freshness. Keep the measured archive immutable; it matches the
-restored bundled-CPython candidate, with only the benchmark timing protocol changed. The failed query and presentation experiments
-have not earned promotion. Their remaining cells stay unrun. Prior outcomes
-cannot be pooled into the completed confirmation.
+Next: audit the final retained evidence and resolve the product-quality decision
+with the user before changing the exact spike strategy or acceptance contract.
+Do not rerun an unchanged cohort to seek a passing draw, replace attempts, pool
+prior outcomes, or archive the spec as accepted. The choices ledger has been
+consolidated against current code; final reconciliation and close-spec remain.
+
+The preceding [accepted confirmation](assets/work-clock-confirmation.md) remains
+valid for its own frozen archive. It cannot replace this corrected candidate's
+failed result. Preserve both archives, the canonical skill and healthy retrieval
+semantics. Rejected query/presentation experiments have not earned promotion.
 
 Evidence and boundaries:
 
@@ -47,13 +45,14 @@ Evidence and boundaries:
   [presentation trial](assets/presentation-study.md): rejected experiments,
   source-parity probes and limits on causal explanations.
 
-Priority: validate the integrated freshness correction without weakening
-acceptance; resolve the whole-product review; consolidate choices against the
-final code; then close-spec. Slice 08 remains open. No publication or
+Priority: resolve the failed quality confirmation without silently weakening
+acceptance or changing the measured strategy; then perform final reconciliation
+and close-spec. Slice 08 remains open. No publication or
 release tag is authorized for the intentional `0.0.0` development checkpoint.
 Report observed Jev costs separately; they never enter scored Sol task cost.
 
-No user decision blocks continuing. Use the authorized credentials and retained
+Further strategy experiments or acceptance changes require an explicit direction
+after reviewing the completed evidence. Preserve authorized credentials and retained
 Docker snapshots; do not repair credentials or regenerate baselines. Preserve
 user-edited skill files and local historical evidence. Stage only explicit files,
 keeping deprecated personal-repository evals out of Git.

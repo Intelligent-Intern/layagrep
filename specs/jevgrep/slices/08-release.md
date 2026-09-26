@@ -1,6 +1,6 @@
 # Confirm quality and the release artifact
 
-Status: open. Frozen work-clock v2 confirmation passed; final review found filesystem-freshness defects requiring correction and validation. Depends on: 07. Read [contracts](../contracts.md) first.
+Status: open. Freshness fixes and deterministic verification passed, but the corrected package's complete cohort lost Django and Requests baseline solves. See [final confirmation](../assets/freshness-confirmation.md). Depends on: 07. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 

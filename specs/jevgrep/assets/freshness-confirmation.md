@@ -1,7 +1,13 @@
 # Corrected-package confirmation
 
-Status: running; acceptance contradicted by lost Django and Requests baseline solves.
-Finish and retain the registered cohort rather than replacing that attempt.
+Status: complete; rejected by the registered acceptance gate. Six of ten tasks
+solved, six of eight baseline solves were preserved, and four solved tasks were
+strict cost wins. All ten Sol bills are complete: **$5.5410776** versus baseline
+**$7.6220690**, a **27.30% reduction including failed tasks**. Lower total cost
+does not compensate for the lost solves. Jev's observed subtotal is
+**$1.035782622**; its full total is unknown and excluded from scored cost.
+The [complete aggregate](freshness-aggregate.json) is retained byte-for-byte from
+the study, SHA-256 `37f2dc0883d0e366b75e74b0f178498a393da9f8ef9cd573d5881630efc0d65a`.
 This is a separate prospective ten-task cohort for the
 [source-freshness correction](source-freshness.md), not a replacement of individual
 cells from the preceding accepted study. The frozen plan, archived runner and
@@ -23,6 +29,7 @@ separately and excluded; incomplete observations are subtotals, not totals.
 | pytest-dev__pytest-6197 | solved; cost win | $0.8116844 | $2.3444580 | $0.098483154 |
 | sphinx-doc__sphinx-8638 | solved; not a cost win | $1.2444744 | $1.0594724 | known $0.196647108; total unknown |
 | matplotlib__matplotlib-26466 | unresolved | $0.4256784 | $0.3957160 | known $0.157293066; total unknown |
+| pylint-dev__pylint-4604 | unresolved at collection | $0.3656432 | $0.2836264 | known $0.067285722; total unknown |
 
 Scikit-learn returned five relevant files in 5,038 bytes, implementation reading
 leads and two test source blocks. The agent then read the splitter and tests, searched documentation,
@@ -37,8 +44,9 @@ and test work does not isolate a causal cost effect from the freshness correctio
 
 Root execution log: `/tmp/jg-freshness-v1-run.log`. Per-task grade and accounting
 receipts, complete event streams, patches and request/response evidence remain
-with the attempts. Acceptance stays unproven until all ten outcomes are retained
-and the full aggregate is evaluated.
+with the attempts. All coding, grading and accounting processes are terminal;
+no attempt was replaced and no baseline was rerun. The product quality gate
+remains open because the completed aggregate rejects the candidate.
 
 Django's packet contained 51 files in 8,071 bytes without excerpts. SQLite was
 listed and its critical type-only rebuild guard was read, untruncated, before the
@@ -122,3 +130,23 @@ After correcting an initial NumPy slice attempt, local text tests passed 104 wit
 12 skips and offsetbox tests passed 285 with two skips. Official evaluation still
 failed the combined Annotation/OffsetFrom input-copy regression, as in baseline.
 Evidence: `/tmp/jg-freshness-v1-matplotlib-comparison/findings.md`.
+
+Pylint returned 32 files in 6,990 bytes with two fixture blocks and a reading lead
+to the relevant checker. The agent read that checker, added qualified/unqualified
+ABC coverage and passed one focused plus 20 checker tests. Its implementation
+differs structurally from earlier variants but handles the inspected paths
+equivalently. Official evaluation failed during collection on missing `IS_PYPY`,
+before patch assertions ran. That retained environmental limitation remains a
+formal nonpass, not a proven patch defect. Evidence:
+`/tmp/jg-freshness-v1-pylint-comparison/findings.md`.
+
+## Interpretation boundary
+
+The two lost baseline solves are concrete patch/test omissions despite delivered
+code: Django's same-type rebuild condition and Requests' HEAD behavior. This
+does not isolate model variance or the freshness correction as the sole cause.
+Healthy controlled parity passed, but it is not a substitute for this failed
+live confirmation. The preceding accepted cohort remains evidence about its
+own frozen archive, not a result that can replace this one. No further unchanged
+cohort is justified merely to obtain a passing draw; changes to retrieval, skill
+or acceptance require a separate explicit decision and identified experiment.
