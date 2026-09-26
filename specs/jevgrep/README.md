@@ -21,8 +21,8 @@ all ten frozen no-call validations. [Freshness evidence](assets/source-freshness
 owns the archive identity, failure reproductions and verification results. Do not
 transfer the previous cohort's measured results to this corrected archive.
 [Current confirmation](assets/freshness-confirmation.md) records completed cells;
-scikit-learn solved officially but exceeded baseline cost, and Django failed its
-official grade, contradicting acceptance for this cohort. Finish the registered
+scikit-learn solved officially but exceeded baseline cost, and Django and Requests
+failed official grading, contradicting acceptance for this cohort. Finish the registered
 attempts and diagnose that failure; do not replace or pool cells. The choices ledger has
 been consolidated against current code; final reconciliation and archive remain.
 
