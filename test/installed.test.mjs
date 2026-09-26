@@ -116,6 +116,7 @@ async function context(t, mode = "healthy", executable = binary) {
       }
       assert.ok(requests.length < 256, "Synthetic search stopped making bounded forward progress");
       requests.push({ body, raw, receivedAt: performance.now() });
+      if (typeof mode === "function" && (await mode({ body, raw, tree, response }))) return;
       if (mode === "rate-limit" && requests.length === 1) {
         response.writeHead(429, { "content-type": "application/json", "retry-after": "1" });
         response.end(JSON.stringify({ error: "fixture rate limit" }));
@@ -723,4 +724,79 @@ test("missing or corrupt packaged Python assets fail closed without downloads", 
     assert.equal((await fixture.run(["--help"], { AI_GATEWAY_API_KEY: "" })).code, 0);
     await rm(copy, { recursive: true, force: true });
   }
+});
+
+for (const mutation of ["changed", "ignored"])
+  test(`installed final freshness discards ${mutation} source after role evaluation`, async (t) => {
+    let sawRole = false;
+    const fixture = await context(t, async ({ body, tree, response }) => {
+      if (body.questions.implementation) {
+        sawRole = true;
+        await writeFile(
+          join(tree, mutation === "ignored" ? ".ignore" : "a.ts"),
+          mutation === "ignored" ? "a.ts\n" : "export function replacement() { return 2; }\n",
+        );
+      }
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({
+          answers: Object.fromEntries(
+            Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+          ),
+        }),
+      );
+      return true;
+    });
+    await rm(fixture.tree, { recursive: true });
+    await mkdir(fixture.tree);
+    await writeFile(
+      join(fixture.tree, "a.ts"),
+      'export function selected() { return "FINAL_STALE_SENTINEL"; }\n',
+    );
+    const result = await fixture.run([query, fixture.tree, "--no-cache"]);
+    assert.ok(sawRole);
+    assert.equal(result.code, 2, result.stdout);
+    assert.match(result.stdout, /incomplete/);
+    assert.match(result.stdout, /a\.ts/);
+    assert.ok(!result.stdout.includes("FINAL_STALE_SENTINEL"));
+    assert.ok(!result.stdout.includes('Source block "a.ts"'));
+  });
+
+test("installed queued freshness withholds excluded source uploads", async (t) => {
+  let uploads = 0;
+  const releases = [];
+  const fixture = await context(t, async ({ body, raw, tree, response }) => {
+    if (raw.includes("QUEUED_INSTALLED_SENTINEL")) {
+      uploads++;
+      if (uploads <= 8)
+        await new Promise((resolve) => {
+          releases.push(resolve);
+          if (releases.length === 8)
+            void writeFile(join(tree, ".ignore"), "large.txt\n").then(() =>
+              releases.forEach((release) => release()),
+            );
+        });
+    }
+    response.writeHead(200, { "content-type": "application/json" });
+    response.end(
+      JSON.stringify({
+        answers: Object.fromEntries(
+          Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.1 }]),
+        ),
+      }),
+    );
+    return true;
+  });
+  t.after(() => releases.forEach((release) => release()));
+  await rm(fixture.tree, { recursive: true });
+  await mkdir(fixture.tree);
+  await writeFile(
+    join(fixture.tree, "large.txt"),
+    "QUEUED_INSTALLED_SENTINEL line\n".repeat(18000),
+  );
+  const result = await fixture.run([query, fixture.tree, "--no-cache"]);
+  assert.equal(uploads, 8);
+  assert.equal(result.code, 2, result.stdout);
+  assert.match(result.stdout, /incomplete/);
+  assert.ok(!result.stdout.includes("QUEUED_INSTALLED_SENTINEL"));
 });

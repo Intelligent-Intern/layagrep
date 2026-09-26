@@ -9,7 +9,12 @@ export type EvaluationRequest = {
 
 export class EvaluationFailure extends Error {
   constructor(
-    public readonly kind: "authentication" | "request-limit" | "provider" | "cancelled",
+    public readonly kind:
+      | "authentication"
+      | "request-limit"
+      | "provider"
+      | "cancelled"
+      | "source-invalid",
     public readonly splitEligible = false,
   ) {
     super(`Jev evaluation failed: ${kind}`);
@@ -70,7 +75,7 @@ export function createEvaluator(options: {
     },
     async evaluate(
       request: EvaluationRequest,
-      policy?: { navigation?: boolean },
+      policy?: { navigation?: boolean; beforeAttempt?: () => Promise<void> },
     ): Promise<Record<string, number>> {
       assertActive();
       const cacheInput: CacheInput = {
@@ -112,6 +117,8 @@ export function createEvaluator(options: {
             throw new EvaluationFailure("cancelled");
           }
         }
+        await policy?.beforeAttempt?.();
+        assertActive();
         try {
           const result = await evaluate({
             model: gateway.evaluationModel("typesafe-ai/jev"),

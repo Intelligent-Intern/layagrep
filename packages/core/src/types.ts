@@ -53,6 +53,6 @@ export type Evaluator = {
   readonly cacheIssues?: Array<{ kind: string; count: number }>;
   evaluate(
     request: EvaluationRequest,
-    policy?: { navigation?: boolean },
+    policy?: { navigation?: boolean; beforeAttempt?: () => Promise<void> },
   ): Promise<Record<string, number>>;
 };
