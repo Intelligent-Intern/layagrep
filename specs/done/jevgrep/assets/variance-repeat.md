@@ -102,3 +102,13 @@ test selections (four passes, then 74 passes with one dependency-warning failure
 and one expected failure), without the first run's selector repairs. Own coverage
 remains a flat-package case, and the broad test scope is narrower. Evidence:
 `/tmp/jg-repeat-pytest-comparison.md`.
+
+Sphinx solved again at $0.4001468 versus first-run $1.2444744 and baseline
+$1.0594724, recovering a successful cost win. Its complete observed Jev total
+is $0.110341140. The production fix is identical. The packet shrank from
+31,851 bytes with 14 excerpts to 14,005 bytes without excerpts; both runs read
+the implementation directly. The repeat's instance-variable/type regression
+passed immediately in one 35-pass domain-suite run, versus three test-authoring
+repairs and broader verification in the first run. Omitted broader coverage
+does not show that the known environment warning was fixed. Evidence:
+`/tmp/jg-repeat-sphinx-comparison.md`.
