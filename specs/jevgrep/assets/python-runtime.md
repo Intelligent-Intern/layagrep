@@ -73,8 +73,11 @@ whole runtime as Apache-only. Packaging owns those notices and their verificatio
 `evals/runs/swebench/installed-jg-cpython-parity-v1/plan.json` freezes all ten tasks
 on the archive above and the existing Sol model/harness/baselines. Its exact
 archive passed four offline installed checks on each of Linux amd64 and arm64,
-and the native macOS smoke identified the same SHA-256. Release content validation
-and all ten dry-run validations passed before paid execution. Current official
+and the native macOS smoke identified the same SHA-256. All ten dry-run
+validations passed before paid execution. Release-validator unit tests passed,
+but the direct archive validation intentionally rejected development version
+`0.0.0` before content checks. An earlier statement that this archive passed
+release validation was incorrect; the recorded output confirms that rejection. Current official
 results and paired trace findings belong in the
 [cohort confirmation](cpython-confirmation.md). Superseded studies remain
 historical and contribute no outcomes to this cohort. Platform transcripts are

@@ -7,7 +7,8 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: diagnose the Django regression with one isolated query-framing experiment.
+Next: prepare and run Django first in the isolated
+[mechanism-first skill experiment](assets/query-framing-study.md).
 The frozen `installed-jg-cpython-parity-v1` cohort is complete and not accepted:
 7/10 solves versus 8/10 baseline, six cost wins, and 35.27% lower full Sol cost.
 [Confirmation evidence](assets/cpython-confirmation.md) owns all outcomes, trace
@@ -25,7 +26,8 @@ exercised corpus; task-quality acceptance failed and remains required.
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted
 with its patch and traces retained; seven cells never started. These superseded
 studies remain stopped. The bundled-CPython cohort is terminal; no Sol run is
-active. The isolated diagnostic makes only bounded Jev classification calls.
+active. The completed query diagnostics made only bounded Jev calls. A separately
+identified skill candidate is prepared for an actual Django task test.
 
 The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
 superseded, retaining completed outcomes and interrupted traces. It is not a
