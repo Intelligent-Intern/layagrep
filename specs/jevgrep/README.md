@@ -12,15 +12,14 @@ its frozen artifact: eight baseline solves preserved, eight cost wins, 33.21%
 lower total Sol cost. [Confirmation evidence](assets/work-clock-confirmation.md)
 owns all ten results and their limits. No paid benchmark or grader remains active.
 
-Next: integrate the filesystem-freshness fixes being implemented in the isolated
-`codex/final-freshness` worktree. Final independent review found buffered navigation
-source uploaded after ignore changes and stale non-Python excerpts returned after
-role evaluation. Required final freshness checks and per-network-attempt validation
-must fix those cases without changing healthy spike requests or output. Run their
-red/green installed tests and healthy parity, then determine what remains necessary
-to validate the corrected artifact. Do not transfer the frozen cohort's measured
-results to changed code without evidence. The pre-fix full default gate passed;
-its green result did not cover these newly reproduced cases.
+Next: finish serial merged verification and no-call preparation, then validate
+and run the separate `installed-jg-freshness-v1` cohort against saved baselines. The freshness
+correction is integrated in `92ca7f9`; its isolated worktree is removed. Exact
+archive checks passed on macOS and both Linux architectures. The first full gate
+had one five-second timeout under concurrent platform testing; no test allowance
+was changed. [Freshness evidence](assets/source-freshness.md) owns the corrected
+archive identity, failure reproductions and verification status. Do not transfer
+the previous cohort's measured results to the corrected archive.
 
 Preserve healthy retrieval semantics and the canonical skill while fixing
 filesystem freshness. Keep the measured archive immutable; it matches the
@@ -42,7 +41,7 @@ Evidence and boundaries:
   [presentation trial](assets/presentation-study.md): rejected experiments,
   source-parity probes and limits on causal explanations.
 
-Priority: validate and integrate the freshness correction without weakening
+Priority: validate the integrated freshness correction without weakening
 acceptance; resolve the whole-product review; consolidate choices against the
 final code; then close-spec. Slice 08 remains open. No publication or
 release tag is authorized for the intentional `0.0.0` development checkpoint.

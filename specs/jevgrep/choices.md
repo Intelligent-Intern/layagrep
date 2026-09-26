@@ -221,6 +221,21 @@ Gap: artifact layout and execution mechanics were delegated. Reach: results from
 different candidates cannot be pooled into acceptance; failed attempts and unknown
 bills remain visible. Verdict: sound. Confidence: high.
 
+### Recheck source when deferred work is ready to use it
+
+When: final source-freshness correction. A queued request may wait while the user
+edits or ignores a file. Bind its content to an in-memory snapshot, then use the
+same filesystem policy to check that snapshot before evaluation, provider retries
+and final output. Keep this bookkeeping out of Jev's input. A detected change
+removes stale evidence and makes the result incomplete.
+
+Gap: source freshness was required, but the deferred validation boundaries were
+not fully specified. Reach: these checks are observations, not locks; changes
+after a check remain possible. Validation readiness preserves request order, and
+splitting invalid groups preserves their healthy siblings. This adds filesystem
+reads without changing the healthy retrieval policy. Verdict: sound. Confidence:
+high for detected-change handling; no claim of atomic filesystem consistency.
+
 ### Reuse installed command journeys for native macOS verification
 
 When: supported-runtime verification. Install a tarball into a temporary npm
