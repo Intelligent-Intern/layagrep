@@ -33,8 +33,10 @@ workflow and accounting rules. Older custom evals are deprecated and stay out of
 
 ## Agent skill
 
-The canonical [Jevgrep skill](skills/jevgrep/SKILL.md) lives under `skills/` for
-agent discovery and installation through the skills CLI. It describes the `jg` search workflow and is embedded in the installed CLI.
+See the [package guide](apps/cli/README.md) for installation, authentication and
+Codex/Claude skill setup. The canonical [Jevgrep skill](skills/jevgrep/SKILL.md)
+lives under `skills/` and is embedded unchanged in the installed CLI. Agent
+configuration changes only when the user explicitly installs or exports it.
 
 ## Releases
 
