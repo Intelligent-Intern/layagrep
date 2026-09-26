@@ -37,6 +37,66 @@ type Declaration = {
   parent?: Declaration;
 };
 let pythonLanguage: Promise<Language> | undefined;
+function outsideReferenceSyntax(node: SyntaxNode): boolean {
+  switch (node.type) {
+    case "type_alias_statement":
+      return true;
+    case "function_definition":
+    case "class_definition":
+      return node.childForFieldName("type_parameters") !== null;
+    case "interpolation":
+    case "format_expression":
+    case "format_specifier": {
+      let owner = node.parent;
+      while (owner && owner.type !== "string") owner = owner.parent;
+      const start = owner
+        ? (children(owner).find((child) => child.type === "string_start")?.text ?? "")
+        : "";
+      const delimiter = /^[a-z]*("""|'''|"|')/i.exec(start)?.[1];
+      if (!/f/i.test(start) || !delimiter) return false;
+      // Literal format text permits escaped line continuations; expression text never does.
+      if (node.type === "format_specifier")
+        return delimiter.length === 1 && /(?:^|[^\\])(?:\\\\)*\r?\n/.test(node.text);
+      const expression = node.childForFieldName("expression")?.text ?? "";
+      return (
+        expression.includes(delimiter) ||
+        expression.includes("\\") ||
+        (delimiter.length === 1 && /[\r\n]/.test(expression))
+      );
+    }
+    case "comment": {
+      for (let parent = node.parent; parent; parent = parent.parent) {
+        if (parent.type === "interpolation") return true;
+        if (parent.type === "string") break;
+      }
+      return false;
+    }
+    case "print_statement":
+      // A redirection-shaped print is also a valid Python 3 shift/tuple expression.
+      return !children(node).some((child) => child.type === "chevron");
+    case "exec_statement":
+      return true;
+    case "raise_statement":
+      return children(node).some((child) => child.type === "expression_list");
+    case "except_clause":
+      return node.children.some((child) => child?.type === ",");
+    case "comparison_operator":
+      return node.children.some((child) => child?.type === "<>");
+    case "integer":
+      return /[lL]$/.test(node.text) || /^0[0-9_]*[1-9][0-9_]*$/.test(node.text);
+    case "string_start":
+      return node.text.startsWith("`") || /^(?:ur|ru)["']/i.test(node.text);
+    case "tuple_pattern":
+    case "list_pattern": {
+      let parent = node.parent;
+      while (parent && ["tuple_pattern", "list_pattern", "default_parameter"].includes(parent.type))
+        parent = parent.parent;
+      return parent?.type === "parameters" || parent?.type === "lambda_parameters";
+    }
+    default:
+      return false;
+  }
+}
 async function parsePython(source: string) {
   pythonLanguage ??= (async () => {
     await Parser.init({
@@ -59,7 +119,12 @@ async function parsePython(source: string) {
     while (!invalid && pending.length) {
       const node = pending.pop()!;
       const nodes = children(node);
-      if (node.type === "block" && !nodes.some((child) => child.type !== "comment")) invalid = true;
+      // The grammar spans multiple Python versions; consumers share the frozen Python 3.11 boundary.
+      if (
+        outsideReferenceSyntax(node) ||
+        (node.type === "block" && !nodes.some((child) => child.type !== "comment"))
+      )
+        invalid = true;
       else pending.push(...nodes);
     }
     if (invalid) {
@@ -292,7 +357,7 @@ export async function inspect(
         ...(ts.getTrailingCommentRanges(source, node.end) ?? []),
       ])
         comments.push({ startLine: line(comment.pos), endLine: line(comment.end - 1) });
-      for (const child of node.getChildren(file)) visit(child);
+      ts.forEachChild(node, visit);
     };
     visit(file);
     mode = "typescript";

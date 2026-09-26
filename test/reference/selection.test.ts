@@ -88,3 +88,8 @@ test("follow-up reading leads retain first-seen order across passes", async () =
     d.name === "target" ? 0.9 : pass === 1 ? 0.4 : 0,
   );
 });
+
+test("Python 2 source preserves frozen fallback questions instead of named declarations", async () => {
+  const source = 'def target():\n    print "old"\n' + "# padding\n".repeat(600);
+  await expectParity("old.py", source, () => 0.9);
+});

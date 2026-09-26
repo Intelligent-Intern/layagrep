@@ -78,7 +78,7 @@ test("query previews preserve frozen Python source windows and bytes", async () 
   const corpus = JSON.parse(
     await readFile(new URL("./fixtures/python-reference.json", import.meta.url), "utf8"),
   );
-  for (const fixture of corpus.cases.filter((f) => f.name !== "python2")) {
+  for (const fixture of corpus.cases) {
     const preview = await pythonPreview(
       { path: fixture.path, source: fixture.source, contentHash: "fixture" },
       fixture.query,
@@ -128,14 +128,82 @@ test("TS/JS uses original source coordinates, comments, and decorator-bearing me
   ]);
 });
 
-test("Python 2 syntax accepted by the packaged grammar is an explicit parser difference", async () => {
-  const source = 'def target():\n    print "old"\n';
-  const result = await inspect({ path: "old.py", source, contentHash: "fixture" });
-  assert.equal(result.mode, "python");
-  assert.deepEqual(
-    result.units.map(({ name, range }) => ({ name, ...range })),
-    [{ name: "target", startLine: 1, endLine: 2 }],
-  );
+test("syntax outside reference Python 3.11 falls back across inspection, preview and neighbors", async () => {
+  const { pythonNeighborhood, pythonPreview, sourceForUnit } =
+    await import("../../packages/core/src/source.ts");
+  for (const source of [
+    'def target():\n    print "old"\n',
+    'def target():\n    exec "x=1" in globals(), locals()\n',
+    "try:\n    pass\nexcept Exception, e:\n    pass\n",
+    'raise Error, "message", traceback\n',
+    "value = left <> right\n",
+    "value = 123L\n",
+    "value = 0xFFl\n",
+    "value = 0755\n",
+    "value = 0_1\n",
+    "value = `expression`\n",
+    'value = ur"text"\n',
+    'value = rU"text"\n',
+    "def target((first, second)):\n    return first\n",
+    "def target((first, second)=(1, 2)):\n    return first\n",
+    "value = lambda (first, second): first\n",
+    "type Alias = int\n",
+    "def target[T](value: T):\n    return value\n",
+    'value = f"{mapping["key"]}"\n',
+    "value = f\"{'\\n'}\"\n",
+    'value = f"""{value # comment\n}"""\n',
+    'value = f"{(value +\n other)}"\n',
+    "value = f'{1:{mapping['width']}}'\n",
+    "value = f'{1:{\"\\n\"}}'\n",
+  ]) {
+    const snapshot = {
+      path: "old.py",
+      source: source + "# padding\n".repeat(60),
+      contentHash: "fixture",
+    };
+    const result = await inspect(snapshot);
+    assert.equal(result.mode, "text", source);
+    assert.equal(result.fallback, "syntax", source);
+    assert.equal(
+      result.units.map((unit) => sourceForUnit(snapshot, unit)).join(""),
+      snapshot.source,
+    );
+    assert.deepEqual(
+      await pythonNeighborhood(snapshot, [{ startLine: 1, endLine: 2 }]),
+      [],
+      source,
+    );
+    const preview = await pythonPreview(snapshot, "target", 512);
+    assert.equal(preview.parseUnavailable, true, source);
+    assert.equal(preview.matchedDeclarations, 0, source);
+  }
+});
+
+test("Python 3 equivalents and Python 2-looking strings remain parsed", async () => {
+  for (const source of [
+    'print("old")\n',
+    "print >> stream, value\n",
+    "print +1\nprint [1,2]\n",
+    "value = f\"{mapping['key']}\"\n",
+    'value = f"""{mapping["key"]}"""\n',
+    'value = f"""{(value +\n other)}"""\n',
+    "value = f\"{'#value'}\"\n",
+    "value = f'{1:\\\n}'\n",
+    "type = int\ndef target(value: int):\n    return value\n",
+    'exec("x=1", globals(), locals())\n',
+    "try:\n    pass\nexcept Exception as e:\n    pass\n",
+    "try:\n    pass\nexcept (TypeError, ValueError):\n    pass\n",
+    'raise Error("message") from cause\n',
+    "raise (Error, value)\n",
+    "value = 0o755 + 0xFF + 0b11 + 000 + 0_0\n",
+    'value = u"text" + r"raw" + rb"bytes".decode()\n',
+    "def target(value=[a for (a,b) in pairs]):\n    return value\n",
+    "for (a,b) in pairs:\n    pass\n",
+    '# print "old"; exec "x"; 123L\ntext = "ur\\\"text\\\" <> `value`"\n',
+  ]) {
+    const result = await inspect({ path: "modern.py", source, contentHash: "fixture" });
+    assert.equal(result.mode, "python", source);
+  }
 });
 
 test("trailing Python comments stay separate from AST declaration ends", async () => {
@@ -226,12 +294,16 @@ test("empty Python suites fall back instead of crashing query previews", async (
   assert.equal((await inspect(snapshot)).mode, "text");
 });
 
-test("TS comments survive token positions without treating string contents as comments", async () => {
+test("TS comment discovery follows frozen AST nodes while retaining exact source bytes", async () => {
   const source =
     'function x() {\n // end\n}\nconst x = /*important*/ 1;\nconst url="https://example.test";\nconst regexp=/https?:\\/\\//;\n';
-  const result = await inspect({ path: "comments.ts", source, contentHash: "fixture" });
-  assert.deepEqual(result.comments, [
-    { startLine: 2, endLine: 2 },
-    { startLine: 4, endLine: 4 },
-  ]);
+  const snapshot = { path: "comments.ts", source, contentHash: "fixture" };
+  const result = await inspect(snapshot);
+  // The frozen forEachChild traversal does not visit the closing-brace or numeric-literal token.
+  assert.deepEqual(result.comments, []);
+  const { sourceForUnit } = await import("../../packages/core/src/source.ts");
+  assert.equal(
+    sourceForUnit(snapshot, result.units[0]!),
+    source.split("\n").slice(0, 3).join("\n") + "\n",
+  );
 });
