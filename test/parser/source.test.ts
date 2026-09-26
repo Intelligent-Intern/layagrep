@@ -38,6 +38,18 @@ test("syntax errors and unsupported source fall back without losing source lines
   }
 });
 
+test("TypeScript syntax fallback retains block-comment ranges and exact source bytes", async () => {
+  const source =
+    "/*\n" + ("comment " + "x".repeat(70) + "\n").repeat(100) + "*/\nconst broken = ;\n";
+  const snapshot = { path: "broken.ts", source, contentHash: "fixture" };
+  const result = await inspect(snapshot, { maxUnitBytes: 3000 });
+  assert.equal(result.mode, "text");
+  assert.equal(result.fallback, "syntax");
+  assert.deepEqual(result.comments, [{ startLine: 1, endLine: 102 }]);
+  const { sourceForUnit } = await import("../../packages/core/src/source.ts");
+  assert.equal(result.units.map((unit) => sourceForUnit(snapshot, unit)).join(""), source);
+});
+
 test("oversized Unicode lines are losslessly split into bounded byte spans", async () => {
   const source = "é漢🙂".repeat(10) + "\r\nend";
   const result = await inspect(

@@ -304,6 +304,7 @@ export async function inspect(
   let units: { name: string; range: Range }[] = [],
     comments: Range[] = [],
     mode: Inspection["mode"];
+  let syntaxFallback = false;
   if (/\.pyi?$/.test(path)) {
     // A missing/incompatible packaged parser is a setup failure, never syntax fallback.
     const tree = await parsePython(source);
@@ -324,8 +325,8 @@ export async function inspect(
           ? ts.ScriptKind.JS
           : ts.ScriptKind.TS;
     const file = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, kind);
-    if ((file as ts.SourceFile & { parseDiagnostics?: unknown[] }).parseDiagnostics?.length)
-      return fallback("syntax");
+    syntaxFallback = !!(file as ts.SourceFile & { parseDiagnostics?: unknown[] }).parseDiagnostics
+      ?.length;
     const line = (position: number) => file.getLineAndCharacterOfPosition(position).line + 1;
     const add = (node: ts.Node, prefix = "") => {
       const named = node as ts.Node & { name?: ts.Node };
@@ -350,7 +351,7 @@ export async function inspect(
           },
         });
     };
-    for (const statement of file.statements) add(statement);
+    if (!syntaxFallback) for (const statement of file.statements) add(statement);
     const visit = (node: ts.Node) => {
       for (const comment of [
         ...(ts.getLeadingCommentRanges(source, node.getFullStart()) ?? []),
@@ -365,6 +366,8 @@ export async function inspect(
   comments = [...new Map(comments.map((r) => [`${r.startLine}:${r.endLine}`, r])).values()].sort(
     (a, b) => a.startLine - b.startLine,
   );
+  // Invalid declarations fall back to text, but comments still own the context-window boundaries.
+  if (syntaxFallback) return { ...fallback("syntax"), comments };
   if (!units.length && source)
     return {
       units: textUnits(
