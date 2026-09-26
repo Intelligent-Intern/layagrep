@@ -1,6 +1,6 @@
 # Confirm quality and the release artifact
 
-Status: open. The first faithful confirmation was rejected; the new frozen work-clock cohort is running after its Django-first continuation gate passed. Depends on: 07. Read [contracts](../contracts.md) first.
+Status: open. Frozen work-clock v2 confirmation passed; final review found filesystem-freshness defects requiring correction and validation. Depends on: 07. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 

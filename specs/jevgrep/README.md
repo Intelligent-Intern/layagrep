@@ -7,19 +7,26 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-The active full study is `installed-jg-cpython-work-clock-v2`. Continue collecting
-terminal grades and complete bills from its existing sequential runner, then
-aggregate all ten outcomes. [Confirmation evidence](assets/work-clock-confirmation.md)
-owns results and trace findings. Its identical package and protocol passed every
-no-call validation. No candidate changes, replacement attempts or baseline reruns.
-The earlier v1 study remains stopped after a documented Docker outage; its
-recovered costs and two wins cannot be pooled into v2.
+The full `installed-jg-cpython-work-clock-v2` study is complete and accepted for
+its frozen artifact: eight baseline solves preserved, eight cost wins, 33.21%
+lower total Sol cost. [Confirmation evidence](assets/work-clock-confirmation.md)
+owns all ten results and their limits. No paid benchmark or grader remains active.
 
-Keep production retrieval and the canonical skill unchanged. The installed
-package matches the restored bundled-CPython candidate; only the prospective
-benchmark timing protocol differs. The failed query and presentation experiments
+Next: integrate the filesystem-freshness fixes being implemented in the isolated
+`codex/final-freshness` worktree. Final independent review found buffered navigation
+source uploaded after ignore changes and stale non-Python excerpts returned after
+role evaluation. Required final freshness checks and per-network-attempt validation
+must fix those cases without changing healthy spike requests or output. Run their
+red/green installed tests and healthy parity, then determine what remains necessary
+to validate the corrected artifact. Do not transfer the frozen cohort's measured
+results to changed code without evidence. The pre-fix full default gate passed;
+its green result did not cover these newly reproduced cases.
+
+Preserve healthy retrieval semantics and the canonical skill while fixing
+filesystem freshness. Keep the measured archive immutable; it matches the
+restored bundled-CPython candidate, with only the benchmark timing protocol changed. The failed query and presentation experiments
 have not earned promotion. Their remaining cells stay unrun. Prior outcomes
-cannot be pooled into the active cohort.
+cannot be pooled into the completed confirmation.
 
 Evidence and boundaries:
 
@@ -35,9 +42,9 @@ Evidence and boundaries:
   [presentation trial](assets/presentation-study.md): rejected experiments,
   source-parity probes and limits on causal explanations.
 
-Priority: finish this frozen quality confirmation; address any failing contract
-without weakening acceptance; run whole-spec closeout review; consolidate choices
-against the final code; then close-spec. Slice 08 remains open. No publication or
+Priority: validate and integrate the freshness correction without weakening
+acceptance; resolve the whole-product review; consolidate choices against the
+final code; then close-spec. Slice 08 remains open. No publication or
 release tag is authorized for the intentional `0.0.0` development checkpoint.
 Report observed Jev costs separately; they never enter scored Sol task cost.
 

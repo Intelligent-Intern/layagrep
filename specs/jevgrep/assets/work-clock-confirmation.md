@@ -1,6 +1,9 @@
 # Faithful package: replacement work-clock confirmation
 
-Status: running; full-cohort acceptance remains unproven. The authoritative plan
+Status: complete; the registered cohort gate passed for its frozen artifact.
+Final product review subsequently found filesystem-freshness defects; their fixes
+require separate validation before product closeout. This result is not silently
+relabelled as a measurement of later code. The authoritative plan
 and receipts are in `evals/runs/swebench/installed-jg-cpython-work-clock-v2/`.
 [Timing protocol](timing-protocol.md) owns the prospective clock rule, the v1
 Docker outage, retained interruption costs and replacement rationale. No v1
@@ -13,9 +16,12 @@ this run changes no retrieval policy.
 
 ## Retained results
 
-Sol is full task cost; Jev is separately reported and excluded. Pending results
-are not wins, and observed Jev subtotals are not complete totals. This checkpoint
-will be replaced by the final aggregate after all cells finish.
+Sol is full task cost; Jev is separately reported and excluded. Observed Jev subtotals are not complete totals. The retained
+[full aggregate](work-clock-aggregate.json) records all ten graded and fully billed
+Sol outcomes, including the two nonpasses. All eight baseline solves are preserved,
+and all eight are strict cost wins. Full Sol cost is **$5.0907814** versus
+**$7.6220690**, a **33.21% reduction**. Jev known subtotal is **$1.0259382**;
+its full total is unknown and excluded.
 
 | Task | Official result | Sol | Baseline Sol | Jev observed API cost |
 | --- | --- | ---: | ---: | --- |
@@ -26,9 +32,9 @@ will be replaced by the final aggregate after all cells finish.
 | psf__requests-1142 | solved | $0.2466230 | $0.2685004 | known $0.030577680; total unknown |
 | sympy__sympy-16792 | solved | $0.3628038 | $0.5479750 | known $0.113127588; total unknown |
 | pytest-dev__pytest-6197 | solved | $1.0226676 | $2.3444580 | known $0.058273320; total unknown |
-| sphinx-doc__sphinx-8638 | pending | pending | $1.0594724 | pending |
-| matplotlib__matplotlib-26466 | pending | pending | $0.3957160 | pending |
-| pylint-dev__pylint-4604 | pending | pending | $0.2836264 | pending |
+| sphinx-doc__sphinx-8638 | solved | $0.6570284 | $1.0594724 | known $0.079899246; total unknown |
+| matplotlib__matplotlib-26466 | unresolved | $0.3444674 | $0.3957160 | known $0.171503976; total unknown |
+| pylint-dev__pylint-4604 | unresolved | $0.2575566 | $0.2836264 | $0.069142290 |
 
 ## Paired trace findings
 
@@ -87,6 +93,18 @@ removing implicit variable links. Domain tests pass 35; combined coverage passes
 whose imports were verified, supporting the environmental explanation; this is
 a test control, not another baseline agent run. Evidence:
 `/tmp/jg-work-clock-v2-sphinx-comparison/`.
+
+Matplotlib remains unresolved on the official Annotation/OffsetFrom input-copy
+regression. Its production fix matches the failed baseline: Annotation copies
+its input but OffsetFrom retains a mutable caller array. Passing local tests do
+not cover the latter case. Evidence:
+`/tmp/jg-work-clock-v2-matplotlib-comparison/`.
+
+Pylint's production fix matches baseline and passes local checker/fixture tests.
+Official evaluation fails during collection on missing `IS_PYPY`, before any
+assertion runs, as in the retained baseline limitation. It remains a formal
+nonpass, not proof of a patch defect or an excluded task. Evidence:
+`/tmp/jg-work-clock-v2-pylint-comparison/`.
 
 These tasks fit the old wall-clock allowance too. Their improvements do not
 establish a clock effect or determinism across independent live model trajectories.
