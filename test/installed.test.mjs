@@ -202,7 +202,7 @@ async function context(t, mode = "healthy") {
     server.listen(0, "127.0.0.1", resolve);
   });
   const env = {
-    PATH: "/opt/jevgrep/bin:/usr/local/bin:/usr/bin:/bin",
+    PATH: process.env.JEVGREP_TEST_PATH ?? "/opt/jevgrep/bin:/usr/local/bin:/usr/bin:/bin",
     HOME: home,
     XDG_CONFIG_HOME: config,
     XDG_CACHE_HOME: cache,
@@ -298,13 +298,16 @@ function complete(result) {
   }
 }
 
-test("installed runtime has no checkout or Python/Bun/compiler prerequisites", async (t) => {
+test("installed runtime has no checkout or Python/Bun/compiler prerequisites", async () => {
   for (const executable of ["python3", "bun", "cc", "gcc", "clang", "make"]) {
     const result = spawnSync(executable, ["--version"], { encoding: "utf8" });
     assert.equal(result.error?.code, "ENOENT", `${executable} must be absent from final runtime`);
   }
   await assert.rejects(access("/checkout"), { code: "ENOENT" });
   assert.ok((await realpath(binary)).startsWith(`${packageDirectory}/`));
+});
+
+test("installed local commands match the package without credentials", async (t) => {
   const fixture = await context(t);
   const metadata = JSON.parse(await readFile(join(packageDirectory, "package.json"), "utf8"));
   assert.equal(metadata.name, "@dzhng/jevgrep");
