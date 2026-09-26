@@ -13,6 +13,7 @@ COPY packages/core packages/core
 COPY test test
 COPY scripts scripts
 COPY skills skills
+COPY LICENSE LICENSE
 RUN bun scripts/build-cli.ts
 RUN mkdir -p /opt/npm-cache && cd apps/cli && npm pack --ignore-scripts --pack-destination /opt && npm install --prefix /opt/npm-warm --cache /opt/npm-cache --ignore-scripts --no-audit --no-fund /opt/dzhng-jevgrep-*.tgz && chmod -R a+rX /opt/npm-cache
 ENV npm_config_cache=/opt/npm-cache npm_config_offline=true

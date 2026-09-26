@@ -2,6 +2,7 @@
   "name": "@dzhng/jevgrep",
   "version": "0.0.0",
   "description": "Content-aware source retrieval for coding agents",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dzhng/jevgrep.git",
