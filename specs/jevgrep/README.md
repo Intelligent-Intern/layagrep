@@ -7,72 +7,44 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: collect the running Django attempt in `installed-jg-cpython-work-clock-v1`,
-then grade/account and apply the registered Django-first continuation rule.
-The [agent-work timing protocol](assets/timing-protocol.md) passed review and
-merged Docker checks; all ten cells are frozen and no-call validated.
-The [source placement experiment](assets/presentation-study.md) is terminal and
-failed; its remaining nine cells stay unrun. Keep production renderer and skill unchanged.
-The no-model counterfactual preserves all evidence while moving first-ranked
-source inside the observed tool prefix. Real SQLite replays match the frozen oracle, and an 81-request
-three-file replay proves both pipelines exceed the follow-up threshold and skip
-that pass. Exact coverage and whole-pipeline limits are in the
-[mechanism-first skill experiment](assets/query-framing-study.md). That candidate
-failed the same Django regression at Sol $1.2353512; its remaining nine tasks stay
-unrun and the production skill is unchanged. Packet-visibility comparison is
-complete: initial truncation hid selected source, but a later read and explicit
-recognition preceded replacing the failing regression with a type-changing test.
-Do not infer another query-breadth fix. Django under the work-time protocol is
-the only active paid task; do not launch a replacement attempt.
-The frozen `installed-jg-cpython-parity-v1` cohort is complete and not accepted:
-7/10 solves versus 8/10 baseline, six cost wins, and 35.27% lower full Sol cost.
-[Confirmation evidence](assets/cpython-confirmation.md) owns all outcomes, trace
-findings and quality caveats. Never rerun a baseline, replace an attempt, or treat
-the lower total as compensation for a lost solve. Keep the measured CLI unchanged
-while testing any query/skill hypothesis as a separately identified candidate.
+The only active confirmation is `installed-jg-cpython-work-clock-v1`.
+Django officially solved below its immutable baseline; the registered rule now
+permits the other nine tasks in that same frozen plan. The sequential runner has
+started scikit-learn. Collect every terminal receipt, official grade and complete
+Sol bill, then aggregate the full cohort. Never replace an attempt or rerun a
+baseline. [Timing protocol and current evidence](assets/timing-protocol.md) own
+this study's procedure and results.
 
-The merged `bun run verify` gate passed and whole-product review's sole finding
-is fixed with a clean follow-up review. Exact archive checks pass on macOS arm64
-and Linux arm64/amd64. [Runtime evidence](assets/python-runtime.md) records the
-artifact and interpreter limits. The architecture port is verified for the
-exercised corpus; task-quality acceptance failed and remains required.
+Keep production retrieval and the canonical skill unchanged. The installed
+package matches the restored bundled-CPython candidate; only the prospective
+benchmark timing protocol differs. The failed query and presentation experiments
+have not earned promotion. Their remaining cells stay unrun. Prior outcomes
+cannot be pooled into the active cohort.
 
-`installed-jg-reference-parity-v1` is stopped and superseded. Requests and
-scikit-learn officially solved but exceeded baseline cost; Django was interrupted
-with its patch and traces retained; seven cells never started. These superseded
-studies remain stopped. The bundled-CPython cohort is terminal. The completed
-query diagnostics made only bounded Jev calls; the separate mechanism-first plan
-owns the new skill candidate and its Django-first evaluation.
+Evidence and boundaries:
 
-The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
-superseded, retaining completed outcomes and interrupted traces. It is not a
-release acceptance cohort. Never rerun saved baselines or pool candidates.
-Report Jev observed API costs separately from scored full Sol cost.
+- [Runtime verification](assets/python-runtime.md): merged default tests,
+  whole-product review, and exact archive checks on macOS arm64 and Linux
+  arm64/amd64 passed. Interpreter parity is established for the exercised corpus,
+  not all possible inputs.
+- [Restoration record](assets/parity-restoration.md): frozen reference, known
+  deviations and controlled request/output/recovery comparisons.
+- [Completed first confirmation](assets/cpython-confirmation.md): rejected for
+  losing a baseline solve despite lower total cost. Its traces remain evidence.
+- [Query trial](assets/query-framing-study.md) and
+  [presentation trial](assets/presentation-study.md): rejected experiments,
+  source-parity probes and limits on causal explanations.
 
-Keep the production incumbent's restored expansion, discovery inputs/order,
-excerpt presentation, scoped guidance and accepted skill (only rename executable
-to `jg`) unchanged. The isolated experiment changes only the recorded skill
-instruction and does not promote that change into production. Required
-Node-only runtime, auth, cache, filesystem protections and truthful failure
-handling remain, but must not silently change healthy retrieval decisions.
-The earlier deterministic and platform gates passed for the deviating port;
-they do not prove parity. See [parity restoration](assets/parity-restoration.md) and the
-[source-budget investigation](assets/source-budget-decision.md).
-Remaining: a candidate that passes frozen quality confirmation, final choices
-consolidation, whole-spec closeout review and close-spec.
-See [contracts](contracts.md) for the corrected contract.
+Priority: finish this frozen quality confirmation; address any failing contract
+without weakening acceptance; run whole-spec closeout review; consolidate choices
+against the final code; then close-spec. Slice 08 remains open. No publication or
+release tag is authorized for the intentional `0.0.0` development checkpoint.
+Report observed Jev costs separately; they never enter scored Sol task cost.
 
-No user decision blocks starting. External verification dependencies are a working
-Docker daemon, explicit Gateway credentials for live tests, retained official task
-snapshots/baselines, and macOS access for native install verification. Missing live
-inputs do not block deterministic development, but do block the corresponding
-acceptance claim. Do not repair credentials or regenerate an existing baseline.
-
-Implement one focused slice at a time, running its narrow tests and recording its
-artifact. Use write-tests for behavioral tests and review before completing an
-implementation pass. Update this section, slice status, decisions and unresolved
-verification before ending each pass. The named commands are implemented; their
-recorded evidence does not substitute for the open quality gate.
+No user decision blocks continuing. Use the authorized credentials and retained
+Docker snapshots; do not repair credentials or regenerate baselines. Preserve
+user-edited skill files and local historical evidence. Stage only explicit files,
+keeping deprecated personal-repository evals out of Git.
 
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
 - [x] [02 — Bundled parser parity](slices/02-parser.md)

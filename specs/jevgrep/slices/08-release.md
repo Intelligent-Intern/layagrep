@@ -1,6 +1,6 @@
 # Confirm quality and the release artifact
 
-Status: frozen confirmation complete and rejected; solve preservation fails on Django and only six cost wins are verified. Depends on: 07. Read [contracts](../contracts.md) first.
+Status: open. The first faithful confirmation was rejected; the new frozen work-clock cohort is running after its Django-first continuation gate passed. Depends on: 07. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -28,8 +28,9 @@ One frozen release-candidate dossier.
 [the runner workflow](../../../evals/implementation/swebench/installed.md); native
 macOS installed smoke command documented by the harness.
 
-Commands are implementation targets. Add them in this slice; do not imply they
-already exist. CLI transcripts replace visual/screenshot gates for this product.
+These commands are implemented. Use the frozen installed runner to finish the
+open quality gate and retain its evidence. CLI transcripts replace visual/screenshot
+gates for this product.
 
 ## Verification and verdict
 

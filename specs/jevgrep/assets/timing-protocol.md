@@ -71,7 +71,18 @@ Study `installed-jg-cpython-work-clock-v1` is frozen and all ten no-call checks
 pass. Its 179 installed files match the original bundled-CPython cohort exactly;
 the skill hash is
 `1a6b29ca8855d3538883c6dada289db68dd2dfca90f466e39407902dc000dd50`.
-Proof: `/tmp/jg-work-clock-freeze-proof.json`. Django is running first under the
-registered rule. Collect its terminal receipt, official grade and complete bill
-before any continuation. No other cell has started. Production CLI and canonical
-skill remain unchanged.
+Proof: `/tmp/jg-work-clock-freeze-proof.json`.
+
+Django completed with valid timing evidence and officially resolved (one solve,
+zero infrastructure/errors). All 37 Sol requests are accounted for: **$1.1409928**
+versus the saved **$1.5055472** baseline. Jev's known observed subtotal is
+**$0.148011822**; its complete total remains unknown (776 cost responses for 777
+client calls) and is excluded from scoring.
+
+The receipt records 359.286 seconds wall time, 222.354 charged work and 136.933
+credited retrieval. This run fits the old 900-second wall limit too: its success
+must not be attributed to gaining more time. Query and agent trajectory vary.
+The official pass and lower complete Sol bill satisfy the registered continuation
+rule, so the sequential runner has started the remaining nine tasks in this same
+plan. No Django replacement or baseline execution occurs. Production CLI and
+canonical skill remain unchanged; full-cohort acceptance is still unproven.

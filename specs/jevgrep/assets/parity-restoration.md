@@ -4,9 +4,9 @@ This record preserves the pre-CPython restoration work and its superseded
 cohorts. The bundled-CPython port subsequently passed integration, platform and
 whole-product checks; [runtime evidence](python-runtime.md) owns that coverage.
 Its completed quality cohort failed acceptance, as recorded in
-[confirmation evidence](cpython-confirmation.md). The separate
-[mechanism-first skill experiment](query-framing-study.md) owns the active trial;
-none of the stopped studies below is reactivated.
+[confirmation evidence](cpython-confirmation.md). The separate query and presentation experiments also failed.
+[The prospective timing protocol](timing-protocol.md) owns the active faithful
+confirmation; none of the stopped studies below is reactivated.
 
 The user rejected unvalidated architecture changes during production porting.
 The accepted reference is the source closure and skill bound by
