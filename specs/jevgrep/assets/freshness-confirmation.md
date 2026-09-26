@@ -19,6 +19,7 @@ separately and excluded; incomplete observations are subtotals, not totals.
 | astropy__astropy-13579 | solved; cost win | $0.3914126 | $0.4286310 | known $0.077806470; total unknown |
 | pydata__xarray-3305 | solved; cost win | $0.3182098 | $0.4937066 | $0.123411498 |
 | psf__requests-1142 | unresolved | $0.2388080 | $0.2685004 | $0.011300058 |
+| sympy__sympy-16792 | solved; cost win | $0.3320948 | $0.5479750 | known $0.098661402; total unknown |
 
 Scikit-learn returned five relevant files in 5,038 bytes, implementation reading
 leads and two test source blocks. The agent then read the splitter and tests, searched documentation,
