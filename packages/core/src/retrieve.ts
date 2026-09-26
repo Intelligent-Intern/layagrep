@@ -1,5 +1,5 @@
 import { basename, extname } from "node:path";
-import { createFilesystem } from "./filesystem";
+import { createFilesystem, type Snapshot, type DirectoryEntry } from "./filesystem";
 import { EvaluationFailure } from "./gateway";
 import { inspect, pythonPreview, sourceForUnit, splitSource } from "./source";
 import {
@@ -26,7 +26,9 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   const candidates = new Map<string, { path: string; contentHash: string; score: number }>();
   const files = new Map<string, FileEvidence>();
   const visited = new Set<string>();
-  const pruned = new Set<string>();
+  const pruned = new Map<string, NavigationItem>();
+  const previews = new Map<string, FilePreview>();
+  let entriesSeen = 0;
   let stop = false;
   function issue(kind: string, count = 1) {
     issues.set(kind, (issues.get(kind) ?? 0) + count);
@@ -44,21 +46,8 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   }
   async function score(items: NavigationItem[], anchor?: { path: string; classes: string[] }) {
     const results: Array<{ item: NavigationItem; score: number }> = [];
+    const batches: NavigationItem[][] = [];
     let batch: NavigationItem[] = [];
-    async function flush() {
-      if (!batch.length || stop) {
-        batch = [];
-        return;
-      }
-      const group = batch;
-      batch = [];
-      try {
-        const scores = await evaluator.evaluate(navigationRequest(input.query, group, anchor));
-        group.forEach((item, index) => results.push({ item, score: scores[`q${index}`]! }));
-      } catch (error) {
-        issue(error instanceof EvaluationFailure ? error.kind : "provider");
-      }
-    }
     for (const item of items) {
       if (
         Buffer.byteLength(JSON.stringify(navigationRequest(input.query, [item], anchor))) > 38_000
@@ -72,12 +61,21 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           Buffer.byteLength(
             JSON.stringify(navigationRequest(input.query, [...batch, item], anchor)),
           ) > 38_000)
-      )
-        await flush();
-      if (stop) break;
+      ) {
+        batches.push(batch);
+        batch = [];
+      }
       batch.push(item);
     }
-    await flush();
+    if (batch.length) batches.push(batch);
+    await parallel(batches, async (group) => {
+      try {
+        const scores = await evaluator.evaluate(navigationRequest(input.query, group, anchor));
+        group.forEach((item, index) => results.push({ item, score: scores[`q${index}`]! }));
+      } catch (error) {
+        issue(error instanceof EvaluationFailure ? error.kind : "provider");
+      }
+    });
     return results;
   }
   async function previewDirectory(path: string): Promise<DirectoryPreview> {
@@ -87,9 +85,9 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       sampledFiles: 0,
       sampledDirectories: 0,
       sampledExtensions: {},
-      contentSamples: [],
     };
     let cursor: string | undefined;
+    let bytes = 0;
     try {
       do {
         const page = await reader.listPage(path, cursor);
@@ -97,14 +95,13 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
         for (const entry of page.issues) issue(entry.kind);
         for (const entry of page.entries) {
           const child = { name: basename(entry.path), kind: entry.kind };
-          if (
-            preview.entries.length >= 64 ||
-            Buffer.byteLength(JSON.stringify([...preview.entries, child])) > 4096
-          ) {
+          const size = Buffer.byteLength(JSON.stringify(child));
+          if (preview.entries.length >= 64 || bytes + size > 4096) {
             preview.truncated = true;
             break;
           }
           preview.entries.push(child);
+          bytes += size;
           if (entry.kind === "directory") preview.sampledDirectories++;
           else {
             preview.sampledFiles++;
@@ -119,99 +116,198 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       if (cursor) await reader.closeCursor(cursor);
     }
     preview.entries.sort((a, b) => a.name.localeCompare(b.name));
-    const allowance = Math.max(256, Math.floor(16000 / Math.max(1, preview.sampledFiles)));
-    for (const child of preview.entries) {
-      if (child.kind !== "file" || stop) continue;
-      const source = await snapshot(`${path}/${child.name}`);
-      if (!source) continue;
-      const sample = await pythonPreview(source, input.query, allowance);
-      preview.contentSamples!.push({
+    return preview;
+  }
+  async function withDirectoryContent(item: NavigationItem): Promise<NavigationItem> {
+    const preview = {
+      ...item.childPreview!,
+      contentSamples: [] as NonNullable<DirectoryPreview["contentSamples"]>,
+    };
+    const children = preview.entries.filter((child) => child.kind === "file");
+    const perFile = Math.max(80, Math.floor(16000 / Math.max(1, children.length)));
+    for (const child of children) {
+      if (stop) break;
+      const snapshotValue = await snapshot(`${item.path}/${child.name}`);
+      if (!snapshotValue || Buffer.byteLength(snapshotValue.source) > 1_000_000) continue;
+      const source = snapshotValue.source;
+      const part = Math.floor(perFile / 3);
+      const offsets = [
+        0,
+        Math.max(0, Math.floor(source.length / 2) - Math.floor(part / 2)),
+        Math.max(0, source.length - part),
+      ];
+      preview.contentSamples.push({
         name: child.name,
-        source: sample.text,
-        truncated: sample.truncated,
+        truncated: source.length > perFile,
+        source:
+          source.length <= perFile
+            ? source
+            : offsets
+                .map((start) => `[character offset ${start}]\n${source.slice(start, start + part)}`)
+                .join("\n...\n"),
       });
     }
-    while (Buffer.byteLength(JSON.stringify(preview)) > 28_000 && preview.contentSamples!.length) {
-      preview.contentSamples!.pop();
-      preview.truncated = true;
+    while (
+      Buffer.byteLength(JSON.stringify(preview)) > 28000 &&
+      preview.contentSamples.some((sample) => sample.source.length > 80)
+    ) {
+      for (const sample of preview.contentSamples) {
+        sample.source = sample.source.slice(
+          0,
+          Math.max(80, Math.floor(sample.source.length * 0.8)),
+        );
+        sample.truncated = true;
+      }
+    }
+    return { ...item, childPreview: preview };
+  }
+  async function previewFile(source: Snapshot): Promise<FilePreview> {
+    const bytes = Buffer.from(source.source);
+    let text = new TextDecoder("utf8", { fatal: true }).decode(bytes.subarray(0, 16384), {
+      stream: bytes.length > 16384,
+    });
+    let truncated = bytes.length > 16384;
+    while (Buffer.byteLength(JSON.stringify(text)) > 24000) {
+      let end = Math.floor(text.length * 0.75);
+      const last = text.charCodeAt(end - 1);
+      if (last >= 0xd800 && last <= 0xdbff) end--;
+      text = text.slice(0, end);
+      truncated = true;
+    }
+    const preview: FilePreview = {
+      sizeBytes: bytes.length,
+      extension: extname(source.path),
+      text,
+      previewBytes: Buffer.byteLength(text),
+      truncated,
+      range: "opening bytes",
+      declarations: [],
+      declarationIndexTruncated: false,
+    };
+    if (truncated && /\.pyi?$/.test(source.path) && bytes.length <= 1_000_000) {
+      const sampled = await pythonPreview(source, input.query, 16384);
+      if (
+        sampled.truncated &&
+        sampled.text &&
+        Buffer.byteLength(sampled.text) <= 16384 &&
+        Buffer.byteLength(JSON.stringify(sampled.text)) <= 24000
+      ) {
+        preview.text = sampled.text;
+        preview.previewBytes = sampled.previewBytes;
+        preview.range = "sampled source ranges";
+      }
+    }
+    if (
+      truncated &&
+      /\.(?:pyi?|[cm]?[jt]s|[jt]sx)$/.test(source.path) &&
+      bytes.length <= 1_000_000
+    ) {
+      preview.declarations = (await inspect(source)).units.map((unit) => ({
+        name: unit.name,
+        ...unit.range,
+      }));
+      while (preview.declarations.length && Buffer.byteLength(JSON.stringify(preview)) > 32000) {
+        preview.declarations.pop();
+        preview.declarationIndexTruncated = true;
+      }
     }
     return preview;
   }
   async function discover(seeds: string[], anchor?: { path: string; classes: string[] }) {
-    const queue = seeds.map((path) => ({ path, depth: 0 }));
-    for (let position = 0; position < queue.length && !stop; position++) {
-      const current = queue[position]!;
-      if (visited.has(current.path)) continue;
-      visited.add(current.path);
-      let cursor: string | undefined;
-      try {
-        do {
-          const page = await reader.listPage(current.path, cursor);
-          cursor = page.nextCursor;
-          for (const entry of page.issues) issue(entry.kind);
-          const items: NavigationItem[] = [];
-          const hashes = new Map<string, string>();
-          let pendingBytes = 0;
-          async function flushItems() {
-            for (const decision of await score(items.splice(0), anchor)) {
-              const { item } = decision;
-              if (item.kind === "directory") {
-                if (decision.score > 0.5) queue.push({ path: item.path, depth: 0 });
-                else if (!anchor) pruned.add(item.path);
-              } else if (decision.score > 0.25) {
-                const prior = candidates.get(item.path);
-                if (!prior || decision.score > prior.score)
-                  candidates.set(item.path, {
-                    path: item.path,
-                    contentHash: hashes.get(item.path)!,
-                    score: decision.score,
-                  });
-              }
+    const directories = [...seeds];
+    while (directories.length && !stop && entriesSeen < 100_000) {
+      const level = directories.splice(0).map((path) => ({ path, depth: 0 }));
+      const items: NavigationItem[] = [];
+      const hashes = new Map<string, string>();
+      for (let index = 0; index < level.length && !stop; index++) {
+        const current = level[index]!;
+        if (entriesSeen >= 100_000) {
+          issue("resource_limit");
+          break;
+        }
+        if (visited.has(current.path)) continue;
+        visited.add(current.path);
+        const entries: DirectoryEntry[] = [];
+        let cursor: string | undefined;
+        try {
+          do {
+            const page = await reader.listPage(current.path, cursor);
+            cursor = page.nextCursor;
+            for (const entry of page.issues) issue(entry.kind);
+            entries.push(...page.entries);
+            if (
+              entriesSeen + entries.length > 100_000 ||
+              (cursor && entriesSeen + entries.length === 100_000)
+            ) {
+              issue("resource_limit");
+              break;
             }
-            pendingBytes = 0;
+          } while (cursor && !stop);
+        } finally {
+          if (cursor) await reader.closeCursor(cursor);
+        }
+        for (const entry of entries.sort((a, b) => a.path.localeCompare(b.path))) {
+          if (stop) break;
+          if (entriesSeen++ >= 100_000) {
+            issue("resource_limit");
+            break;
           }
-          for (const entry of page.entries.sort((a, b) => a.path.localeCompare(b.path))) {
-            if (stop) break;
-            if (entry.kind === "directory") {
-              if (current.depth === 0) queue.push({ path: entry.path, depth: 1 });
-              else {
-                items.push({
-                  path: entry.path,
-                  kind: "directory",
-                  childPreview: await previewDirectory(entry.path),
-                });
-                await flushItems();
-              }
-            } else {
-              const source = await snapshot(entry.path);
-              if (!source) continue;
-              hashes.set(entry.path, source.contentHash);
-              const chunks = splitSource(source, 12_000);
-              for (const chunk of chunks) {
-                const text = sourceForUnit(source, chunk);
-                items.push({
-                  path: entry.path,
-                  kind: "file",
-                  filePreview: {
-                    sizeBytes: Buffer.byteLength(source.source),
-                    extension: extname(entry.path),
-                    text,
-                    previewBytes: Buffer.byteLength(text),
-                    truncated: chunks.length > 1,
-                    range: "sampled source ranges",
-                  },
-                });
-                pendingBytes += Buffer.byteLength(text);
-                if (pendingBytes >= 24000) await flushItems();
-              }
+          if (entry.kind === "directory") {
+            if (current.depth === 0) level.push({ path: entry.path, depth: 1 });
+            else {
+              const item: NavigationItem = {
+                path: entry.path,
+                kind: "directory",
+                childPreview: await previewDirectory(entry.path),
+              };
+              items.push(anchor ? await withDirectoryContent(item) : item);
+            }
+          } else {
+            const source = await snapshot(entry.path);
+            if (!source) continue;
+            hashes.set(entry.path, source.contentHash);
+            const filePreview = await previewFile(source);
+            previews.set(entry.path, filePreview);
+            if (Buffer.byteLength(source.source) > 1_000_000) {
+              issue("resource_limit");
+              items.push({ path: entry.path, kind: "file", filePreview });
+              continue;
+            }
+            const chunks = splitSource(source, 12_000);
+            for (const chunk of chunks) {
+              const text = sourceForUnit(source, chunk);
+              items.push({
+                path: entry.path,
+                kind: "file",
+                filePreview: {
+                  sizeBytes: Buffer.byteLength(source.source),
+                  extension: extname(entry.path),
+                  text,
+                  previewBytes: Buffer.byteLength(text),
+                  truncated: chunks.length > 1,
+                  range: "sampled source ranges",
+                },
+              });
             }
           }
-          await flushItems();
-        } while (cursor && !stop);
-      } finally {
-        if (cursor) await reader.closeCursor(cursor);
+        }
+      }
+      for (const { item, score: probability } of await score(items, anchor)) {
+        if (item.kind === "directory") {
+          if (probability > 0.5) directories.push(item.path);
+          else if (!anchor) pruned.set(item.path, item);
+        } else if (probability > 0.25) {
+          const prior = candidates.get(item.path);
+          if (!prior || probability > prior.score)
+            candidates.set(item.path, {
+              path: item.path,
+              contentHash: hashes.get(item.path)!,
+              score: probability,
+            });
+        }
       }
     }
+    if (directories.length) issue("resource_limit");
   }
   function sortedCandidates() {
     return [...candidates.values()].sort(
@@ -276,16 +372,17 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     }
     if (anchor && !stop) {
       // Only one relationship reconsideration, anchored before new candidates are admitted.
-      for (const path of pruned) {
+      const items: NavigationItem[] = [];
+      for (const item of pruned.values()) {
         if (stop) break;
-        const decisions = await score(
-          [{ path, kind: "directory", childPreview: await previewDirectory(path) }],
-          anchor,
-        );
-        if (decisions.some((decision) => decision.score > 0.5)) await discover([path], anchor);
+        items.push(await withDirectoryContent(item));
       }
+      const seeds = (await score(items, anchor))
+        .filter((decision) => decision.score > 0.5)
+        .map((decision) => decision.item.path);
+      await discover(seeds, anchor);
     }
-    const ordered = sortedCandidates();
+    const ordered = [...candidates.values()];
     // All admitted paths survive even if subsequent source inspection is unavailable.
     for (const candidate of ordered)
       files.set(candidate.path, {
@@ -347,27 +444,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     await parallel(ordered, async (candidate) => {
       const source = await unchanged(candidate);
       if (!source) return;
-      const sample = await pythonPreview(source, input.query, 16_000);
-      const preview: FilePreview = {
-        sizeBytes: Buffer.byteLength(source.source),
-        extension: extname(source.path),
-        text: sample.text,
-        previewBytes: sample.previewBytes,
-        truncated: sample.truncated,
-        range: sample.truncated ? "semantic source windows" : "opening bytes",
-        declarations: [],
-        declarationIndexTruncated: false,
-      };
-      if (sample.truncated) {
-        preview.declarations = (await inspect(source)).units.map((unit) => ({
-          name: unit.name,
-          ...unit.range,
-        }));
-        while (preview.declarations.length && Buffer.byteLength(JSON.stringify(preview)) > 32_000) {
-          preview.declarations.pop();
-          preview.declarationIndexTruncated = true;
-        }
-      }
+      const preview = previews.get(candidate.path)!;
       try {
         const scores = await evaluator.evaluate(roleRequest(input.query, candidate.path, preview));
         files.get(candidate.path)!.roles = Object.keys(scores).filter(
@@ -382,7 +459,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       root: reader.root,
       query: input.query,
       status: input.signal.aborted ? "interrupted" : issues.size ? "incomplete" : "complete",
-      files: ordered.map((candidate) => files.get(candidate.path)!),
+      files: sortedCandidates().map((candidate) => files.get(candidate.path)!),
       issues: [...issues].map(([kind, count]) => ({ kind, count })),
       warnings: evaluator.cacheIssues,
       counts: {
