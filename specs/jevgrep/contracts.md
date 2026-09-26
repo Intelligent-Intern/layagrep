@@ -67,27 +67,20 @@ Keep `apps/cli` (credentials/process/rendering) and `packages/core` (retrieval)
 plus existing TypeScript configuration. Test helpers remain under `test/`.
 Official evaluation tools remain development-only and must not enter the package.
 
-```ts
-type Range = { startLine: number; endLine: number }; // one-based, inclusive
-type Snapshot = { path: string; contentHash: string; source: string };
-type SourceUnit = { id: string; name: string; range: Range };
-type Lead = { unit: SourceUnit; score: number };
-type FileEvidence = {
-  path: string; contentHash: string; score: number; roles: string[];
-  leads: Lead[]; selected: Range[]; rendered: Range[];
-  excerpts: Array<{ range: Range; source: string }>;
-  sourceOmitted: boolean;
-};
-type RetrievalResult = {
-  root: string; query: string; status: 'complete' | 'incomplete' | 'interrupted';
-  files: FileEvidence[];
-  issues: Array<{ kind: string; count: number }>;
-  counts: { requests: number; cacheHits: number; inspectedFiles: number };
-};
-// Names may change; these semantic boundaries must survive.
-retrieve(input: { root: string; query: string; policy: SearchPolicy;
-  signal: AbortSignal }, dependencies: RetrievalDependencies): Promise<RetrievalResult>;
-```
+The implemented schemas live in [retrieval types](../../packages/core/src/types.ts),
+[source units](../../packages/core/src/source.ts), and
+[filesystem snapshots](../../packages/core/src/filesystem.ts). `retrieve` accepts a
+root, query, policy, cancellation signal and evaluator; it returns file evidence,
+completion status, counted issues and request/cache statistics. Cache warnings
+are separate from missing-evidence issues.
+
+A source unit has a name, inclusive one-based line range, and half-open UTF-8 byte
+coordinates in its snapshot. A reading lead carries the name, range and relevance
+score without duplicating the parser unit. File evidence distinguishes selected
+ranges from expanded rendered ranges and includes exact excerpt bytes. Partial
+long-line excerpts also carry byte coordinates, because line numbers alone cannot
+locate a fragment. Snapshot hashes bind all of those coordinates to the original
+source. Names may change; these semantic boundaries must survive.
 
 Paths are relative to the canonical root. Output escapes control characters in
 paths; source remains verbatim with attributable ranges. One snapshot owns source,

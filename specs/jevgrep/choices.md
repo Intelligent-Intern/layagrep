@@ -53,11 +53,11 @@ cannot accidentally broaden a follow-up upload. Verdict: sound. Confidence: high
 ### Revalidate selected evidence before sharing it across files
 
 When: installed retrieval integration. Files can change or become ignored while
-Jev evaluates other files. Before building the cross-file evidence request, check
-that each donor is still eligible and has the same content hash. Remove stale
+Jev evaluates other files. Before each declaration evaluation, check that the target and every cross-file
+donor are still eligible and have the same content hash. Remove stale
 excerpts and report incomplete results while retaining admitted file locations.
 
-Gap: the spec required fresh snapshots but did not prescribe the cross-file
+Gap: the spec required fresh snapshots but did not prescribe the per-request
 validation point. Reach: an answer can contain fewer excerpts after a concurrent
 edit; it will not silently present the saved bytes as current. Verdict: sound.
 Confidence: high. This is a bounded snapshot check, not an atomic filesystem lock.

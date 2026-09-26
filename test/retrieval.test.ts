@@ -155,3 +155,120 @@ testIfDocker(
     }
   },
 );
+
+testIfDocker(
+  "donors ignored during follow-up are absent from later evaluation requests",
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "jg-followup-change-"));
+    let calls = 0;
+    let changed = false;
+    let staleUploads = 0;
+    let followups = 0;
+    try {
+      for (let index = 0; index < 12; index++) {
+        await writeFile(
+          join(root, `${index}.ts`),
+          `export function record${index}() {return true;}\n`,
+        );
+      }
+      const result = await retrieve(
+        { root, query: "record behavior", signal: new AbortController().signal },
+        {
+          get requests() {
+            return calls;
+          },
+          async evaluate(request) {
+            calls++;
+            const state = request.state as { selectedEvidence?: Array<{ path: string }> };
+            if (state.selectedEvidence) {
+              followups++;
+              if (followups > 8 && state.selectedEvidence.some((entry) => entry.path === "0.ts"))
+                staleUploads++;
+              if (!changed) {
+                changed = true;
+                await writeFile(join(root, ".ignore"), "0.ts\n");
+              }
+            }
+            return Object.fromEntries(Object.keys(request.questions).map((id) => [id, 0.9]));
+          },
+        },
+      );
+      expect(changed).toBe(true);
+      expect(staleUploads).toBe(0);
+      expect(result.status).toBe("incomplete");
+      expect(result.files.find((file) => file.path === "0.ts")?.excerpts).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
+
+testIfDocker("an aborted evaluator cannot return a previously cached answer", async () => {
+  const { createEvaluationCache } = await import("../packages/core/src/cache");
+  const directory = await mkdtemp(join(tmpdir(), "jg-cache-abort-"));
+  const controller = new AbortController();
+  let calls = 0;
+  const server = Bun.serve({
+    port: 0,
+    fetch() {
+      calls++;
+      return Response.json({ answers: { q: { type: "boolean", probability: 0.8 } } });
+    },
+  });
+  try {
+    const evaluator = createEvaluator({
+      apiKey: "fixture",
+      baseURL: `http://127.0.0.1:${server.port}`,
+      signal: controller.signal,
+      cache: createEvaluationCache({ directory }),
+    });
+    const request = {
+      state: "test",
+      questions: { q: { type: "boolean" as const, instructions: "Relevant?" } },
+    };
+    expect(await evaluator.evaluate(request)).toEqual({ q: 0.8 });
+    expect(await evaluator.evaluate(request)).toEqual({ q: 0.8 });
+    expect(evaluator.cacheHits).toBe(1);
+    controller.abort();
+    await expect(evaluator.evaluate(request)).rejects.toMatchObject({ kind: "cancelled" });
+    expect(calls).toBe(1);
+  } finally {
+    server.stop(true);
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+testIfDocker(
+  "a file excluded during declaration selection is not uploaded in later groups",
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "jg-group-change-"));
+    let declarations = 0;
+    try {
+      await writeFile(
+        join(root, "events.ts"),
+        Array.from({ length: 20 }, (_, i) => `export function event${i}() {return true;}\n`).join(
+          "",
+        ),
+      );
+      const result = await retrieve(
+        { root, query: "event behavior", signal: new AbortController().signal },
+        {
+          requests: 0,
+          async evaluate(request) {
+            const state = request.state as { declarations?: unknown[] };
+            if (state.declarations) {
+              declarations++;
+              if (declarations === 1) await writeFile(join(root, ".ignore"), "events.ts\n");
+            }
+            return Object.fromEntries(Object.keys(request.questions).map((id) => [id, 0.9]));
+          },
+        },
+      );
+      expect(declarations).toBe(1);
+      expect(result.status).toBe("incomplete");
+      expect(result.files[0]?.excerpts).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);

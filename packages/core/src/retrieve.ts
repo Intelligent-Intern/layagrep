@@ -296,7 +296,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
         excerpts: [],
         sourceOmitted: false,
       });
-    const select = async (evidence?: Evidence[]) =>
+    const select = async (evidence?: () => Promise<Evidence[] | undefined>) =>
       parallel(ordered, async (candidate) => {
         const source = await unchanged(candidate);
         if (!source) return;
@@ -305,7 +305,10 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           input.query,
           candidate.score,
           evaluator,
-          evidence,
+          async () => {
+            if (!(await unchanged(candidate))) return null;
+            return { evidence: await evidence?.() };
+          },
           files.get(candidate.path),
         );
         files.set(candidate.path, selection.file);
@@ -327,7 +330,15 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     }
 
     if (evidence.length && Buffer.byteLength(JSON.stringify(evidence)) <= 64_000 && !stop)
-      await select(evidence);
+      await select(async () => {
+        const current = new Set<string>();
+        for (const path of new Set(evidence.map((entry) => entry.path))) {
+          const candidate = candidates.get(path)!;
+          if (await unchanged(candidate)) current.add(path);
+        }
+        const fresh = evidence.filter((entry) => current.has(entry.path));
+        return fresh.length ? fresh : undefined;
+      });
     await parallel(ordered, async (candidate) => {
       const source = await unchanged(candidate);
       if (!source) return;

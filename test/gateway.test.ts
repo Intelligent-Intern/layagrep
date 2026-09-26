@@ -65,3 +65,78 @@ test("transient failures retry within the shared request guard and never become 
     server.stop(true);
   }
 });
+
+test("cancellation of a rate-limited request prevents further attempts", async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  let firstResponse!: () => void;
+  const received = new Promise<void>((resolve) => {
+    firstResponse = resolve;
+  });
+  const server = Bun.serve({
+    port: 0,
+    fetch() {
+      calls++;
+      firstResponse();
+      return Response.json(
+        { error: "rate limited" },
+        { status: 429, headers: { "retry-after": "30" } },
+      );
+    },
+  });
+  try {
+    const evaluator = createEvaluator({
+      apiKey: "fixture",
+      baseURL: `http://127.0.0.1:${server.port}`,
+      signal: controller.signal,
+      retryDelayMs: 0,
+    });
+    const result = evaluator.evaluate({
+      state: "test",
+      questions: { q: { type: "boolean", instructions: "Relevant?" } },
+    });
+    await received;
+    controller.abort();
+    await expect(result).rejects.toMatchObject({ kind: "cancelled" });
+    expect(calls).toBe(1);
+    expect(evaluator.requests).toBe(1);
+  } finally {
+    controller.abort();
+    server.stop(true);
+  }
+}, 2000);
+
+test("Retry-After delays a retry before the provider can recover", async () => {
+  const received: number[] = [];
+  const server = Bun.serve({
+    port: 0,
+    fetch() {
+      received.push(performance.now());
+      return received.length === 1
+        ? Response.json(
+            { error: "rate limited" },
+            { status: 429, headers: { "retry-after": "0.1" } },
+          )
+        : Response.json({ answers: { q: { type: "boolean", probability: 0.8 } } });
+    },
+  });
+  try {
+    const evaluator = createEvaluator({
+      apiKey: "fixture",
+      baseURL: `http://127.0.0.1:${server.port}`,
+      signal: new AbortController().signal,
+      retryDelayMs: 0,
+    });
+    expect(
+      await evaluator.evaluate({
+        state: "test",
+        questions: { q: { type: "boolean", instructions: "Relevant?" } },
+      }),
+    ).toEqual({ q: 0.8 });
+    expect(received.length).toBe(2);
+    expect(received[1]! - received[0]!).toBeGreaterThanOrEqual(95);
+    expect(evaluator.requests).toBe(2);
+  } finally {
+    server.stop(true);
+  }
+});

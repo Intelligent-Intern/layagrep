@@ -62,6 +62,7 @@ export function createEvaluator(options: {
       return requests;
     },
     async evaluate(request: EvaluationRequest): Promise<Record<string, number>> {
+      if (options.signal.aborted) throw new EvaluationFailure("cancelled");
       const cacheInput: CacheInput = {
         request,
         namespace: {
@@ -73,6 +74,7 @@ export function createEvaluator(options: {
         },
       };
       const cached = await options.cache?.get(cacheInput);
+      if (options.signal.aborted) throw new EvaluationFailure("cancelled");
       if (
         cached &&
         Object.keys(cached).length === Object.keys(request.questions).length &&

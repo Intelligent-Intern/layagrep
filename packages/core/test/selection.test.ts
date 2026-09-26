@@ -96,7 +96,7 @@ test("Python neighbors are rendering context and follow-up passes do not expand 
       );
       return 0;
     }),
-    evidence,
+    async () => ({ evidence }),
     first.file,
   );
   expect(calls).toBeGreaterThan(0);
@@ -162,7 +162,7 @@ test("partial giant lines stay byte-bounded in requests, selections and additive
     "TARGET",
     0.8,
     evaluator(() => 0),
-    [{ path: "other.txt", startLine: 1, endLine: 1, source: "TARGET" }],
+    async () => ({ evidence: [{ path: "other.txt", startLine: 1, endLine: 1, source: "TARGET" }] }),
     first.file,
   );
   expect(second.file.selected).toEqual(first.file.selected);
@@ -190,7 +190,7 @@ test("malformed group answers stay unknown without discarding previous successes
     "q",
     0.8,
     broken,
-    [{ path: "other.ts", startLine: 1, endLine: 1, source: "first()" }],
+    async () => ({ evidence: [{ path: "other.ts", startLine: 1, endLine: 1, source: "first()" }] }),
     first.file,
   );
   expect(second.issues).toEqual([{ kind: "provider", count: 1 }]);
@@ -230,7 +230,7 @@ test("previous evidence from changed bytes is discarded explicitly", async () =>
     "q",
     0.9,
     evaluator(() => 0),
-    [],
+    async () => ({ evidence: [] }),
     old.file,
   );
   expect(next.issues).toEqual([{ kind: "changed", count: 1 }]);

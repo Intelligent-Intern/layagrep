@@ -94,6 +94,16 @@ async function context(t, mode = "healthy") {
       }
       assert.ok(requests.length < 256, "Synthetic search stopped making bounded forward progress");
       requests.push({ body, raw });
+      if (mode === "transient" && requests.length === 1) {
+        response.writeHead(500, { "content-type": "application/json" });
+        response.end(JSON.stringify({ error: "temporary fixture failure" }));
+        return;
+      }
+      if (mode === "unauthorized") {
+        response.writeHead(401, { "content-type": "application/json" });
+        response.end(JSON.stringify({ error: "fixture credential rejected" }));
+        return;
+      }
       let probabilities;
       if (Array.isArray(body.state.items)) {
         assert.equal(body.state.query, query);
@@ -366,4 +376,22 @@ test("doctor uses the installed SDK while missing credentials fail cleanly", asy
   assert.equal(missing.code, 1, missing.stdout);
   assert.ok(missing.stdout.trim().length > 0);
   assert.equal(fixture.requests.length, before);
+});
+
+test("provider authentication failure stops immediately with fatal exit 1", async (t) => {
+  const fixture = await context(t, "unauthorized");
+  const result = await fixture.run([query]);
+  assert.equal(result.code, 1);
+  assert.equal(fixture.requests.length, 1);
+  assert.ok(!result.stdout.includes("Status: complete"));
+  assert.ok(!result.stdout.includes("py-evidence-"));
+});
+
+test("a transient provider failure retries the same request and completes installed retrieval", async (t) => {
+  const fixture = await context(t, "transient");
+  const result = await fixture.run([query]);
+  assert.equal(result.code, 0);
+  assert.match(result.stdout, /Status: complete/);
+  assert.deepEqual(fixture.requests[0].body, fixture.requests[1].body);
+  for (const [branch] of branches) assert.ok(result.stdout.includes(`py-evidence-${branch}:`));
 });

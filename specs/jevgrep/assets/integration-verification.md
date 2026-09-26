@@ -30,3 +30,24 @@ and permits execution on that isolated mount. Coverage was preserved.
 Still unproven: live Requests/Sol checkpoint, final failure/cache requirements,
 source-budget choice, ten-task frozen quality gate, Linux/amd64 and native macOS
 release verification. Historical spike outcomes are not production outcomes.
+
+## Independent review follow-up
+
+`codex review --commit 3c8835f` reproduced stale donors during the follow-up pass
+and successful cache hits after cancellation. Both were confirmed with failing
+regressions. Selection now asks its caller to prepare each declaration request:
+the filesystem owner refreshes donor eligibility/hashes and checks the target
+snapshot before each group. This also fixes a separately reproduced case where a
+file ignored after its first declaration group was uploaded twice more.
+Cancellation is checked before and after asynchronous cache lookup.
+
+Focused verification: 14 retrieval/selection tests pass in Docker; four HTTP
+evaluator tests pass, including rate-limit cancellation and Retry-After recovery.
+The installed suite passed eight journeys before these last retrieval fixes;
+`bun run test:e2e -- --case failures` selects its three current failure cases
+(malformed answers, authentication failure, transient recovery) and passed.
+This is not the complete slice 05 matrix yet.
+
+A live `jg doctor` completed successfully through AI Gateway with the authorized
+Duet staging credential, loaded through its existing dotenvx mechanism. No secret
+was printed. This verifies live connectivity only; the official task remains next.

@@ -29,7 +29,7 @@ export async function selectFile(
   query: string,
   score: number,
   evaluator: Evaluator,
-  selectedEvidence?: Evidence[],
+  prepare?: () => Promise<{ evidence?: Evidence[] } | null>,
   previous?: FileEvidence,
 ): Promise<SelectionResult> {
   const issues = new Map<string, number>();
@@ -101,7 +101,15 @@ export async function selectFile(
     pending.push(unit);
   }
   if (pending.length) groups.push(pending);
+  let invalidated = false;
   for (const group of groups) {
+    const prepared = prepare ? await prepare() : {};
+    if (prepared === null) {
+      invalidated = true;
+      selected.length = 0;
+      leads.clear();
+      break;
+    }
     const first = Math.max(1, group[0]!.range.startLine - 8),
       last = Math.min(lines.length, group.at(-1)!.range.endLine + 8);
     const oversizedContext = [...lines.slice(0, 20), ...lines.slice(first - 1, last)].some(
@@ -124,7 +132,7 @@ export async function selectFile(
       snapshot.path,
       context,
       group.map((unit) => ({ name: unit.name, ...unit.range })),
-      selectedEvidence,
+      prepared.evidence,
     );
     try {
       const answers = await evaluator.evaluate(request);
@@ -226,7 +234,7 @@ export async function selectFile(
         ...(partial ? { sourceByteStart: span.start, sourceByteEnd: span.end, partial: true } : {}),
       };
     }),
-    sourceOmitted: false,
+    sourceOmitted: invalidated,
   };
   return { file, issues: [...issues].map(([kind, count]) => ({ kind, count })) };
 }
