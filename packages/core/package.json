@@ -11,7 +11,8 @@
     "lint": "oxlint src"
   },
   "dependencies": {
-    "ai": "7.0.107"
+    "ai": "7.0.107",
+    "ignore": "7.0.5"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
