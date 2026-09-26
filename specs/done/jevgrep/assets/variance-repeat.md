@@ -55,3 +55,21 @@ These are observed differences, not proof that ranking caused the miss. Evidence
 Astropy solved again. Repeat Sol cost is $0.3507346 versus first-run $0.3914126
 and baseline $0.4286310, retaining a successful cost win. Its observed Jev total
 is complete at $0.076535382 and remains excluded from scored Sol cost.
+The repeat used ten generations versus fourteen and restored a lazy forward-call
+guard for the no-dropped-axis case. Its authored regression uses celestial and
+spectral coordinates rather than the first run's linear fixture. Final local
+coverage passed 107, skipped seven and retained the known expired-leap-second
+failure. Evidence: `/tmp/jg-repeat-astropy-comparison.md`.
+
+Xarray solved again at $0.5114540 versus first-run $0.3182098 and baseline
+$0.4937066, losing its earlier cost-win classification. The production patch
+matches the first run. Its packet grew from 2,787 bytes without excerpts to
+17,524 bytes with 12 blocks; the agent ran three successful test selections
+instead of one and added default-attribute and groupby coverage. These observed
+changes accompany higher cost without isolating its cause. Jev's known subtotal
+is $0.181858194, full total unknown. Evidence: `/tmp/jg-repeat-xarray-comparison.md`.
+
+Requests solved on the repeat after failing the first corrected run. Its complete
+Sol cost is $0.2721328 versus first-run $0.2388080 and baseline $0.2685004, so the
+recovered solve is not a strict cost win. Jev's complete observed total is
+$0.010286388, excluded from scored cost.
