@@ -13,9 +13,10 @@ the remaining frozen cells continue to characterize the same policy.
 | Requests 1142 | Solved, no evaluator errors | $0.2307800 | $0.2685004 | −14.05% | $0.011333322 |
 | scikit-learn 13124 | Solved, no evaluator errors | $0.2161638 | $0.2944360 | −26.58% | $0.061259100 |
 | Django 15629 | Unresolved; one required test failed | $1.0015696 | $1.5055472 | −33.47%, **not a win** | Known $0.179557602; full total unknown |
+| Astropy 13579 | Solved, no evaluator errors | $0.5697514 | $0.4286310 | +32.92%, **not a win** | Known $0.093963408; full total unknown |
 
-All three Sol bills are complete: nine generations each for Requests and
-scikit-learn, 24 for Django. Jev response-cost
+All four Sol bills are complete: nine generations each for Requests and
+scikit-learn, 24 for Django and 21 for Astropy. Jev response-cost
 coverage is complete: Requests has 72 client calls and 81 provider attempts;
 scikit-learn has 215 calls and 233 provider attempts. These are observed API
 metadata, not invoice reconciliation. Unknown or failed remaining outcomes cannot
@@ -107,3 +108,42 @@ retry, and two navigation requests recovered by splitting. The CLI returned
 complete output, but strict accounting leaves the full observed Jev total unknown
 while retaining the known response-cost subtotal above. This is not zero usage
 and does not change the fully accounted Sol bill.
+
+## Astropy cost regression
+
+The packet contains 60 files and zero excerpts (10,132 bytes); the accepted spike
+had 27 files and zero excerpts (4,631 bytes). Both rank the implementation and
+its tests first. Jev scores the inverse method 0.42, yielding a lead; reusable
+`dropped_world_dimensions` code scores 0.13, yielding neither excerpt nor lead.
+Sol reads the implementation locally.
+
+The treatment adds package/changelog inspection, a behavior probe, separate test
+enumeration, two failure-log reads, a late high-level test and a final source read.
+All comparators encounter the same expired leap-second failure in broader tests,
+so it cannot alone explain the added cost. The final focused rerun follows a test
+change and is justified. Forty-one focused tests pass. The treatment shares lazy
+cached coordinates between metadata and inversion, whereas the references compute
+them locally with a guard; no new functional defect was established.
+
+Higher cached-input and cache-creation charges dominate the cost increase. Packet
+breadth and the observed exploration are associated differences, not isolated
+causes. Detailed comparison is retained at `/tmp/jg-cpython-astropy-comparison/`.
+
+## Separate query-wording diagnostic
+
+The frozen candidate remains unchanged. A preregistered three-call Jev-only probe
+replays one retained scikit-learn declaration request, changing only `state.query`.
+All source bytes, declarations, questions and other state fields are identical.
+The main `_make_test_folds` declaration scores 0.26 with the current query
+(retained score 0.27), 0.50 with accepted-spike wording and 0.69 with a neutral
+investigative query. Only 0.69 crosses the existing strict `>0.5` selection rule.
+
+Three logical/transport/provider calls succeed with zero retries; observed cost
+is $0.000414750, research spend separate from cohort task costs. A 60-second
+abort limit is diagnostic-only; production policy is unchanged. One observation
+per wording cannot eliminate variance or prove downstream quality. This supports
+query sensitivity as a next hypothesis, not promotion of a new strategy. The
+contract, exact request/response artifacts and hashes are retained in
+`/tmp/jg-query-sensitivity/`. A next experiment must remain separately identified,
+retain the same official solve/cost gate, and test actual task outcomes before any
+candidate adoption. No Sol or baseline agent was rerun for this diagnostic.
