@@ -6,7 +6,7 @@ unless explicitly delegated. No backward compatibility or migration layer.
 
 ## CLI and installation
 
-Publish one npm package installing `jevgrep`. Node >=22 is the runtime floor;
+Publish one npm package `@dzhng/jevgrep` installing `jg`. Node >=22 is the runtime floor;
 Bun/Turbo are development tools only. Publish from GitHub Actions on `v*` tags,
 using the user-supplied `NPM_TOKEN` secret as `NODE_AUTH_TOKEN`, following duet-agent.
 Validate tag/version agreement and publish the exact verified tarball, then smoke-test
@@ -15,13 +15,13 @@ Silicon macOS and Linux x64/arm64 before claiming those combinations. Windows is
 out of scope. No runtime Python, Git, ripgrep, compiler, or Bun prerequisite.
 
 ```text
-jevgrep "question" [root]              # root defaults to cwd
-jevgrep auth [--stdin]                # hidden interactive input or explicit pipe
-jevgrep doctor                       # synthetic Gateway connectivity/answer check
-jevgrep cache clear                  # idempotently clear Jevgrep cache
-jevgrep skill                        # print bundled SKILL.md to stdout
-jevgrep --help
-jevgrep --version
+jg "question" [root]              # root defaults to cwd
+jg auth [--stdin]                # hidden interactive input or explicit pipe
+jg doctor                       # synthetic Gateway connectivity/answer check
+jg cache clear                  # idempotently clear Jevgrep cache
+jg skill                        # print bundled SKILL.md to stdout
+jg --help
+jg --version
 ```
 
 Search flags: `--no-cache`, `--max-source-bytes N` (0 = unlimited excerpts),
@@ -47,12 +47,12 @@ Credentials retain XDG config location and owner-only permissions; environment
 key takes precedence over saved key. An explicitly empty environment key disables
 saved credentials, supporting isolated tests. Reject whitespace-containing keys
 consistently; never echo keys in either stream or provider errors. Auth saves
-without a network call; doctor verifies a synthetic expected answer. Root/help/
+without a network call; doctor verifies a synthetic expected answer. Help/
 version/skill/cache-clear require no provider key. Bound auth stdin input.
 
 The canonical skill source is `skills/jevgrep/SKILL.md` in this repository,
 discoverable by the skills CLI installer. Ship that same file with the npm package;
-do not maintain a second authored copy. `jevgrep skill` makes installation
+do not maintain a second authored copy. `jg skill` makes installation
 possible using ordinary redirection into the user's chosen agent skill directory;
 do not silently write agent configuration. Document Codex and Claude installation.
 The skill chooses unfamiliar multi-file discovery, awaits the same invocation,

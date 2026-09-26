@@ -49,3 +49,45 @@ another reader is required to intentionally change policy.
 
 Gap: method notation in the plan did not settle where policy lived. Reach: callers
 cannot accidentally broaden a follow-up upload. Verdict: sound. Confidence: high.
+
+### Revalidate selected evidence before sharing it across files
+
+When: installed retrieval integration. Files can change or become ignored while
+Jev evaluates other files. Before building the cross-file evidence request, check
+that each donor is still eligible and has the same content hash. Remove stale
+excerpts and report incomplete results while retaining admitted file locations.
+
+Gap: the spec required fresh snapshots but did not prescribe the cross-file
+validation point. Reach: an answer can contain fewer excerpts after a concurrent
+edit; it will not silently present the saved bytes as current. Verdict: sound.
+Confidence: high. This is a bounded snapshot check, not an atomic filesystem lock.
+
+### Keep cache trouble separate from missing retrieval evidence
+
+When: cache integration. An unreadable cache should fall back to the provider.
+Report the cache problem as a warning; mark the search incomplete only when an
+actual retrieval step fails. Cached entries contain only validated numeric answers.
+
+Gap: the result schema did not distinguish cache warnings from evidence failures.
+Reach: callers can trust a complete search even if it ran without persistence.
+Verdict: sound. Confidence: high.
+
+### Bound pending source batches without limiting admitted file counts
+
+When: traversal integration. Flush accumulated source fragments by bytes before
+many large files can pile up in memory. Keep candidate metadata for every file
+passing the threshold, and revisit snapshots when selecting source.
+
+Gap: the plan delegated batching details. Reach: request grouping differs from the
+reference under large inputs and therefore needs the production quality gate.
+Verdict: provisional until the frozen task comparison. Confidence: medium.
+
+### Rebuild the CLI whenever build is requested
+
+When: packaging integration. The bundled CLI includes core source and the canonical
+skill outside its package directory. Disable its build cache so a changed skill or
+core module cannot yield a stale executable through incomplete cache inputs.
+
+Gap: the spec did not prescribe development build caching. Reach: local builds do
+more work; package verification always receives current source. Verdict: sound.
+Confidence: high; build caching can be reintroduced with complete input tracking.

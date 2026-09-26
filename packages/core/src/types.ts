@@ -1,10 +1,12 @@
 import type { FilesystemPolicy } from "./filesystem";
 import type { EvaluationRequest } from "./gateway";
 
-export type SourceRange = { startLine: number; endLine: number };
+import type { Range } from "./source";
+export type { Range } from "./source";
+export type EvidenceRange = Range & { sourceByteStart?: number; sourceByteEnd?: number };
 export type ReadingLead = {
   name: string;
-  range: SourceRange;
+  range: EvidenceRange;
   score: number;
 };
 export type FileEvidence = {
@@ -13,9 +15,15 @@ export type FileEvidence = {
   score: number;
   roles: string[];
   leads: ReadingLead[];
-  selected: SourceRange[];
-  rendered: SourceRange[];
-  excerpts: Array<{ range: SourceRange; source: string }>;
+  selected: EvidenceRange[];
+  rendered: EvidenceRange[];
+  excerpts: Array<{
+    range: EvidenceRange;
+    source: string;
+    sourceByteStart?: number;
+    sourceByteEnd?: number;
+    partial?: boolean;
+  }>;
   sourceOmitted: boolean;
 };
 export type RetrievalResult = {
@@ -24,6 +32,7 @@ export type RetrievalResult = {
   status: "complete" | "incomplete" | "interrupted";
   files: FileEvidence[];
   issues: Array<{ kind: string; count: number }>;
+  warnings?: Array<{ kind: string; count: number }>;
   counts: { requests: number; cacheHits: number; inspectedFiles: number };
 };
 export type SearchInput = {
@@ -36,5 +45,6 @@ export type SearchInput = {
 export type Evaluator = {
   readonly requests: number;
   readonly cacheHits?: number;
+  readonly cacheIssues?: Array<{ kind: string; count: number }>;
   evaluate(request: EvaluationRequest): Promise<Record<string, number>>;
 };

@@ -1,13 +1,13 @@
 ---
 name: jevgrep
-description: Find relevant implementation, callers, helpers and tests for unfamiliar multi-file behavior using the jevgrep CLI. Use before coding when the affected locations are unclear; skip when the needed path and context are already known.
+description: Find relevant implementation, callers, helpers and tests for unfamiliar multi-file behavior using the jg CLI. Use before coding when the affected locations are unclear; skip when the needed path and context are already known.
 ---
 
 # Jevgrep
 
-1. Run `jevgrep "research question" [root]`. Describe the observed behavior,
+1. Run `jg "research question" [root]`. Describe the observed behavior,
    expected behavior and useful reproduction clues. Omit root to search the current
-   directory. Use `jevgrep --help` for supported options.
+   directory. Use `jg --help` for supported options.
 2. Wait for that same invocation to finish. Retain its shell session and read its
    output instead of launching another search when a polling interval expires.
    Allow enough tool output to read the excerpts; the summary at the head is not

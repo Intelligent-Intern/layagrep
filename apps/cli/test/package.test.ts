@@ -1,6 +1,6 @@
 import { expect } from "bun:test";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -13,7 +13,17 @@ testInDocker(
   "npm tarball installs the jg executable and canonical skill outside the checkout",
   async () => {
     const scratch = await mkdtemp(join(tmpdir(), "jevgrep-package-"));
-    const env = { ...process.env, HOME: scratch, AI_GATEWAY_API_KEY: "", NODE_PATH: "" };
+    const npmCache = join(scratch, "npm-cache");
+    if (process.env.npm_config_cache) {
+      await cp(process.env.npm_config_cache, npmCache, { recursive: true });
+    }
+    const env = {
+      ...process.env,
+      HOME: scratch,
+      AI_GATEWAY_API_KEY: "",
+      NODE_PATH: "",
+      npm_config_cache: npmCache,
+    };
     try {
       const { stdout } = await execute(
         "npm",

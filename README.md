@@ -3,7 +3,7 @@
 Context retrieval for coding agents: ask a repository question and receive source
 context that helps the agent act without a long sequence of searches and reads.
 The architecture spike is complete enough for an implementation decision; the
-production CLI still provides the auth/doctor scaffold. See the
+production CLI is implemented and undergoing installed and benchmark verification. See the
 [accepted architecture](docs/architecture.md) for the reference strategy, rationale,
 and evidence limits. The [full product spec](specs/jevgrep/README.md) owns the
 implementation plan and current product decisions.
@@ -12,7 +12,7 @@ implementation plan and current product decisions.
 
 Uses Duet's Bun workspaces, shared TypeScript configuration, and Turborepo pattern.
 Install with `bun install`, then run `bun run dev --help`. `bun run build` creates
-a Node-compatible CLI at `apps/cli/dist/index.js`; invoke it with Node during development.
+a Node-compatible CLI at `apps/cli/dist/bin/index.js`; invoke it with Node during development.
 Use the root typecheck, lint, test, and format-check scripts before handing off changes.
 
 Run `bun run dev auth` to paste a hidden AI Gateway key, then `bun run dev doctor`
@@ -34,5 +34,4 @@ workflow and accounting rules. Older custom evals are deprecated and stay out of
 ## Agent skill
 
 The canonical [Jevgrep skill](skills/jevgrep/SKILL.md) lives under `skills/` for
-agent discovery and installation through the skills CLI. It describes the target
-search workflow; the production search command is still under implementation.
+agent discovery and installation through the skills CLI. It describes the `jg` search workflow and is embedded in the installed CLI.

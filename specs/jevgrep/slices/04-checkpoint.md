@@ -6,7 +6,7 @@ Status: planned. Depends on: 01, 02, 03. Read [contracts](../contracts.md) first
 
 Compose core `retrieve` and the CLI contract. Port hierarchy, file admission, source/lead decisions, accepted relationship pass and separate roles; copy exact accepted request builders. Add bounded directory source samples as an explicitly labeled production change. Keep one deterministic candidate ordering so cache inputs can later be reproducible; record its request difference from the spike.
 
-CLI owns credentials, rendering, stdout-only errors, cancellation and exit codes. Core result carries selected versus rendered ranges and completeness. Ship `jevgrep skill` and the canonical `skills/jevgrep/SKILL.md` following write-skills. Production invocation is selective, benchmark wrapper forces first retrieval. Implement initial finite evaluator attempts and 50k counter now; the later fault slice expands conformance rather than allowing runaway work here.
+CLI owns credentials, rendering, stdout-only errors, cancellation and exit codes. Core result carries selected versus rendered ranges and completeness. Ship `jg skill` and the canonical `skills/jevgrep/SKILL.md` following write-skills. Production invocation is selective, benchmark wrapper forces first retrieval. Implement initial finite evaluator attempts and 50k counter now; the later fault slice expands conformance rather than allowing runaway work here.
 
 Build/pack/install outside checkout. First checkpoint deliberately has no persistent cache yet; do not advertise final cache behavior until slice 06. This is feature staging, not a temporary second retrieval implementation. Start with the accepted source allocation, retaining all qualifying paths.
 

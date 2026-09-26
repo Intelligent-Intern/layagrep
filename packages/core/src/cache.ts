@@ -8,8 +8,8 @@ export type JsonValue =
   | boolean
   | number
   | string
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+  | readonly JsonValue[]
+  | { readonly [key: string]: JsonValue | undefined };
 export type CacheInput = {
   request: JsonValue;
   namespace: { model: string; provider: string; policyVersion: string; [key: string]: string };

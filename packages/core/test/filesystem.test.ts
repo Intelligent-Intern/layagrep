@@ -1,4 +1,5 @@
-import { afterEach, expect, test, spyOn } from "bun:test";
+import { testIfDocker as test } from "../../../test/helpers/docker";
+import { afterEach, expect, spyOn } from "bun:test";
 import { mkdtemp, mkdir, writeFile, rm, symlink, chmod, open, utimes } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

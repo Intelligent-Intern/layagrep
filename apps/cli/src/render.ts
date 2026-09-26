@@ -30,6 +30,7 @@ export function renderResult(result: RetrievalResult, maxSourceBytes = 0): strin
     `Root: ${quote(result.root)}`,
     `Relevant files: ${files.length}`,
     `Source omitted: ${files.filter(({ omitted }) => omitted).length} file(s)`,
+    ...(result.warnings ?? []).map(({ kind, count }) => `Warning: ${quote(kind)}: ${count}`),
     ...result.issues.map(({ kind, count }) => `Issue: ${quote(kind)}: ${count}`),
     "",
     "Reading leads (estimates; source below is evidence):",

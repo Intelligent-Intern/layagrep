@@ -2,18 +2,25 @@
 
 Turn a coding agent's research question into relevant file locations and useful
 source excerpts. Ship a Node-only CLI and explicit agent skill, using hierarchical
-Jev classification through Vercel AI Gateway. This is the build plan; production
-search is not implemented yet.
+Jev classification through Vercel AI Gateway. This is the build plan; production search is implemented and acceptance verification is in progress.
 
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-25**.
-Next: integrate [02: bundled parser](slices/02-parser.md) and
-[03: filesystem](slices/03-filesystem.md) from their isolated branches, then compose
-the installed workflow. Reference replay is green; see
-[verification evidence](assets/reference-verification.md). Begin by reading
-[contracts](contracts.md) and the [decision map](map.md). Preserve the accepted
-spike as evidence; do not import experimental runtime modules into the product.
+Next: run the installed `jg` on the
+retained official Requests task with Sol. Parser, filesystem, evaluator, selection,
+cache and CLI components are integrated; slice acceptance remains open until its
+full evidence exists. Reference HTTP replay and the Node-only installed fixture
+journey pass. Two mutation regressions now verify that invalidated evidence is
+removed and reported incomplete. The default test runner passes under non-root, read-only Docker isolation; see
+[integrated verification](assets/integration-verification.md).
+
+Priority after that checkpoint: fault/cache coverage, measured output policy,
+frozen ten-task confirmation, and release verification. Never rerun saved
+baselines. The current source allocation is uncapped: the accepted reference
+validated its budget flag but did not enforce it. A cap needs slice 07 evidence.
+See [verification evidence](assets/reference-verification.md),
+[contracts](contracts.md), and the [decision map](map.md).
 
 No user decision blocks starting. External verification dependencies are a working
 Docker daemon, explicit Gateway credentials for live tests, retained official task
@@ -38,7 +45,7 @@ not claims about the current scaffold.
 
 ## Product and scope
 
-User supplies `jevgrep "question" [root]`; the CLI returns a summary, all qualifying
+User supplies `jg "question" [root]`; the CLI returns a summary, all qualifying
 file locations, optional declaration leads, and selected verbatim excerpts. It
 helps the caller begin with evidence; the caller still owns the patch and tests.
 Threshold selection replaces fixed top-N file counts. No negative-path inventory,
@@ -47,8 +54,7 @@ generated answer, saved report, daemon, index, MCP server or UI.
 Final v1 includes npm packaging and a tested publishing workflow on macOS/Linux,
 Node-only runtime, auth/doctor,
 Python and TS/JS parsing with text fallback, safe default eligibility, incomplete
-results, default-on cache, and the agent skill. Cache persistence is an explicitly
-later feature after the first installed checkpoint, not an alternate pipeline.
+results, default-on cache, and the agent skill. Cache persistence uses the same evaluator and retrieval pipeline.
 No backward compatibility, data migrations or scaffold shims. Other providers,
 Windows, Claude/DeepSWE benchmark expansion and untouched holdout research are
 separate follow-ups. Keep personal-repository evals out of version control.

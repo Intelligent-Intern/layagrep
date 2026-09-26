@@ -11,7 +11,12 @@ RUN bun install --frozen-lockfile
 COPY apps/cli apps/cli
 COPY packages/core packages/core
 COPY test test
+COPY scripts scripts
+COPY skills skills
+RUN bun scripts/build-cli.ts
+RUN mkdir -p /opt/npm-cache && cd apps/cli && npm pack --ignore-scripts --pack-destination /opt && npm install --prefix /opt/npm-warm --cache /opt/npm-cache --ignore-scripts --no-audit --no-fund /opt/dzhng-jevgrep-*.tgz && chmod -R a+rX /opt/npm-cache
+ENV npm_config_cache=/opt/npm-cache npm_config_offline=true
 COPY evals/implementation/swebench/hierarchy-unit-locators-spike.ts evals/implementation/swebench/source-method-windows-spike.ts evals/implementation/swebench/source-method-declarations-spike.py evals/implementation/swebench/content-handoff-v47-spike.ts evals/implementation/swebench/content-handoff-v47-spike.py evals/implementation/swebench/complete-source-v64-spike.ts evals/implementation/swebench/preview-fragments-v51-spike.ts evals/implementation/swebench/source-neighborhood-spike.py evals/implementation/swebench/
-RUN bun build evals/implementation/swebench/hierarchy-unit-locators-spike.ts --target=node --outfile=/tmp/jevgrep-reference.mjs
-ENV HOME=/tmp/jevgrep-home XDG_CONFIG_HOME=/tmp/jevgrep-config XDG_CACHE_HOME=/tmp/jevgrep-cache AI_GATEWAY_API_KEY=""
+RUN bun build evals/implementation/swebench/hierarchy-unit-locators-spike.ts --target=node --outfile=/opt/jevgrep-reference.mjs
+ENV JEVGREP_TEST_IN_DOCKER=1 HOME=/tmp/jevgrep-home XDG_CONFIG_HOME=/tmp/jevgrep-config XDG_CACHE_HOME=/tmp/jevgrep-cache AI_GATEWAY_API_KEY=""
 CMD ["bun", "test", "test/reference/replay.test.ts"]

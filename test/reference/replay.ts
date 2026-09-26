@@ -14,6 +14,7 @@ export async function replay(mode: "healthy" | "missing" | "invalid" = "healthy"
           path?: string;
           declarations?: unknown[];
           selectedEvidence?: unknown[];
+          relationAnchor?: unknown;
         };
         questions: Record<string, unknown>;
       };
@@ -34,11 +35,13 @@ export async function replay(mode: "healthy" | "missing" | "invalid" = "healthy"
               probability:
                 body.state.items?.[i]?.path === "unrelated.md"
                   ? 0.05
-                  : body.state.declarations &&
-                      !body.state.selectedEvidence &&
-                      body.state.path === "tests/telemetry.test.ts"
-                    ? 0.4
-                    : 0.9,
+                  : body.state.items?.[i]?.path === "src/backend" && !body.state.relationAnchor
+                    ? 0.1
+                    : body.state.declarations &&
+                        !body.state.selectedEvidence &&
+                        body.state.path !== "src/telemetry.ts"
+                      ? 0.4
+                      : 0.9,
             },
           ]),
         ),
@@ -50,7 +53,7 @@ export async function replay(mode: "healthy" | "missing" | "invalid" = "healthy"
     const child = Bun.spawn(
       [
         "node",
-        "/tmp/jevgrep-reference.mjs",
+        "/opt/jevgrep-reference.mjs",
         "--root",
         resolve("test/reference/tree"),
         "--query",

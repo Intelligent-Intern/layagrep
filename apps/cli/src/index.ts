@@ -3,6 +3,8 @@ import { authenticate, configDirectory, loadApiKey } from "./auth";
 import { help, parseCommand } from "./args";
 import { CliError } from "./errors";
 import { renderResult } from "./render";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { version } from "../package.json";
 import skill from "../../../skills/jevgrep/SKILL.md" with { type: "text" };
 
@@ -29,6 +31,10 @@ async function write(text: string) {
   });
 }
 
+function cacheDirectory() {
+  return join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "jevgrep");
+}
+
 async function main() {
   const command = parseCommand(process.argv.slice(2));
   switch (command.kind) {
@@ -40,8 +46,14 @@ async function main() {
       return write(skill);
     case "auth":
       return authenticate(command.fromStdin, controller.signal);
-    case "cache-clear":
-      throw new CliError("Cache support is not available in this checkpoint.");
+    case "cache-clear": {
+      const { createEvaluationCache } = await import("@repo/core");
+      const cache = createEvaluationCache({ directory: cacheDirectory() });
+      await cache.clear();
+      if (cache.stats().issues.length)
+        throw new CliError("Could not completely clear the cache. Check its permissions.");
+      return write("Cache cleared.\n");
+    }
     case "doctor": {
       const apiKey = await loadApiKey();
       const { createEvaluator } = await import("@repo/core");
@@ -73,8 +85,14 @@ async function main() {
     }
     case "search": {
       const apiKey = await loadApiKey();
-      const { retrieve, createEvaluator } = await import("@repo/core");
+      const { retrieve, createEvaluator, createEvaluationCache } = await import("@repo/core");
+      const cache = createEvaluationCache({
+        directory: cacheDirectory(),
+        enabled: !command.noCache,
+      });
       const evaluator = createEvaluator({
+        cache,
+        policyVersion: JSON.stringify(command.policy),
         apiKey,
         signal: controller.signal,
         baseURL: process.env.AI_GATEWAY_BASE_URL,
@@ -85,7 +103,7 @@ async function main() {
           query: command.query,
           policy: command.policy,
           signal: controller.signal,
-          protectedPaths: [configDirectory()],
+          protectedPaths: [configDirectory(), cacheDirectory()],
         },
         evaluator,
       );

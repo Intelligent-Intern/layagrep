@@ -12,19 +12,21 @@
       },
     },
     "apps/cli": {
-      "name": "@jevgrep/cli",
+      "name": "@dzhng/jevgrep",
       "version": "0.0.0",
       "bin": {
-        "jevgrep": "./dist/index.js",
+        "jg": "./dist/bin/index.js",
       },
       "dependencies": {
-        "@clack/prompts": "1.8.1",
-        "@repo/core": "workspace:*",
+        "typescript": "5.9.3",
+        "web-tree-sitter": "0.25.10",
       },
       "devDependencies": {
+        "@clack/prompts": "1.8.1",
+        "@repo/core": "workspace:*",
         "@repo/typescript-config": "workspace:*",
         "@types/bun": "catalog:",
-        "typescript": "catalog:",
+        "@types/node": "22.20.4",
       },
     },
     "packages/core": {
@@ -61,7 +63,7 @@
 
     "@clack/prompts": ["@clack/prompts@1.8.1", "", { "dependencies": { "@clack/core": "1.5.1", "fast-string-width": "^3.0.2", "fast-wrap-ansi": "^0.2.0", "sisteransi": "^1.0.5" } }, "sha512-dlT1m5e/0yUL0kRNcQn7yGLVThkgbB0Ga/1AmfDDC/8ik6AIiSf2QLQO2zPYvefsHP0aFgxO93cVLCCfDp7kzQ=="],
 
-    "@jevgrep/cli": ["@jevgrep/cli@workspace:apps/cli"],
+    "@dzhng/jevgrep": ["@dzhng/jevgrep@workspace:apps/cli"],
 
     "@oxfmt/binding-android-arm-eabi": ["@oxfmt/binding-android-arm-eabi@0.57.0", "", { "os": "android", "cpu": "arm" }, "sha512-qVBsEO+KugOsCmUHcO8iqNnqc65p7PCKpCs8M66mPZ+Ri+CWbcpoQOEJBg2OTu03+0qu++NK1jj6IzvQVs0Sig=="],
 

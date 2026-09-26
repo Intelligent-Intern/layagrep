@@ -1,16 +1,9 @@
 import { EvaluationFailure } from "./gateway";
 import { evidenceRequest, type Evidence } from "./requests";
-import {
-  inspect,
-  pythonNeighborhood,
-  sourceForUnit,
-  type Range,
-  type Snapshot,
-  type SourceUnit,
-} from "./source";
-import type { Evaluator, FileEvidence, ReadingLead } from "./types";
+import { inspect, pythonNeighborhood, sourceForUnit, type Range, type SourceUnit } from "./source";
+import type { Evaluator, FileEvidence, ReadingLead, EvidenceRange } from "./types";
 
-type EvidenceRange = Range & { sourceByteStart?: number; sourceByteEnd?: number };
+import type { Snapshot } from "./filesystem";
 type Span = { start: number; end: number };
 const sourceUnitBytes = 24_000;
 export type SelectionResult = {

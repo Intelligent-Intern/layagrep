@@ -4,7 +4,7 @@ import { Parser, Language, type Node as SyntaxNode } from "web-tree-sitter";
 import ts from "typescript";
 
 export type Range = { startLine: number; endLine: number };
-export type Snapshot = { path: string; contentHash: string; source: string };
+import type { Snapshot } from "./filesystem";
 export type SourceUnit = {
   id: string;
   name: string;
@@ -655,4 +655,12 @@ export function sourceForUnit(snapshot: Snapshot, unit: SourceUnit): string {
   return Buffer.from(snapshot.source)
     .subarray(unit.sourceByteStart, unit.sourceByteEnd)
     .toString("utf8");
+}
+
+/** Complete-file fragments keep admission independent of declaration-name sampling. */
+export function splitSource(snapshot: Snapshot, maxBytes = 12_000): SourceUnit[] {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 4)
+    throw new Error("Invalid source byte allowance");
+  const text = sourceText(snapshot.source);
+  return textUnits(text, { startLine: 1, endLine: text.lineCount }, "source", maxBytes, false);
 }

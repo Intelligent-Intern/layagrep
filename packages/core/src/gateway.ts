@@ -1,4 +1,5 @@
 import { createGateway, experimental_evaluate as evaluate } from "ai";
+import { type createEvaluationCache, type CacheInput } from "./cache";
 import { setTimeout as delay } from "node:timers/promises";
 
 export type EvaluationRequest = {
@@ -15,6 +16,8 @@ export class EvaluationFailure extends Error {
 
 export function createEvaluator(options: {
   apiKey: string;
+  cache?: ReturnType<typeof createEvaluationCache>;
+  policyVersion?: string;
   baseURL?: string;
   signal: AbortSignal;
   requestLimit?: number;
@@ -22,6 +25,7 @@ export function createEvaluator(options: {
   retryDelayMs?: number;
 }) {
   let requests = 0;
+  let cacheHits = 0;
   let cooldownUntil = 0;
   const gateway = createGateway({
     apiKey: options.apiKey,
@@ -48,10 +52,37 @@ export function createEvaluator(options: {
     },
   });
   return {
+    get cacheHits() {
+      return cacheHits;
+    },
+    get cacheIssues() {
+      return options.cache?.stats().issues ?? [];
+    },
     get requests() {
       return requests;
     },
     async evaluate(request: EvaluationRequest): Promise<Record<string, number>> {
+      const cacheInput: CacheInput = {
+        request,
+        namespace: {
+          model: "typesafe-ai/jev",
+          provider: options.baseURL ?? "vercel-ai-gateway",
+          policyVersion: options.policyVersion ?? "1",
+          parserVersion: "python-0.25.0-ts-5.9.3",
+          promptVersion: "unit-locators-1",
+        },
+      };
+      const cached = await options.cache?.get(cacheInput);
+      if (
+        cached &&
+        Object.keys(cached).length === Object.keys(request.questions).length &&
+        Object.keys(request.questions).every(
+          (id) => typeof cached[id] === "number" && cached[id]! >= 0 && cached[id]! <= 1,
+        )
+      ) {
+        cacheHits++;
+        return cached;
+      }
       for (let attempt = 0; attempt < 3; attempt++) {
         if (options.signal.aborted) throw new EvaluationFailure("cancelled");
         if (requests >= (options.requestLimit ?? 50_000))
@@ -78,9 +109,11 @@ export function createEvaluator(options: {
               AbortSignal.timeout(options.timeoutMs ?? 30_000),
             ]),
           });
-          return Object.fromEntries(
+          const scores = Object.fromEntries(
             Object.entries(result.answers).map(([id, answer]) => [id, answer.probability]),
           );
+          await options.cache?.put(cacheInput, scores);
+          return scores;
         } catch (error) {
           if (options.signal.aborted) throw new EvaluationFailure("cancelled");
           if (requests >= (options.requestLimit ?? 50_000))

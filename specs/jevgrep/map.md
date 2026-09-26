@@ -31,6 +31,7 @@ baseline solves; this is not untouched generalization evidence.
 | Eligibility?              | Respect `.gitignore`/`.ignore`; skip hidden, dependency/build, binary and obvious credential files by default. Broadening must be explicit. | User              |
 | Source output cap?        | Choose by solve quality and full agent cost. Retain all qualifying file locations and label omitted source.                                 | Delegated by user |
 | Platforms/distribution?   | npm, macOS and Linux; Windows deferred.                                                                                                     | User              |
+| Executable name?          | `jg`, like `rg`; repo, package and skill keep the Jevgrep name.                                                                             | User              |
 | Runtime prerequisites?    | Node only; bundle Python parsing and TS/JS parsing, text fallback.                                                                          | User              |
 | Compatibility/migrations? | Neither; hard cutover from experiments while preserving evidence.                                                                           | User              |
 | Partial provider failure? | Preserve useful results, prominently label incomplete, distinct exit code.                                                                  | User              |

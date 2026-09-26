@@ -18,10 +18,15 @@
     "build": "turbo build",
     "check-types": "turbo check-types",
     "lint": "turbo lint",
-    "test": "turbo test",
+    "test": "bash scripts/test-reference.sh bash scripts/test-suite.sh",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
-    "test:reference": "bash scripts/test-reference.sh"
+    "test:reference": "bash scripts/test-reference.sh",
+    "test:parser": "bash scripts/test-reference.sh node --experimental-strip-types --test test/parser/source.test.ts",
+    "test:filesystem": "bash scripts/test-reference.sh bun test packages/core/test/filesystem.test.ts test/retrieval.test.ts",
+    "test:installed": "bash scripts/test-installed.sh",
+    "test:e2e": "bun run test:installed",
+    "verify": "bun run check-types && bun run lint && bun run test && bun run test:installed"
   },
   "devDependencies": {
     "oxfmt": "0.57.0",
