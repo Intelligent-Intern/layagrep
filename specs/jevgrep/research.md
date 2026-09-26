@@ -58,3 +58,7 @@ File-list-only, per-declaration source-only representation, broader relationship
 and test-example heuristics did not replace the accepted strategy. Preserve their
 lessons without making them defaults by documentation. See the
 [experiment lessons](../../evals/implementation/swebench/architecture-lessons.md).
+
+The frozen spike validates `--max-source-bytes` but never uses the parsed value
+to allocate output. Its measured output is uncapped. The product budget experiment
+must compare against that behavior, not treat the flag default as an enforced cap.

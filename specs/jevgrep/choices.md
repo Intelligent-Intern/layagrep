@@ -27,3 +27,25 @@ Gap: the spec did not define how to control historical concurrency in the fixtur
 Reach: this fixture proves exact request construction, not determinism on every
 repository. Verdict: sound. Confidence: high. The ordering race remains documented
 for the production port to resolve deliberately.
+
+### Stream directory entries in native order
+
+When: filesystem component integration. A directory can contain more entries than
+fit in one page. Its open cursor retains the unread entries instead of loading the
+whole directory just to alphabetize it. The caller must keep reading even when a
+page contains only excluded names, and must close a cursor when pruning a branch.
+
+Gap: the plan required bounded pages but did not prescribe order. Reach: traversal
+must sort candidate output separately and may not treat a page boundary as the end
+of a directory. Verdict: sound. Confidence: medium; the quality effect of request
+ordering remains part of the installed benchmark confirmation.
+
+### Fix eligibility policy for one reader
+
+When: filesystem component integration. The same reader checks initial previews
+and follow-up source reads with one policy. If ignore files change while content
+is being read, it checks eligibility again before returning that content. Creating
+another reader is required to intentionally change policy.
+
+Gap: method notation in the plan did not settle where policy lived. Reach: callers
+cannot accidentally broaden a follow-up upload. Verdict: sound. Confidence: high.

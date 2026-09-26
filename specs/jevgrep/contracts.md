@@ -201,7 +201,8 @@ ranges, then source blocks. All-file directory evidence can exceed 200 lines;
 without altering the quoted source. Source byte budget never caps files or leads.
 Default budget is an evidence-backed implementation decision: compare accepted
 output with one bounded allocation candidate while freezing prompts/selection.
-Until evidence selects a cap, retain the accepted allocation; do not guess a small
+Until evidence selects a cap, retain the accepted uncapped allocation (the spike
+validated its budget flag but never enforced it); do not guess a small
 budget and present it as optimized. `--max-source-bytes` overrides allocation only.
 
 Official acceptance preserves every fixed baseline solve and reaches at least
