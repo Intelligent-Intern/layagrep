@@ -25,8 +25,8 @@ jg "How are telemetry events recorded and sent?" ./my-project
 Requires **Node.js 22+**, **macOS or Linux**, and a key for **Vercel AI Gateway, TypeSafe, or OpenRouter**.
 No separate Python, Bun, or ripgrep installation is required to use `jg`.
 
-**Provider selection is on main and awaits the next npm release.** The published
-0.2.0 package uses Vercel AI Gateway; build from source to try TypeSafe/OpenRouter.
+Provider selection requires **0.3.0 or newer**. Upgrade an older installation with
+`npm install --global @dzhng/jevgrep@latest`.
 
 ## Install the agent skill — required for agent setup
 
