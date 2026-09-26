@@ -7,9 +7,11 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: assess the observed tool-output truncation with a no-model presentation
-counterfactual before any further paid experiment. Keep the production renderer
-and skill unchanged. Real SQLite replays match the frozen oracle, and an 81-request
+Next: finish the isolated [source placement experiment](assets/presentation-study.md),
+record its exact candidate identity and focused checks before preparing a new
+plan or making paid calls. Keep the production renderer and skill unchanged.
+The no-model counterfactual preserves all evidence while moving first-ranked
+source inside the observed tool prefix. Real SQLite replays match the frozen oracle, and an 81-request
 three-file replay proves both pipelines exceed the follow-up threshold and skip
 that pass. Exact coverage and whole-pipeline limits are in the
 [mechanism-first skill experiment](assets/query-framing-study.md). That candidate
