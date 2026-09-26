@@ -6,6 +6,29 @@ this ledger against the shipped state; benchmark acceptance is still open.
 
 ## Sound — medium confidence
 
+### Charge benchmark work time separately from waiting for retrieval
+
+When: prospective timing-protocol correction. A search can spend twelve minutes
+waiting for Jev, followed by five minutes of coding and tests. The new benchmark
+charges five minutes against the agent's fifteen-minute work allowance. A baseline
+without Jevgrep still receives fifteen minutes of work. All Sol requests, including
+waiting-related messages, remain in the dollar bill. The timer watches the agent's
+command-start and command-finish messages; it does not measure exact CPU or provider
+time. Other commands running alongside a search count as work, and ambiguous shell
+programs receive no waiting credit.
+
+Gap: the user's target excludes timing, but the original wall-clock guard could
+make the agent cancel a valid search. Reach: future studies freeze this different
+timing instruction and measurement rule explicitly, retain the original baselines,
+and never reinterpret old attempts. A separate twenty-four-hour guard stops a
+stuck attempt. The task container stays alive until the runner captures evidence
+and removes it, so a second container timer cannot cut that process short; a host
+crash can still leave an owned container requiring cleanup.
+
+Verdict: sound for the cost/quality objective. Confidence: medium; host-observed
+events are a practical measurement boundary, and the changed timing instruction
+must remain visible when interpreting comparisons.
+
 ### Pin request contents without pretending network arrival order is meaningful
 
 When: reference harness pass. Two file reads can finish in either order in the

@@ -52,5 +52,21 @@ mistake, and no claim of superiority follows from parser or clock conformance.
 
 ## Status
 
-Harness correction is isolated and under verification. No new paid study is
-prepared or running. Production CLI and canonical skill remain unchanged.
+Harness correction is integrated in `7bf0536` and `d08a14d`. The merged focused
+Docker suite passes all 24 tests. Independent review's container-lifetime finding
+is fixed; the follow-up review has no actionable findings. Its socket-binding test
+was sandbox-blocked, so the complete Docker suite supplies that verification.
+An additional thirteen retained-event-stream replay preserves stdout and reports
+no timing parse errors, with zero retrieval credit for all ten baselines. It
+checks event compatibility at artificial replay speed, not historical durations.
+
+Evidence: `/tmp/jg-clock-merged-tests.log`, `/tmp/jg-clock-codex-review.log`,
+`/tmp/jg-clock-followup-review.log` and `/tmp/jg-clock-evidence/`. The task container
+has no competing thirty-minute timeout; the monitor owns the clock, and existing
+final cleanup removes the container after evidence capture. Timeouts cannot count
+as completed treatments even when the native process exited zero. Nonterminal
+error messages do not prematurely end an active retrieval interval.
+
+Next study: `installed-jg-cpython-work-clock-v1`, all ten cells frozen before any
+run, Django first under the rule above. No new paid attempt is running yet.
+Production CLI and canonical skill remain unchanged.
