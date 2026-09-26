@@ -32,3 +32,19 @@ Root execution log: `/tmp/jg-freshness-v1-run.log`. Per-task grade and accountin
 receipts, complete event streams, patches and request/response evidence remain
 with the attempts. Acceptance stays unproven until all ten outcomes are retained
 and the full aggregate is evaluated.
+
+Django's packet contained 51 files in 8,071 bytes without excerpts. SQLite was
+listed and its critical type-only rebuild guard was read, untruncated, before the
+first patch. The final patch left that guard unchanged. Official evaluation ran
+123 tests: 121 passed, one failed and one skipped. The failure is a normal foreign
+key retaining no collation after its referenced primary key changes collation
+without changing type; later many-to-many and reversal assertions were not reached.
+
+The agent's own regression changed AutoField to CharField, missing that same-type
+condition. Its broad suite ran 312 tests: 283 passed and 29 skipped. A separate
+hidden-relation fixture failed locally and was simplified without a production
+fix, but that is not the official failing case. Paired evidence and the exact
+pre-patch SQLite read are retained in
+`/tmp/jg-freshness-v1-django-comparison/`. The needed code was delivered and read;
+this does not prove model variance alone caused the outcome, nor that adding
+initial excerpts would prevent it.
