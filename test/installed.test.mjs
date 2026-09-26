@@ -631,3 +631,22 @@ test("a rate-limited provider retry waits and recovers the installed evidence", 
   assert.ok(fixture.requests[1].receivedAt - fixture.requests[0].receivedAt >= 950);
   assert.equal(fixture.requests.filter(({ raw }) => raw === fixture.requests[0].raw).length, 2);
 });
+
+test("source budget preserves every file and lead while explicitly omitting source", async (t) => {
+  const fixture = await context(t);
+  const unlimited = await fixture.run([query, "--max-source-bytes", "0"]);
+  complete(unlimited);
+  const before = fixture.requests.length;
+  const bounded = await fixture.run([query, "--max-source-bytes", "1"]);
+  assert.equal(bounded.code, 0);
+  assert.match(bounded.stdout, /Source omitted: [1-9]/);
+  assert.ok(!bounded.stdout.includes("py-evidence-"));
+  const locations = (stdout) =>
+    stdout.split("\n").filter((line) => line.startsWith("- ") || /^  \"/.test(line));
+  assert.deepEqual(locations(bounded.stdout), locations(unlimited.stdout));
+  assert.equal(
+    fixture.requests.length,
+    before,
+    "Rendering policy must not change cached classification requests",
+  );
+});

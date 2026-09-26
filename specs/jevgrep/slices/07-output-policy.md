@@ -1,6 +1,6 @@
 # Choose source allocation using completed tasks
 
-Status: planned. Depends on: 06. Read [contracts](../contracts.md) first.
+Status: measuring. Depends on: 06. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -12,7 +12,7 @@ Record the chosen default and all attempts in the spec before freezing the relea
 
 Recorded source-budget decision.
 
-`bun run eval:swebench -- --task psf__requests-1142 --compare-source-budgets --reuse-baseline` plus `bun run test:e2e -- --case output`.
+Use `bun run eval:swebench prepare --package /absolute/package.tgz --output /absolute/new-study --task psf__requests-1142`, then the maintained runner's `run`, `grade` and `account` operations on that plan. See [the runner workflow](../../../evals/implementation/swebench/installed.md). `bun run test:e2e -- --case output` verifies installed rendering and actual head truncation.
 
 Commands are implementation targets. Add them in this slice; do not imply they
 already exist. CLI transcripts replace visual/screenshot gates for this product.
@@ -35,3 +35,15 @@ Show the artifact and summarize deviations. This is a non-blocking review checkp
 continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
+
+Current candidate: 1,500 source bytes, with whole excerpts ranked by contained
+reading leads scoring above 0.5; equal scores keep original order. It preserves
+all admitted paths and leads. This is a heuristic because class-context snippets
+have no reading-lead score. Production default remains 0 (uncapped) until measured.
+On the retained Requests packet it keeps the decisive method and test helper
+(1,208 source bytes) while omitting 689 bytes of scaffolding. Unlimited output
+is byte-identical to the retained 2,852-byte stdout. This is packet evidence only.
+
+The candidate package and skill are frozen in the single-task study
+`evals/runs/swebench/installed-jg-requests-budget1500-v1/plan.json`.
+No baseline execution is available in the maintained runner.

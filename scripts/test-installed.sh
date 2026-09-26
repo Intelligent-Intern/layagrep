@@ -20,18 +20,19 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 && -f "$2" ]] || { echo "--prebuilt requires a package tarball"; exit 1; }
       package_input="$2"; shift 2 ;;
     --case)
-      [[ $# -ge 2 ]] || { echo "--case requires checkpoint, failures, or cache"; exit 1; }
+      [[ $# -ge 2 ]] || { echo "--case requires checkpoint, failures, cache, or output"; exit 1; }
       case "$2" in
         checkpoint) pattern="" ;;
         failures) pattern="provider|malformed|invalid JSON|cancellation|interrupt|stdout pipe" ;;
         cache) pattern="cache" ;;
+        output) pattern="source budget|head -200" ;;
         *) echo "Unknown installed test case: $2"; exit 1 ;;
       esac
       shift 2 ;;
     --test-name-pattern)
       [[ $# -ge 2 ]] || { echo "--test-name-pattern requires a pattern"; exit 1; }
       pattern="$2"; shift 2 ;;
-    *) echo "Usage: $0 [--prebuilt package.tgz] [--case checkpoint|failures|cache] [--test-name-pattern regex]"; exit 1 ;;
+    *) echo "Usage: $0 [--prebuilt package.tgz] [--case checkpoint|failures|cache|output] [--test-name-pattern regex]"; exit 1 ;;
   esac
 done
 if [[ -n "$package_input" ]]; then

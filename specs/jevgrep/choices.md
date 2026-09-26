@@ -138,3 +138,29 @@ Gap: the filesystem interruption and invalidation paths shared a preparation
 boundary, so the implementation had to distinguish their effect on retained data.
 Reach: partial output remains useful without claiming complete discovery or a
 filesystem lock. Verdict: sound. Confidence: high.
+
+
+### Use available declaration scores to allocate limited source
+
+When: source-budget trial. If a byte cap cannot fit every selected excerpt,
+prefer an excerpt containing a declaration Jev scored above 0.5, starting with
+the strongest score. Keep all file locations and reading leads, and explicitly
+mark source omissions. Equal scores preserve original ordering. A class-context
+snippet can be useful despite lacking such a score; this heuristic does not
+claim to measure the value of all context.
+
+Gap: numerical source allocation and tie breaks were delegated. Reach: finite
+budgets may omit useful surrounding context, so the default stays uncapped until
+the official task and complete Sol bill support the candidate. Verdict: sound
+as a reversible trial, not an accepted default. Confidence: medium.
+
+### Freeze one installed package across the official cohort
+
+When: maintained benchmark runner. Prepare all ten cells before execution, binding
+package, skill, agent inputs, dataset and harness sources. Each cell can execute
+once; an abandoned attempt is retained as interrupted. A smaller diagnostic study
+cannot satisfy the cohort gate, and the runner has no baseline execution path.
+
+Gap: artifact layout and execution mechanics were delegated. Reach: results from
+different candidates cannot be pooled into acceptance; failed attempts and unknown
+bills remain visible. Verdict: sound. Confidence: high.
