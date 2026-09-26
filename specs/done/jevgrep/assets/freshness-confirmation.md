@@ -8,6 +8,9 @@ does not compensate for the lost solves. Jev's observed subtotal is
 **$1.035782622**; its full total is unknown and excluded from scored cost.
 The [complete aggregate](freshness-aggregate.json) is retained byte-for-byte from
 the study, SHA-256 `37f2dc0883d0e366b75e74b0f178498a393da9f8ef9cd573d5881630efc0d65a`.
+After reviewing these results, the user accepted the documented tradeoff and
+authorized finishing the product. The [implementation record](../README.md)
+records that separate acceptance decision; the measured gate remains failed.
 This is a separate prospective ten-task cohort for the
 [source-freshness correction](source-freshness.md), not a replacement of individual
 cells from the preceding accepted study. The frozen plan, archived runner and
@@ -45,8 +48,8 @@ and test work does not isolate a causal cost effect from the freshness correctio
 Root execution log: `/tmp/jg-freshness-v1-run.log`. Per-task grade and accounting
 receipts, complete event streams, patches and request/response evidence remain
 with the attempts. All coding, grading and accounting processes are terminal;
-no attempt was replaced and no baseline was rerun. The product quality gate
-remains open because the completed aggregate rejects the candidate.
+no attempt was replaced and no baseline was rerun. The original quantitative
+quality target remains unmet; product acceptance is a separate user decision.
 
 Django's packet contained 51 files in 8,071 bytes without excerpts. SQLite was
 listed and its critical type-only rebuild guard was read, untruncated, before the

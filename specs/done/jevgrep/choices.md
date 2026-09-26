@@ -3,8 +3,8 @@
 This ledger describes the decisions embodied in the implementation, not its
 verification status. `jg` is the installed CLI; Jev is the relevance classifier
 it calls. “Reference” means the accepted experimental retrieval implementation.
-The [spec handoff](README.md) owns unfinished work and the
-[confirmation record](assets/work-clock-confirmation.md) owns measured outcomes.
+The [implementation record](README.md) owns the closure decision and the
+[corrected confirmation](assets/freshness-confirmation.md) owns measured outcomes.
 
 Review these medium-confidence choices first: the benchmark work clock, ordering
 inside cross-file evidence, and the shared Python interpreter. They preserve the
@@ -147,8 +147,9 @@ constraint. **Confidence:** medium. Owner: [selection](../../../packages/core/sr
 **When:** cache integration and performance review.
 
 A new answer is ready to save while the cache is near its disk limit. The cache
-publishes the complete answer atomically, then scans stored entries and removes
-old entries as needed. It does not maintain a separate persistent index or run a
+publishes the complete answer atomically, then scans stored entries in filesystem
+enumeration order and removes entries beyond the retained byte budget. This is
+not oldest-first eviction. It does not maintain a separate persistent index or run a
 background cleanup service. With many entries, repeating that scan for many new
 answers adds overhead; an indexed eviction design would trade that work for
 another stateful component to maintain.

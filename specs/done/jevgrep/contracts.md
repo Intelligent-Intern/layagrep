@@ -45,8 +45,8 @@ A downstream closed pipe ends quietly without an error stack or continued calls.
 
 Credentials retain XDG config location and owner-only permissions; environment
 key takes precedence over saved key. An explicitly empty environment key disables
-saved credentials, supporting isolated tests. Reject whitespace-containing keys
-consistently; never echo keys in either stream or provider errors. Auth saves
+saved credentials, supporting isolated tests. Trim surrounding whitespace, then
+reject internal whitespace consistently; never echo keys in either stream or provider errors. Auth saves
 without a network call; doctor verifies a synthetic expected answer. Help/
 version/skill/cache-clear require no provider key. Bound auth stdin input.
 
@@ -193,8 +193,9 @@ idempotent clear. `--no-cache` disables both reads and writes. Corrupt/unavailab
 cache behaves as a miss and is summarized without turning healthy retrieval into
 incomplete discovery. File layout and eviction mechanism delegated; initial size
 limit 256 MiB, enforced without a daemon. Concurrent clear/writes must not crash
-or produce invalid answers; clear removes entries existing when its scan begins,
-not a global pause of other searches.
+or produce invalid answers; clear atomically detaches the current entries directory
+before cleanup. Concurrent writers may create new entries; clear is not a global
+pause of other searches.
 
 ## Output and quality
 

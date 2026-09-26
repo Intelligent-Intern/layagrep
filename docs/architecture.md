@@ -11,7 +11,9 @@ second coding agent or a generated-answer layer.
 
 The accepted reference is the frozen
 [unit-locators spike](../evals/implementation/swebench/hierarchy-unit-locators-spike.ts)
-with the [canonical skill](../skills/jevgrep/SKILL.md).
+with its [historical measured skill](../test/reference/accepted-skill.md).
+The [canonical production skill](../skills/jevgrep/SKILL.md) preserves those
+instructions with the executable renamed to `jg`.
 The production CLI implements this strategy with the product boundaries recorded
 in the implementation record. This document identifies the experimental reference,
 not a substitute for the corrected package's measured quality result.
@@ -108,9 +110,8 @@ combine each task's cheapest result from different strategies.
 
 The [acceptance audit](../specs/done/jevgrep/assets/accepted-spike-audit.json)
 rechecks the frozen artifacts, official grades, and complete bills against the
-user-revised target. The [cohort result](../specs/done/jevgrep/assets/accepted-spike-audit.json)
-is the canonical numerical evidence; its original unmet-target label refers to
-the former 80% target and is retained as history.
+user-revised target and is the canonical numerical evidence for the accepted
+spike. It records the revised 70% target rather than the earlier 80% goal.
 
 This is a small, tuned, Python-only sample with one fixed baseline per task and
 model/harness. It supports accepting a useful retrieval architecture, not a
