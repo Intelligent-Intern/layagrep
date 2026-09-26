@@ -62,7 +62,7 @@ the product goal.
 | Query content affects declaration selection | Same sklearn source/questions: current query 0.26, spike query 0.50, neutral mechanism query 0.69 | Supported as query sensitivity in one observation each; no task-quality claim |
 | Neutral wording alone fixes Django selection | Same SQLite method/source/questions: current 0.09, neutral same concepts 0.06 | Not supported |
 | Broader mechanism scope admits relevant missing context | Removing collation and MySQL focus together raises that Django method to 0.52 | Coupled scope effect in one observation; individual contributions and downstream value unknown |
-| Initial mechanism-first skill improves the failed task | Candidate defined above; coding-agent result pending | Inspect actual query, packet, reads, patch, tests, official grade and complete bill |
+| Initial mechanism-first skill improves the failed task | Django remains officially unresolved; full Sol $1.2353512 versus parent $1.0015696 and baseline $1.5055472 | Reject this candidate for promotion; no remaining nine task runs |
 
 Each diagnostic used three successful Jev calls, no SDK retries and a 60-second
 diagnostic timeout, without changing production's timeout. Observed research Jev
@@ -70,3 +70,55 @@ cost: $0.000414750 for sklearn and $0.000318360 for Django. Exact preregistratio
 requests, responses and unchanged-source proofs are in `/tmp/jg-query-sensitivity/`
 and `/tmp/jg-django-query-sensitivity/`. These are development diagnostics on
 known cases; they establish no untouched generalization.
+
+## Completed Django result
+
+Preparation and all ten no-call checks passed. One Django attempt ran under
+`installed-jg-mechanism-query-v1b`; the remaining nine cells were not run. Its exact
+initial query was:
+
+> How does the existing mechanism propagate attributes from referenced fields when altering relationship columns, and where is it tested?
+
+The official evaluator reports one unresolved task, no infrastructure/error
+instances, and the same failed collation-only regression as the parent. All
+pass-to-pass tests succeed. Full Sol billing accounts for all 33 generations:
+**$1.2353512**, 17.95% below the immutable baseline but 23.34% above the failed
+parent. This is not a cost win because the task is unresolved. Separately, 1,937
+Jev calls have a known observed cost subtotal of **$0.282719220**; transport
+coverage is incomplete, so the full Jev total remains unknown and excluded.
+
+The CLI returned 212 files and selected SQLite implementation source. Its full
+stdout is 350,468 bytes; the file list alone is 61,230 bytes. The coding agent's
+20,000-token tool limit truncated the packet, omitting the SQLite source block
+while retaining its first-place path and reading leads. Later, after a failing
+schema regression, an explicit file read delivered the critical type-change-only
+condition. Sol still replaced that regression with an AutoField-to-CharField
+migration scenario and left the SQLite condition unchanged. The replacement
+passes because it changes the type as well as collation; it does not establish
+collation-only propagation. More selected context did not produce a correct fix.
+
+Raw rollout ordinal 29 records the truncated initial tool result. The later read
+at ordinal 116 and output at 121 establish that the condition did eventually
+reach the agent. Detailed paired evidence lives in
+`/tmp/jg-mechanism-query-django-comparison/`; authoritative traces, patch, grade
+receipt and generation accounting remain in the study's Django attempt folder.
+Do not attribute the failure solely to missing context or solely to truncation.
+The candidate is not promoted, the production skill remains unchanged, and no
+baseline was rerun. Diagnose the observed handoff before another paid candidate.
+
+## No-call follow-up diagnostics
+
+Exact native-body hashes identify 11 repeated requests in the parent Django run
+and seven in the skill candidate. Their retained answers vary by at most 0.01
+and 0.05 probability respectively; none crosses the strict 0.5 source-selection
+threshold. Each repeat group has only one successfully delivered response; the
+other retained response followed a transport failure. This sample does not
+support retry score variation as the cause of lost source selection, and cannot
+establish service stability across unobserved requests. Reproducible script and
+per-question evidence: `/tmp/jg-query-retry-variance/`.
+
+Next, compare actual Django declaration inputs and expansion through the frozen
+reference and production with the same delivered answers. Stop at unmatched
+requests, preserve array order, and do not substitute late responses that the
+client did not receive. This investigates port fidelity without another model
+call or a corrective hint derived from the evaluator.

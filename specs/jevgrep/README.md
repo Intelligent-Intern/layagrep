@@ -7,10 +7,12 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: follow the isolated `installed-jg-mechanism-query-v1b` plan in the
-[mechanism-first skill experiment](assets/query-framing-study.md). Inspect the
-retained Django attempt and its official grade/bill before applying the registered
-continuation rule. Do not launch another attempt while its process is active.
+Next: replay retained real Django selection inputs and delivered answers against
+the frozen spike and production, without model calls, stopping at any unmatched
+request. The isolated [mechanism-first skill experiment](assets/query-framing-study.md)
+failed the same Django regression at Sol $1.2353512; its remaining nine tasks stay
+unrun and the production skill is unchanged. Finish the exact packet-visibility
+comparison before proposing another candidate. No paid task is active.
 The frozen `installed-jg-cpython-parity-v1` cohort is complete and not accepted:
 7/10 solves versus 8/10 baseline, six cost wins, and 35.27% lower full Sol cost.
 [Confirmation evidence](assets/cpython-confirmation.md) owns all outcomes, trace
