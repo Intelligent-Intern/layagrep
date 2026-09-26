@@ -14,6 +14,8 @@ import { selectFile, type SelectionResult } from "./selection";
 import { repositoryContext } from "./repository-context";
 import type { Evaluator, FileEvidence, RetrievalResult, SearchInput } from "./types";
 
+// Provider calls dominate wall time; each stage keeps this many in flight.
+const concurrency = 32;
 /** Traversal owns admission; every stage reads through the same eligibility policy. */
 export async function retrieve(input: SearchInput, evaluator: Evaluator): Promise<RetrievalResult> {
   const reader = await createFilesystem({
@@ -125,7 +127,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       let rejected = false;
       function pump() {
         if (rejected) return;
-        while (active < 8 && batches.length && !stop && !input.signal.aborted) {
+        while (active < concurrency && batches.length && !stop && !input.signal.aborted) {
           const group = batches.shift()!;
           active++;
           scoreGroup(group).then(
@@ -414,7 +416,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   async function parallel<T>(items: T[], work: (item: T) => Promise<void>) {
     let next = 0;
     const results = await Promise.allSettled(
-      Array.from({ length: Math.min(8, items.length) }, async () => {
+      Array.from({ length: Math.min(concurrency, items.length) }, async () => {
         try {
           while (next < items.length && !stop && !input.signal.aborted) await work(items[next++]!);
         } catch (error) {
@@ -518,50 +520,63 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           for (const entry of selection.issues)
             if (entry.kind !== "source-invalid") issue(entry.kind, entry.count);
         });
-      await select();
-      const evidence: Evidence[] = [];
-      // Declaration entries are inserted when selection completes, as in the frozen locations map.
-      for (const path of declarations.keys()) {
-        const candidate = candidates.get(path)!;
-        if (stop || input.signal.aborted) break;
-        if (!files.get(candidate.path)!.excerpts.length) continue;
-        // Context donors obey the same current eligibility/hash check as target files.
-        if (!(await unchanged(candidate))) continue;
-        evidence.push(
-          ...files.get(candidate.path)!.excerpts.map((excerpt) => ({
-            path: candidate.path,
-            ...excerpt.range,
-            source: excerpt.source,
-          })),
-        );
-      }
-
-      if (evidence.length && Buffer.byteLength(JSON.stringify(evidence)) <= 64_000 && !stop)
-        await select(async () => {
-          const current = new Set<string>();
-          for (const path of new Set(evidence.map((entry) => entry.path))) {
-            const candidate = candidates.get(path)!;
-            if (await unchanged(candidate)) current.add(path);
-          }
-          const fresh = evidence.filter((entry) => current.has(entry.path));
-          return fresh.length ? fresh : undefined;
-        });
-      await parallel(ordered, async (candidate) => {
-        const source = await unchanged(candidate);
-        if (!source) return;
-        const preview = previews.get(candidate.path)!;
-        try {
-          const scores = await freshEvaluation(roleRequest(input.query, candidate.path, preview), [
-            candidate,
-          ]);
-          files.get(candidate.path)!.roles = Object.keys(scores).filter(
-            (role) => scores[role]! > 0.5,
+      const selectEvidence = async () => {
+        await select();
+        const evidence: Evidence[] = [];
+        // Declaration entries are inserted when selection completes, as in the frozen locations map.
+        for (const path of declarations.keys()) {
+          const candidate = candidates.get(path)!;
+          if (stop || input.signal.aborted) break;
+          if (!files.get(candidate.path)!.excerpts.length) continue;
+          // Context donors obey the same current eligibility/hash check as target files.
+          if (!(await unchanged(candidate))) continue;
+          evidence.push(
+            ...files.get(candidate.path)!.excerpts.map((excerpt) => ({
+              path: candidate.path,
+              ...excerpt.range,
+              source: excerpt.source,
+            })),
           );
-        } catch (error) {
-          if (!(error instanceof EvaluationFailure && error.kind === "source-invalid"))
-            issue(error instanceof EvaluationFailure ? error.kind : "provider");
         }
-      });
+
+        if (evidence.length && Buffer.byteLength(JSON.stringify(evidence)) <= 64_000 && !stop)
+          await select(async () => {
+            const current = new Set<string>();
+            for (const path of new Set(evidence.map((entry) => entry.path))) {
+              const candidate = candidates.get(path)!;
+              if (await unchanged(candidate)) current.add(path);
+            }
+            const fresh = evidence.filter((entry) => current.has(entry.path));
+            return fresh.length ? fresh : undefined;
+          });
+      };
+      // Roles read only the discovery preview, so they classify while evidence is selected.
+      const roles = new Map<string, string[]>();
+      const classifyRoles = () =>
+        parallel(ordered, async (candidate) => {
+          const source = await unchanged(candidate);
+          if (!source) return;
+          const preview = previews.get(candidate.path)!;
+          try {
+            const scores = await freshEvaluation(
+              roleRequest(input.query, candidate.path, preview),
+              [candidate],
+            );
+            roles.set(
+              candidate.path,
+              Object.keys(scores).filter((role) => scores[role]! > 0.5),
+            );
+          } catch (error) {
+            if (!(error instanceof EvaluationFailure && error.kind === "source-invalid"))
+              issue(error instanceof EvaluationFailure ? error.kind : "provider");
+          }
+        });
+      await Promise.all([selectEvidence(), classifyRoles()]);
+      // Selection replaces file records, so roles attach after it; invalidated files keep none.
+      for (const [path, fileRoles] of roles) {
+        const file = files.get(path)!;
+        if (!file.sourceOmitted) file.roles = fileRoles;
+      }
       if (issues.has("authentication") && !files.size)
         throw new EvaluationFailure("authentication");
     } catch (error) {

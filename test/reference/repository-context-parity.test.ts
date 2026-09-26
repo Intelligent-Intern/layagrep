@@ -78,7 +78,8 @@ async function run(
     ]);
     expect(code).toBe(production && largeAnchor ? 2 : 0);
     expect(stderr).toBe("");
-    return { requests, stdout };
+    // Role classification overlaps evidence selection, so parity is the request set, not arrival order.
+    return { requests: requests.map((body) => JSON.stringify(body)).sort(), stdout };
   } finally {
     server.stop(true);
   }
