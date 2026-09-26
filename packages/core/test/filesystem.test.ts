@@ -205,8 +205,10 @@ test("snapshots preserve exact source and change hashes for same-size edits with
   }
 });
 
-test("a file changed between OS reads is incomplete and never yields mixed source", async () => {
+test("an observable same-size change between OS reads is incomplete", async () => {
   const root = await fixture({ changing: "original bytes" });
+  // Two real writes can share a tmpfs clock tick; pin the initial mtime so this writer is observable.
+  await utimes(join(root, "changing"), 0, 0);
   const probe = await open(join(root, "changing"));
   const prototype = Object.getPrototypeOf(probe);
   const originalRead = prototype.read;
