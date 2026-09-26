@@ -11,8 +11,8 @@ The work-clock v1 confirmation stopped after Docker's disk-space failure during
 Astropy. That attempt is failed and recovered separately; two completed wins and
 seven unstarted cells remain retained. Do not resume or replace its failed cell.
 Docker is recovered and disposable build cache was cleared. The new full `installed-jg-cpython-work-clock-v2` study is prepared and all ten
-no-call validations pass with identical package and protocol. Scikit-learn has
-one official cost win; Django is running. Continue the same sequential runner,
+no-call validations pass with identical package and protocol. Scikit-learn and Django have
+official cost wins; Astropy is running. Continue the same sequential runner,
 execute each cell once and grade/account all outcomes.
 Never pool studies or rerun a baseline. [Timing protocol and evidence](assets/timing-protocol.md)
 own the outage, recovered bills and prospective replacement rationale.
