@@ -54,6 +54,8 @@ fallbacks do not multiply the response cost. This is observed API metadata, not
 invoice reconciliation. Complete totals require matching client starts, completed
 transport receipts, request/response files and valid cost fields. Missing or
 invalid evidence leaves the total unknown while preserving a known subtotal.
+Retained response costs still contribute to that subtotal when the transport log
+or a request-start entry is missing.
 These observations never enter the scored Sol task cost or change cost-win rules.
 
 `aggregate --plan ...` requires ten terminal attempts with official grading receipts,

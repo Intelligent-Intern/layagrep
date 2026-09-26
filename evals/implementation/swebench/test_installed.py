@@ -198,6 +198,23 @@ class InstalledTests(unittest.TestCase):
             events[-1]['transportError']='Interrupted'
             self.assertIsNone(runner.observed_jev(root,events,True,True)['observed_cost_usd'])
 
+    def test_retained_jev_cost_survives_missing_log_or_request_start(self):
+        for missing_log in [True, False]:
+            with self.subTest(missing_log=missing_log),tempfile.TemporaryDirectory() as temporary:
+                path,plan=self.fixture(Path(temporary));out=self.receipt(path,plan)
+                events=self.jev_fixture(out)
+                if not missing_log:
+                    (out/'proxy.jsonl').write_text('\n'.join(json.dumps(event) for event in events[1:]))
+                receipt=json.loads((out/'receipt.json').read_text());receipt['jev_traces_copied']=True;runner.write_json(out/'receipt.json',receipt)
+                with patch.object(runner.urllib.request,'urlopen',side_effect=AssertionError('No network')),contextlib.redirect_stdout(io.StringIO()):
+                    runner.account(argparse.Namespace(plan=path,task=None))
+                result=json.loads((out/'generation-accounting.json').read_text())['jev']
+                self.assertEqual(result['known_cost_usd'],0.03)
+                self.assertEqual(result['responses_with_cost'],2)
+                self.assertEqual(result['known_input_tokens'],20)
+                self.assertEqual(result['known_provider_attempts'],3)
+                self.assertFalse(result['complete']);self.assertIsNone(result['observed_cost_usd'])
+
     def test_observed_jev_cost_does_not_change_scored_sol_cost_win(self):
         with tempfile.TemporaryDirectory() as temporary:
             path,plan=self.fixture(Path(temporary));out=self.receipt(path,plan)

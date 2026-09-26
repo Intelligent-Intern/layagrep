@@ -427,7 +427,8 @@ def observed_jev(out, events, log_valid, traces_copied):
     costs, inputs, outputs, attempts = [], [], [], []
     def count(value):
         return type(value) is int and value >= 0
-    for identifier in sorted(safe_ids):
+    # Retained response metadata remains known even if transport logs were lost.
+    for identifier in sorted(responses):
         try:
             response = responses[identifier]
             body = json.loads(response.read_text())
