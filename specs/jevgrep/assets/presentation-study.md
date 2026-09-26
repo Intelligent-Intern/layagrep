@@ -82,5 +82,10 @@ multi-file regression fails against the parent before the edit. Expected frozen
 presentation differences are explicit; production tests are unchanged.
 
 Version remains the unpublishable development checkpoint `0.0.0`; release
-validation correctly rejects it. No release or promotion occurs. Next: prepare
-and no-call validate the frozen plan before its one Django attempt.
+validation correctly rejects it. No release or promotion occurs. Preparation and
+all ten no-call validations passed. All 179 installed files match the failed query
+parent except the renderer bundle; this also verifies installed dependency bytes.
+The one Django attempt is running under
+`evals/runs/swebench/installed-jg-adjacent-source-v1/plan.json`. Collect its terminal
+receipt, official grade, complete bill and model-visible output before applying
+the continuation rule. Do not start a replacement attempt.
