@@ -130,7 +130,7 @@ try {
       "--test-reporter=tap",
       "--test-concurrency=1",
       "--test-name-pattern",
-      "^(installed local commands match the package without credentials|actual installed search parses Python and returns every relevant hierarchy branch)$",
+      "^(installed local commands match the package without credentials|skill command delegates installation to npx without Gateway credentials|actual installed search parses Python and returns every relevant hierarchy branch)$",
       join(root, "test/installed.test.mjs"),
     ],
     { cwd: scratch, env: runtimeEnv, timeout: 120_000, maxBuffer: 8_000_000 },
@@ -138,8 +138,8 @@ try {
   assert.equal(tested.stderr, "");
   assert.match(
     tested.stdout,
-    /^# pass 2$/m,
-    "Both native smoke journeys must execute; renamed selectors cannot silently pass",
+    /^# pass 3$/m,
+    "All native smoke journeys must execute; renamed selectors cannot silently pass",
   );
   console.log(tested.stdout.trimEnd());
   console.log(

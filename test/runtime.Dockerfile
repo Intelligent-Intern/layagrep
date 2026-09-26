@@ -36,6 +36,7 @@ FROM node:22-bookworm-slim AS runtime
 COPY --from=install /opt/jevgrep /opt/jevgrep
 COPY --from=package /artifacts/canonical-skill.md /test/canonical-skill.md
 COPY test/installed.test.mjs /test/installed.test.mjs
+COPY --chmod=755 test/fixtures/skill-installer.mjs /test/fixtures/skill-installer.mjs
 ENV PATH=/opt/jevgrep/bin:/usr/local/bin:/usr/bin:/bin \
     JEVGREP_INSTALLED_BINARY=/opt/jevgrep/bin/jg \
     JEVGREP_INSTALLED_PACKAGE=/opt/jevgrep/lib/node_modules/@dzhng/jevgrep \

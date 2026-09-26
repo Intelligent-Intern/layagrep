@@ -19,7 +19,7 @@ jg "question" [root]              # root defaults to cwd
 jg auth [--stdin]                # hidden interactive input or explicit pipe
 jg doctor                       # synthetic Gateway connectivity/answer check
 jg cache clear                  # idempotently clear Jevgrep cache
-jg skill                        # print bundled SKILL.md to stdout
+jg skill                        # invoke npx skills for explicit installation
 jg --help
 jg --version
 ```
@@ -52,9 +52,18 @@ version/skill/cache-clear require no provider key. Bound auth stdin input.
 
 The canonical skill source is `skills/jevgrep/SKILL.md` in this repository,
 discoverable by the skills CLI installer. Ship that same file with the npm package;
-do not maintain a second authored copy. `jg skill` makes installation
-possible using ordinary redirection into the user's chosen agent skill directory;
-do not silently write agent configuration. Document Codex and Claude installation.
+do not maintain a second authored copy. The post-release `jg skill` command
+invokes `npx --yes skills add dzhng/jevgrep --skill jevgrep`, forwarding explicit
+agent, global and confirmation options. It installs the current repository skill,
+not necessarily the packaged snapshot. Preserve the installer exit code and route
+both output streams to stdout. Only this explicit command installs agent files;
+search never does. npm/npx and network are required for installation, not search.
+Published 0.1.0 retains its former print-only behavior. Document Codex and Claude
+installation through the skills installer.
+The repository skill now checks for a missing executable, installs the published
+CLI with npm when prerequisites are available, and directs credential setup to
+the user's terminal. This post-release setup addition does not alter the frozen
+benchmark skill or its research instructions; 0.1.0's bundled copy remains unchanged.
 The skill chooses unfamiliar multi-file discovery, awaits the same invocation,
 reads included excerpts first, treats locations as optional leads, and uses normal
 tools to resolve remaining holes. It does not force retrieval for obvious known

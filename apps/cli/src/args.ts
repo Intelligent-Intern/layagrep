@@ -4,7 +4,8 @@ import { CliError } from "./errors";
 import { DEFAULT_MAX_SOURCE_BYTES } from "./render";
 
 export type Command =
-  | { kind: "help" | "version" | "doctor" | "skill" | "cache-clear" }
+  | { kind: "help" | "version" | "doctor" | "cache-clear" }
+  | { kind: "skill"; agents: string[]; global: boolean; yes: boolean }
   | { kind: "auth"; fromStdin: boolean }
   | {
       kind: "search";
@@ -26,6 +27,9 @@ export function parseCommand(args: string[]): Command {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean" },
         stdin: { type: "boolean" },
+        agent: { type: "string", multiple: true },
+        global: { type: "boolean" },
+        yes: { type: "boolean" },
         "no-cache": { type: "boolean" },
         "max-source-bytes": { type: "string" },
         hidden: { type: "boolean" },
@@ -49,7 +53,17 @@ export function parseCommand(args: string[]): Command {
       throw new CliError("Usage: jg auth [--stdin]");
     return { kind: "auth", fromStdin: values.stdin ?? false };
   }
-  if (first === "doctor" || first === "skill") {
+  if (first === "skill") {
+    const agents = values.agent ?? [];
+    if (
+      positionals.length !== 1 ||
+      keys.some((key) => !["agent", "global", "yes"].includes(key)) ||
+      agents.some((agent) => !/^[a-z][a-z0-9-]*$/.test(agent))
+    )
+      throw new CliError("Usage: jg skill [--agent NAME] [--global] [--yes]");
+    return { kind: "skill", agents, global: values.global ?? false, yes: values.yes ?? false };
+  }
+  if (first === "doctor") {
     if (positionals.length !== 1 || keys.length)
       throw new CliError("This command takes no arguments.");
     return { kind: first };
@@ -59,7 +73,12 @@ export function parseCommand(args: string[]): Command {
       throw new CliError("Usage: jg cache clear");
     return { kind: "cache-clear" };
   }
-  if (!first?.trim() || positionals.length > 2 || values.stdin)
+  if (
+    !first?.trim() ||
+    positionals.length > 2 ||
+    values.stdin ||
+    keys.some((key) => ["agent", "global", "yes"].includes(key))
+  )
     throw new CliError('Usage: jg "question" [root]. Run jg --help.');
   const rawBudget = values["max-source-bytes"];
   const maxSourceBytes = rawBudget === undefined ? DEFAULT_MAX_SOURCE_BYTES : Number(rawBudget);
@@ -92,9 +111,17 @@ Root defaults to the current directory; use -- before a root beginning with -.
 Commands:
   auth [--stdin]   Save a Gateway key (hidden prompt, or an explicit pipe)
   doctor          Verify Jev access using a synthetic question
-  skill           Print the bundled agent skill
+  skill           Install the agent skill via npx skills
   --help, -h      Show usage
   --version       Show the installed version
+
+Skill installation options:
+  --agent NAME    Target an agent (repeat for multiple agents)
+  --global        Install for the current user instead of this project
+  --yes           Skip installer confirmation prompts
+
+Skill installation requires npm/npx and network access. Without options,
+the skills installer prompts for agents and installation settings.
 
 Search options:
   --max-source-bytes N     Source allocation; 0 means unlimited (default: ${DEFAULT_MAX_SOURCE_BYTES})

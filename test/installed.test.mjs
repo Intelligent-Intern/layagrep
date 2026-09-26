@@ -359,14 +359,59 @@ test("installed local commands match the package without credentials", async (t)
   const version = await fixture.run(["--version"], noCredentials);
   assert.equal(version.code, 0, version.stdout);
   assert.equal(version.stdout, `${metadata.version}\n`);
-  const skill = await fixture.run(["skill"], noCredentials);
-  assert.equal(skill.code, 0, skill.stdout);
-  assert.equal(skill.stdout, await readFile(expectedSkill, "utf8"));
   assert.equal(
     await readFile(join(packageDirectory, "dist/skills/jevgrep/SKILL.md"), "utf8"),
-    skill.stdout,
+    await readFile(expectedSkill, "utf8"),
   );
   assert.equal(fixture.requests.length, 0, "Local commands must not contact Gateway");
+});
+
+test("skill command delegates installation to npx without Gateway credentials", async (t) => {
+  const fixture = await context(t);
+  const bin = join(fixture.tree, "installer-bin");
+  await mkdir(bin);
+  await symlink(process.execPath, join(bin, "node"));
+  const npx = join(bin, "npx");
+  await symlink(new URL("./fixtures/skill-installer.mjs", import.meta.url), npx);
+  const result = await fixture.run(
+    ["skill", "--agent", "codex", "--agent", "claude-code", "--global", "--yes"],
+    { PATH: bin, AI_GATEWAY_API_KEY: "" },
+  );
+  assert.equal(result.code, 0, result.stdout);
+  assert.match(result.stdout, /Installer completed/);
+  assert.deepEqual(JSON.parse(await readFile(join(fixture.tree, "installed-skill.json"), "utf8")), [
+    "--yes",
+    "skills",
+    "add",
+    "dzhng/jevgrep",
+    "--skill",
+    "jevgrep",
+    "--agent",
+    "codex",
+    "--agent",
+    "claude-code",
+    "--global",
+    "--yes",
+  ]);
+  assert.equal(fixture.requests.length, 0);
+  const failed = await fixture.run(["skill"], {
+    PATH: bin,
+    AI_GATEWAY_API_KEY: "",
+    JEVGREP_INSTALLER_EXIT: "7",
+  });
+  assert.equal(failed.code, 7, failed.stdout);
+  assert.deepEqual(JSON.parse(await readFile(join(fixture.tree, "installed-skill.json"), "utf8")), [
+    "--yes",
+    "skills",
+    "add",
+    "dzhng/jevgrep",
+    "--skill",
+    "jevgrep",
+  ]);
+  await rm(npx);
+  const unavailable = await fixture.run(["skill"], { PATH: bin, AI_GATEWAY_API_KEY: "" });
+  assert.equal(unavailable.code, 1);
+  assert.match(unavailable.stdout, /requires npx/);
 });
 
 test("actual installed search parses Python and returns every relevant hierarchy branch", async (t) => {

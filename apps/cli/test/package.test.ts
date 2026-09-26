@@ -62,11 +62,12 @@ testInDocker(
       const help = await execute(binary, ["--help"], { cwd: scratch, env });
       expect(help.stderr).toBe("");
       expect(help.stdout).toContain('Usage: jg "question" [root]');
-      const skill = await execute(binary, ["skill"], { cwd: scratch, env });
-      expect(skill.stderr).toBe("");
-      expect(skill.stdout).toBe(
-        await readFile(new URL("../../../skills/jevgrep/SKILL.md", import.meta.url), "utf8"),
-      );
+      expect(
+        await readFile(
+          join(prefix, "node_modules/@dzhng/jevgrep/dist/skills/jevgrep/SKILL.md"),
+          "utf8",
+        ),
+      ).toBe(await readFile(new URL("../../../skills/jevgrep/SKILL.md", import.meta.url), "utf8"));
       const manifest = JSON.parse(
         await readFile(join(prefix, "node_modules/@dzhng/jevgrep/package.json"), "utf8"),
       );

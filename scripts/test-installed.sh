@@ -41,6 +41,8 @@ if [[ -n "$package_input" ]]; then
   cp "$package_input" "$scratch/.package-input/jevgrep.tgz"
   cp "${JEVGREP_CANONICAL_SKILL:-$repo_root/skills/jevgrep/SKILL.md}" "$scratch/.package-input/canonical-skill.md"
   cp "$repo_root/test/installed.test.mjs" "$repo_root/test/runtime.Dockerfile" "$scratch/test/"
+  mkdir -p "$scratch/test/fixtures"
+  cp "$repo_root/test/fixtures/skill-installer.mjs" "$scratch/test/fixtures/"
   context_dir="$scratch"
   build_args=(--build-arg PACKAGE_STAGE=prebuilt)
 fi

@@ -18,15 +18,17 @@ folders, files, and declarations. Your coding agent then implements and tests th
 ```sh
 npm install -g @dzhng/jevgrep
 jg auth
+npx skills add dzhng/jevgrep --skill jevgrep --agent codex --agent claude-code
 jg "How are telemetry events recorded and sent?" ./my-project
 ```
 
 Requires **Node.js 22+**, **macOS or Linux**, and a **Vercel AI Gateway key**.
 No separate Python, Bun, or ripgrep installation is required to use `jg`.
 
-## Give your agent the skill
+## Install the agent skill — required for agent setup
 
-Install the CLI above, then add the skill to the project where your agent works:
+Installing the CLI alone does not teach your coding agent to use it. **Install
+the skill as well**, from the project where your agent works:
 
 ```sh
 npx skills add dzhng/jevgrep --skill jevgrep --agent codex --agent claude-code
@@ -35,10 +37,34 @@ npx skills add dzhng/jevgrep --skill jevgrep --agent codex --agent claude-code
 Select just the agent you use, or add `--global` for a user-wide install. The
 [skill](skills/jevgrep/SKILL.md) teaches the agent when to call `jg`, how to use
 returned context, and when to fill gaps with its normal tools. It skips redundant
-retrieval when the needed context is already known. Installing the skill does not
-install the executable or configure an API key.
+retrieval when the needed context is already known. The current repository skill
+checks for `jg` and installs the CLI if it is missing; authentication still needs
+your Gateway key. The skill installer itself does not configure credentials.
 
-For manual skill export and authentication options, see the [package guide](apps/cli/README.md).
+The next CLI release also provides a shortcut to the same installer:
+
+```sh
+jg skill                         # interactive agent selection
+jg skill --agent codex --global   # install for Codex across projects
+```
+
+`jg skill` delegates to `npx skills add dzhng/jevgrep --skill jevgrep` and needs
+npm/npx plus network access. Add `--yes` for unattended installation. Published
+0.1.0 still prints the bundled skill; use `npx skills` directly with that version.
+
+### Upgrade
+
+There is currently no `jg upgrade` command. Upgrade the CLI with npm:
+
+```sh
+npm install -g @dzhng/jevgrep@latest
+jg --version
+```
+
+Update the installed skill separately by rerunning the `npx skills add` command
+above. Updating the npm package does not
+overwrite skill files in your projects. See the [package guide](apps/cli/README.md)
+for authentication details.
 
 ## Start with a question, leave with source
 

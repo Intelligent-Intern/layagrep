@@ -6,7 +6,7 @@ import { renderResult } from "./render";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { version } from "../package.json";
-import skill from "../../../skills/jevgrep/SKILL.md" with { type: "text" };
+import { installSkill } from "./skill";
 
 globalThis.AI_SDK_LOG_WARNINGS = false;
 
@@ -43,7 +43,8 @@ async function main() {
     case "version":
       return write(`${version}\n`);
     case "skill":
-      return write(skill);
+      process.exitCode = await installSkill(command, controller.signal);
+      return;
     case "auth":
       return authenticate(command.fromStdin, controller.signal);
     case "cache-clear": {

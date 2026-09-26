@@ -5,6 +5,21 @@ description: Find files for unfamiliar repository behavior and regression tests 
 
 # Jevgrep
 
+## Setup
+
+Before the first search, check whether `jg` is on PATH (`command -v jg`). If it
+is missing, check for Node.js 22+ and npm, then run
+`npm install --global @dzhng/jevgrep@latest` and verify with `jg --version`.
+If prerequisites are missing or installation fails, report the specific blocker
+and use ordinary discovery; do not retry indefinitely or use sudo.
+
+If a search reports missing credentials, have the user run `jg auth` in their
+terminal or configure `AI_GATEWAY_API_KEY` through their secret manager. Never ask
+them to paste a key into chat. Do not launch the interactive auth prompt in a
+noninteractive agent shell. Continue with ordinary discovery until configured.
+
+## Research
+
 1. Run `jg "your research question"` through the shell. Describe the symptom,
    expected behavior, and useful reproduction clues. The CLI prints its file list
    and source or declaration locations to stdout; it creates no report files.
