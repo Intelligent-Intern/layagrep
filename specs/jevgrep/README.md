@@ -8,8 +8,9 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
 Next: finish the frozen `installed-jg-cpython-parity-v1` cohort. Requests is the
-first paid checkpoint; inspect its trace, grade and account it, then continue the
-same plan's remaining cells. Never rerun an existing baseline or replace a retained
+first completed checkpoint: officially solved, fully billed, and 14.0% below
+baseline Sol cost. Its paired trace review is underway; the same plan's remaining
+cells are running. Never rerun an existing baseline or replace a retained
 attempt. The merged `bun run verify` gate passed and whole-product review's sole
 finding is fixed with a clean follow-up review. Exact archive checks pass on
 macOS arm64 and Linux arm64/amd64; all ten no-call validations passed.
