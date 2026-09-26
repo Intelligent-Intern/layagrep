@@ -20,6 +20,9 @@ Full merged verification and exact archive platform checks passed, followed by
 all ten frozen no-call validations. [Freshness evidence](assets/source-freshness.md)
 owns the archive identity, failure reproductions and verification results. Do not
 transfer the previous cohort's measured results to this corrected archive.
+[Current confirmation](assets/freshness-confirmation.md) records completed cells;
+scikit-learn solved officially but exceeded baseline cost. The choices ledger has
+been consolidated against current code; final reconciliation and archive remain.
 
 Preserve healthy retrieval semantics and the canonical skill while fixing
 filesystem freshness. Keep the measured archive immutable; it matches the
