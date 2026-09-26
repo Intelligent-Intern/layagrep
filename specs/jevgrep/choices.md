@@ -202,6 +202,6 @@ A single Node process path avoids patching the dependency or retaining two parse
 
 Reach: the package gains runtime assets and a child process; pure pending helper
 jobs may need replay when cancellation terminates that process. The product still
-requires only Node. Verdict: provisional pending merged lifecycle and parity
-verification. Confidence: medium. Version coverage and footprint rationale live
+requires only Node. Verdict: sound; merged lifecycle, parity and installed checks passed, with a
+clean review follow-up. Confidence: medium. Version coverage and footprint rationale live
 in [runtime evidence](assets/python-runtime.md).

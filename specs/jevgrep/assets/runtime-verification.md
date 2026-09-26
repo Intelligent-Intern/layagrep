@@ -1,4 +1,9 @@
-# Installed runtime verification
+# Historical installed runtime verification
+
+This archive used the superseded source-budget and grammar-parser policy. These
+results establish only the named historical artifact; they do not verify the
+restored winner or current bundled CPython candidate. Current pickup and gates
+live in the [spec handoff](../README.md).
 
 The frozen cohort archive has SHA-256
 `98bcf47e7de30ad82c8b452a86b958505c3befe6512d00f98486101c6a9fc802`.

@@ -1,6 +1,6 @@
 # Preserve the accepted retrieval packet
 
-Status: reopened after whole-product review reproduced preservation defects
+Status: verified after preservation fixes and whole-product review
 (2026-09-26); live quality belongs to 08.
 Depends on: 04–06.
 
@@ -28,8 +28,8 @@ The installed command must still handle `head -200`, byte-bounded partial units,
 stdout-only failures and all admitted locations. A green deterministic parity gate
 allows a new frozen official cohort; it does not itself prove cost or solve rate.
 
-The merged `bun run verify` gate passes, including the complete production HTTP
-comparisons and all 20 installed journeys. The preserved output contract passes
+The restored production HTTP comparisons and all 21 installed journeys pass
+in the final default `bun run verify` gate. The preserved output contract passes
 both `head -200` and explicit byte-budget checks. The
 [preservation matrix](../assets/parity-restoration.md) records the tested behavior
 and deliberate product differences.

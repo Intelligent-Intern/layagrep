@@ -2,7 +2,7 @@
 
 The synthetic corpus in `fixtures/python-reference.json` records unmodified frozen
 Python helper results, with helper hashes. Expectations are captured in a Python
-container; application tests run the production TypeScript implementation in Node.
+container; application tests run the production inspector and bundled interpreter in Node.
 `capture-reference.py` reads that corpus on stdin and writes refreshed expectations
 on stdout when the original helpers are mounted read-only at `/reference`. Capture
 output is deliberately separate from assertion: a failing port never rewrites its
@@ -14,14 +14,11 @@ preview windows and additive neighboring-method ranges preserve the recorded Pyt
 policy. Comments stay independently available for later context expansion.
 
 The reference language boundary is CPython 3.11: the retained Requests runtime
-uses 3.11.5 and the isolated fixture oracle uses 3.11.2. The bundled grammar accepts
-syntax from other versions, so one shared compatibility check rejects recognized
-Python 2 forms and Python 3.12-only type parameters, type aliases and f-string
-expression forms. Inspection, previews and neighboring-method selection then use
-the same text fallback. Source bytes are retained; no Python executable is required
-by the product. Valid reference syntax is preserved, including print-shaped shift
-expressions and ordinary f-strings. The cases live in the parser tests; this is
-bounded conformance coverage, not a replacement implementation of CPython's grammar.
+uses 3.11.5 and the isolated fixture oracle uses 3.11.2. Production uses CPython
+3.11.3 through Pyodide and the unchanged frozen helpers. This removes the separate
+grammar and hand-written compatibility rules. Version differences remain explicit;
+the cases establish bounded conformance, not universal equivalence. Source bytes
+are retained, and no system Python executable is required by the product.
 
 Python context expansion preserves the reference's conservative whole-line comment
 matching, including hash-prefixed lines in multiline strings. TypeScript comment

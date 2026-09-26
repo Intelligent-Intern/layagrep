@@ -7,13 +7,13 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: integrate the bundled CPython parser and its packaging, then finish the
-merged gate and whole-product review before freezing another package or starting
-paid confirmation. Review found Python AST differences beyond the previously
-fixed evidence-order and TS/JS comment defects. The smaller grammar parser did
-not preserve the winner; use its unchanged Python helpers with bundled CPython.
-See [runtime evidence](assets/python-runtime.md). No additional paid run may
-precede a clean whole-product review.
+Next: freeze a new bundled-CPython package, verify that exact archive on the
+supported platforms, and prepare a fresh ten-task confirmation using the existing
+baselines. The merged `bun run verify` gate passed and whole-product review's
+sole finding (stale package assertions) is fixed with a clean follow-up review.
+The unchanged Python helpers now run in bundled CPython; actual computed-request,
+selection, output and recovery comparisons pass for the exercised corpus.
+See [runtime evidence](assets/python-runtime.md) for coverage and version limits.
 
 `installed-jg-reference-parity-v1` is stopped and superseded. Requests and
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted
@@ -48,12 +48,12 @@ verification before ending each pass. These commands are targets to implement,
 not claims about the current scaffold.
 
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
-- [ ] [02 — Bundled parser parity](slices/02-parser.md)
+- [x] [02 — Bundled parser parity](slices/02-parser.md)
 - [x] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
 - [ ] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
 - [x] [05 — Faults, cancellation and partial results](slices/05-failures.md)
 - [x] [06 — Default-on fresh cache](slices/06-cache.md)
-- [ ] [07 — Preserved output policy](slices/07-output-policy.md)
+- [x] [07 — Preserved output policy](slices/07-output-policy.md)
 - [ ] [08 — Frozen quality and release verification](slices/08-release.md)
 
 ## Product and scope

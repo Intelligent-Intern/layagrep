@@ -79,7 +79,7 @@ export function createEvaluator(options: {
           model: "typesafe-ai/jev",
           provider: options.baseURL ?? "vercel-ai-gateway",
           policyVersion: options.policyVersion ?? "1",
-          parserVersion: "python-0.25.0-ts-5.9.3",
+          parserVersion: "cpython-3.11.3-pyodide-0.25.1-ts-5.9.3",
           promptVersion: "unit-locators-1",
         },
       };

@@ -31,17 +31,31 @@ belongs in the parser and full-CLI reference tests.
 
 Repository source is data supplied to trusted AST helpers, never executed as
 Python. Interpreter streams and globals are shared state, so one owner serializes
-helper calls. A Node child process is being integrated to isolate synchronous
-execution, permit cancellation, and support both the Node product and Bun-hosted
+helper calls. A Node child process isolates synchronous
+execution, permits cancellation, and supports both the Node product and Bun-hosted
 development. The attempted Bun worker-thread loader normalization did not work
 and must not ship. Unrelated pending pure helper requests must survive another
 query's cancellation; no interpreter pool or second parser is introduced.
 
-Integration is unfinished until merged tests prove unchanged computed requests,
-full stdout, cancellation, process exit and offline installed asset loading.
-Missing or corrupt runtime assets must fail truthfully without fabricated
-excerpts or stderr leakage. Helper conformance alone cannot close those gates,
-and none of these checks replaces the frozen downstream quality comparison.
+The merged component checks passed: 23 Node parser/lifecycle tests, four release
+checks, 14 benchmark-harness tests and 21 installed Docker journeys. Native macOS
+arm64 on Node 24.14.0 passed the installed local-command and Python-search smoke
+using archive SHA-256
+`cff8b8607308531c26ec8736c07102449d1b785c95421d826a95a9efd299439e`.
+This is a development artifact, not the prospective quality-cohort freeze.
+
+The first full default run passed 98 of 99 Bun tests, stopping at stale assertions
+for the removed grammar assets. The corrected package test passed independently.
+A whole-product review found that same assertion defect and no other actionable
+issue. The correction's follow-up review reported no actionable findings; the
+final `bun run verify` run passed: 99 Bun tests (933 assertions), 23 Node
+parser/lifecycle tests, four release tests, 14 harness tests and 21 installed
+journeys. Its full transcript is `/tmp/jg-cpython-final-verify.log`.
+Local transcripts: `/tmp/jg-cpython-merged-verify.log`,
+`/tmp/jg-cpython-package-regression-v2.log`, `/tmp/jg-cpython-merged-parser.log`,
+`/tmp/jg-cpython-merged-installed.log`, `/tmp/jg-cpython-native.log` and
+`/tmp/jg-cpython-whole-review.log`. No downstream quality claim follows from these
+checks; the frozen task comparison remains required.
 
 ## Upstream provenance
 

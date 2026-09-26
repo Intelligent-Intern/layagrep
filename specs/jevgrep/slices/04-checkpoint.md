@@ -1,7 +1,7 @@
 # Deliver the installed CLI and agent workflow
 
-Status: installed workflow verified; full-pipeline preservation reopened for
-selection-completion order (2026-09-26). Depends on: 01, 02, 03.
+Status: deterministic installed workflow verified; current bundled-CPython
+artifact still requires its frozen cohort checkpoint (2026-09-26). Depends on: 01, 02, 03.
 Read [contracts](../contracts.md) first.
 
 ## Contract and owner
@@ -26,10 +26,10 @@ needed. CLI transcripts replace visual/screenshot gates for this product.
 
 Docker fixture exercises installed auth, help, doctor, query, skill and partial output with empty stderr and isolated HOME/XDG. Pack excludes evals, secrets and workspace dependencies. Run one explicit live Jev query, then Sol through installed skill/CLI on the saved Requests task; inspect query, stdout, subsequent reads, patch, official grade and full bill. Reuse baseline; do not rerun it. One pass proves integration only, not cohort quality.
 
-The restored frozen cohort's Requests cell officially resolved with complete
+The superseded reference-parity cohort's Requests cell officially resolved with complete
 Sol and Jev billing. Its source blocks match the accepted spike packet; the
-live file/lead decisions differ. This verifies installed integration, not a
-cost advantage. [Restoration evidence](../assets/parity-restoration.md) owns the
+live file/lead decisions differ. This is historical integration evidence, not verification of the current
+bundled-CPython artifact or a cost advantage. [Restoration evidence](../assets/parity-restoration.md) owns the
 artifact identity and measured costs.
 
 ## Delegated decisions
@@ -47,4 +47,4 @@ continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
 
-The installed fixture, live query and official Requests task completed. The task solved but cost more than its saved baseline. Exact query, output, follow-up behavior, grade and billing are in the [checkpoint report](../assets/installed-requests-checkpoint.md). Reproduction uses the maintained [runner workflow](../../../evals/implementation/swebench/installed.md); the frozen checkpoint retains its original runner.
+The earlier installed fixture, live query and official Requests task completed on a superseded package. The task solved but cost more than its saved baseline. Exact query, output, follow-up behavior, grade and billing are in the [checkpoint report](../assets/installed-requests-checkpoint.md). Reproduction uses the maintained [runner workflow](../../../evals/implementation/swebench/installed.md); the frozen checkpoint retains its original runner.

@@ -1,6 +1,6 @@
 # Bundle source inspection without system Python
 
-Status: reopened for bundled CPython integration and full parity review (2026-09-26).
+Status: verified against the exercised reference corpus and installed gates (2026-09-26).
 Depends on: 01.
 Read [contracts](../contracts.md) first. Recognized syntax outside the reference's
 Python 3.11 boundary shares one fallback across inspection, previews and
@@ -25,8 +25,9 @@ already exist. CLI transcripts replace visual/screenshot gates for this product.
 
 Earlier grammar conformance checks passed the exercised fixtures but missed
 Python AST differences found by whole-product review. They do not establish
-completion. Bundled CPython helper conformance passed the bounded probe; merged
-production, lifecycle, installed-package and whole-product gates remain required.
+completion. Bundled CPython passed the bounded helper probe, merged production and lifecycle
+comparisons, installed package checks and whole-product review.
+[Runtime evidence](../assets/python-runtime.md) records the exact coverage.
 The [parser conformance guide](../../../test/parser/README.md) owns executable
 coverage. Neither parser comparisons nor package checks establish task quality.
 
