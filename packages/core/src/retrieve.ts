@@ -464,7 +464,9 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       });
     await select();
     const evidence: Evidence[] = [];
-    for (const candidate of ordered) {
+    // Declaration entries are inserted when selection completes, as in the frozen locations map.
+    for (const path of declarations.keys()) {
+      const candidate = candidates.get(path)!;
       if (stop || input.signal.aborted) break;
       if (!files.get(candidate.path)!.excerpts.length) continue;
       // Context donors obey the same current eligibility/hash check as target files.
