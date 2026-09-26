@@ -21,6 +21,7 @@ separately and excluded; incomplete observations are subtotals, not totals.
 | psf__requests-1142 | unresolved | $0.2388080 | $0.2685004 | $0.011300058 |
 | sympy__sympy-16792 | solved; cost win | $0.3320948 | $0.5479750 | known $0.098661402; total unknown |
 | pytest-dev__pytest-6197 | solved; cost win | $0.8116844 | $2.3444580 | $0.098483154 |
+| sphinx-doc__sphinx-8638 | solved; not a cost win | $1.2444744 | $1.0594724 | known $0.196647108; total unknown |
 
 Scikit-learn returned five relevant files in 5,038 bytes, implementation reading
 leads and two test source blocks. The agent then read the splitter and tests, searched documentation,
