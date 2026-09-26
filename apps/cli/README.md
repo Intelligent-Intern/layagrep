@@ -38,10 +38,10 @@ Select only the agent you use, or add `--global` for user-wide installation. The
 options come from the [skills CLI](https://github.com/vercel-labs/skills#install-a-skill).
 Installing the skill does not install the `jg` executable or configure its key.
 The current repository skill installs a missing CLI when the agent first uses it;
-published 0.1.0's bundled skill predates that setup step. Use the repository skill
+0.1.0's bundled skill predates that setup step. Use the repository skill
 installer above for the latest instructions.
 
-The next release's `jg skill` is a shortcut to that same installer. It supports
+`jg skill` is a shortcut to that same installer. It supports
 `--agent NAME` (repeatable), `--global`, and `--yes`; without options, the installer
 prompts for settings. It requires npm/npx and network access. Published 0.1.0's
 `jg skill` still prints text, so use `npx skills` directly with that version.

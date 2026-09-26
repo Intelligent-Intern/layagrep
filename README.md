@@ -41,7 +41,7 @@ retrieval when the needed context is already known. The current repository skill
 checks for `jg` and installs the CLI if it is missing; authentication still needs
 your Gateway key. The skill installer itself does not configure credentials.
 
-The next CLI release also provides a shortcut to the same installer:
+The CLI also provides a shortcut to the same installer:
 
 ```sh
 jg skill                         # interactive agent selection
@@ -49,8 +49,8 @@ jg skill --agent codex --global   # install for Codex across projects
 ```
 
 `jg skill` delegates to `npx skills add dzhng/jevgrep --skill jevgrep` and needs
-npm/npx plus network access. Add `--yes` for unattended installation. Published
-0.1.0 still prints the bundled skill; use `npx skills` directly with that version.
+npm/npx plus network access. Add `--yes` for unattended installation. In 0.1.0,
+`jg skill` only prints the bundled skill; use `npx skills` directly with that version.
 
 ### Upgrade
 
