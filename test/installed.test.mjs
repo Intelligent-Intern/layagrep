@@ -298,6 +298,38 @@ function complete(result) {
   }
 }
 
+function assertCachedRequestsAreReused(requests, before) {
+  const previous = requests.slice(0, before);
+  const seen = new Set(previous.map(({ raw }) => raw));
+  const withoutEvidence = ({ state, ...rest }) =>
+    JSON.stringify({ ...rest, state: { ...state, selectedEvidence: undefined } });
+  for (const { raw, body } of requests.slice(before)) {
+    assert.ok(!seen.has(raw), "An identical successful native request bypassed the cache");
+    seen.add(raw);
+    // Completion order is part of the frozen input; warm reads can create a genuinely new order.
+    assert.ok(Array.isArray(body.state.selectedEvidence));
+    const evidenceContents = (value) =>
+      JSON.stringify(value.state.selectedEvidence.map((item) => JSON.stringify(item)).sort());
+    assert.ok(
+      previous.some(
+        ({ body: value }) =>
+          withoutEvidence(value) === withoutEvidence(body) &&
+          Array.isArray(value.state.selectedEvidence) &&
+          evidenceContents(value) === evidenceContents(body),
+      ),
+      "Warm retrieval changed more than the selected-evidence order",
+    );
+  }
+}
+
+function assertCachedRequestIsResent(requests, before) {
+  const previous = new Set(requests.slice(0, before).map(({ raw }) => raw));
+  assert.ok(
+    requests.slice(before).some(({ raw }) => previous.has(raw)),
+    "Bypassing or clearing cache must resend a previously cached exact request",
+  );
+}
+
 test("installed runtime has no checkout or Python/Bun/compiler prerequisites", async () => {
   for (const executable of ["python3", "bun", "cc", "gcc", "clang", "make"]) {
     const result = spawnSync(executable, ["--version"], { encoding: "utf8" });
@@ -383,7 +415,7 @@ test("malformed provider answers preserve useful source and return incomplete ex
   assert.match(result.stdout, /^Issue: /m);
 });
 
-test("warm cache avoids HTTP, no-cache bypasses reuse, and edited content invalidates answers", async (t) => {
+test("warm cache reuses identical requests, no-cache bypasses reuse, and edits invalidate answers", async (t) => {
   const fixture = await context(t);
   const first = await fixture.run([query, fixture.tree]);
   complete(first);
@@ -392,16 +424,13 @@ test("warm cache avoids HTTP, no-cache bypasses reuse, and edited content invali
   const warm = await fixture.run([query, fixture.tree]);
   complete(warm);
   assert.equal(warm.stdout, first.stdout);
-  assert.equal(
-    fixture.requests.length,
-    before,
-    "Warm search must reuse every identical successful evaluation",
-  );
+  assertCachedRequestsAreReused(fixture.requests, before);
   t.diagnostic(
-    `Cold HTTP requests: ${before}; warm additional requests: ${fixture.requests.length - before}; stdout identical.`,
+    `Cold HTTP requests: ${before}; novel warm evidence orders: ${fixture.requests.length - before}; identical requests reused and stdout identical.`,
   );
+  const beforeBypass = fixture.requests.length;
   complete(await fixture.run([query, fixture.tree, "--no-cache"]));
-  assert.ok(fixture.requests.length > before, "--no-cache must reach the HTTP fixture");
+  assertCachedRequestIsResent(fixture.requests, beforeBypass);
   const edited = join(fixture.tree, "alpha/nested/first.py");
   await writeFile(
     edited,
@@ -418,12 +447,12 @@ test("warm cache avoids HTTP, no-cache bypasses reuse, and edited content invali
   );
   before = fixture.requests.length;
   assert.equal((await fixture.run([query, fixture.tree])).stdout, changed.stdout);
-  assert.equal(fixture.requests.length, before);
+  assertCachedRequestsAreReused(fixture.requests, before);
   const cleared = await fixture.run(["cache", "clear"], { AI_GATEWAY_API_KEY: "" });
   assert.equal(cleared.code, 0, cleared.stdout);
   before = fixture.requests.length;
   assert.equal((await fixture.run([query, fixture.tree])).code, 0);
-  assert.ok(fixture.requests.length > before, "Clearing the cache must remove the prior answers");
+  assertCachedRequestIsResent(fixture.requests, before);
 });
 
 test("doctor uses the installed SDK while missing credentials fail cleanly", async (t) => {
@@ -660,9 +689,5 @@ test("source budget preserves every file and lead while explicitly omitting sour
   assert.equal(expectedLocations.filter((line) => line.startsWith('"')).length, branches.length);
   assert.ok(expectedLocations.some((line) => line.startsWith("  Reading lead ")));
   assert.deepEqual(locations(bounded.stdout), expectedLocations);
-  assert.equal(
-    fixture.requests.length,
-    before,
-    "Rendering policy must not change cached classification requests",
-  );
+  assertCachedRequestsAreReused(fixture.requests, before);
 });

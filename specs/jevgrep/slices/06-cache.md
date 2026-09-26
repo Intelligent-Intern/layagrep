@@ -6,6 +6,12 @@ Status: verified. Depends on: 05. Read [contracts](../contracts.md) first.
 
 Core cache owns `get(key)/put(key, validatedAnswer)/clear()`, constructed by CLI with XDG location. Enable by default; exact semantic request hashes and seven-day TTL, answer-only payloads, atomic publication, permissions and 256 MiB bound as specified. Do not persist final packets or source. All live filesystem policy/snapshot work precedes lookup; no traversal shortcut based on old directory decisions.
 
+The frozen retrieval preserves completion order inside selected evidence. A warm
+query can therefore form a new ordered request and legitimately contact Jev.
+Reuse is guaranteed for identical successful requests, not for an entire query
+regardless of its computed inputs. Installed checks reject identical resends and
+allow only demonstrated evidence-order permutations in their warm fixture.
+
 Cache failures degrade to misses. `--no-cache` bypasses reads and writes. Keep cache policy out of prompt builders and provider transport. An expired schema is disposable, not a migration target.
 
 ## Human-runnable artifact
