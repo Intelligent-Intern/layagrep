@@ -42,7 +42,7 @@ checks, 14 benchmark-harness tests and 21 installed Docker journeys. Native macO
 arm64 on Node 24.14.0 passed the installed local-command and Python-search smoke
 using archive SHA-256
 `cff8b8607308531c26ec8736c07102449d1b785c95421d826a95a9efd299439e`.
-This is a development artifact, not the prospective quality-cohort freeze.
+The new prospective cohort freezes this same archive.
 
 The first full default run passed 98 of 99 Bun tests, stopping at stale assertions
 for the removed grammar assets. The corrected package test passed independently.
@@ -67,3 +67,15 @@ whole runtime as Apache-only. Packaging owns those notices and their verificatio
 - [Pyodide 0.25.1 license](https://github.com/pyodide/pyodide/blob/0.25.1/LICENSE)
 - [Pyodide runtime API](https://pyodide.org/en/0.25.1/usage/api/js-api.html)
 - [Interruption semantics](https://pyodide.org/en/0.25.1/usage/keyboard-interrupts.html)
+
+## Prospective confirmation
+
+`evals/runs/swebench/installed-jg-cpython-parity-v1/plan.json` freezes all ten tasks
+on the archive above and the existing Sol model/harness/baselines. Its exact
+archive passed four offline installed checks on each of Linux amd64 and arm64,
+and the native macOS smoke identified the same SHA-256. Release content validation
+and all ten dry-run validations passed before paid execution. The Requests cell
+started first; no quality result or bill is claimed yet. Superseded studies remain
+historical and contribute no outcomes to this cohort. Platform transcripts are
+`/tmp/jg-cpython-frozen-amd64.log` and `/tmp/jg-cpython-frozen-arm64.log`;
+preparation and dry-run transcripts use the `/tmp/jg-cpython-cohort-` prefix.

@@ -7,18 +7,19 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: freeze a new bundled-CPython package, verify that exact archive on the
-supported platforms, and prepare a fresh ten-task confirmation using the existing
-baselines. The merged `bun run verify` gate passed and whole-product review's
-sole finding (stale package assertions) is fixed with a clean follow-up review.
-The unchanged Python helpers now run in bundled CPython; actual computed-request,
-selection, output and recovery comparisons pass for the exercised corpus.
-See [runtime evidence](assets/python-runtime.md) for coverage and version limits.
+Next: finish the frozen `installed-jg-cpython-parity-v1` cohort. Requests is the
+first paid checkpoint; inspect its trace, grade and account it, then continue the
+same plan's remaining cells. Never rerun an existing baseline or replace a retained
+attempt. The merged `bun run verify` gate passed and whole-product review's sole
+finding is fixed with a clean follow-up review. Exact archive checks pass on
+macOS arm64 and Linux arm64/amd64; all ten no-call validations passed.
+See [runtime evidence](assets/python-runtime.md) for coverage, artifact identity
+and interpreter-version limits. Quality acceptance remains unproven.
 
 `installed-jg-reference-parity-v1` is stopped and superseded. Requests and
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted
-with its patch and traces retained; seven cells never started. No paid run is
-active. The goal remains active and independent deterministic work can continue.
+with its patch and traces retained; seven cells never started. These superseded studies remain stopped; only the new bundled-CPython study is
+active.
 
 The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
 superseded, retaining completed outcomes and interrupted traces. It is not a
