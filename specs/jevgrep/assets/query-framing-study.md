@@ -121,8 +121,24 @@ support retry score variation as the cause of lost source selection, and cannot
 establish service stability across unobserved requests. Reproducible script and
 per-question evidence: `/tmp/jg-query-retry-variance/`.
 
-Next, compare actual Django declaration inputs and expansion through the frozen
-reference and production with the same delivered answers. Stop at unmatched
-requests, preserve array order, and do not substitute late responses that the
-client did not receive. This investigates port fidelity without another model
-call or a corrective hint derived from the evaluator.
+Actual SQLite first-pass replay is equal against the frozen source oracle for
+both retained queries. Each produces the same 32 declarations and four ordered
+native requests, including source, questions and grouping, using four successfully
+delivered answers. The original query selects no excerpts. The broader query
+selects identical windows 10–27, 97–177 and 395–544, four reading leads, and 10,895
+verbatim source bytes; the critical `_alter_field` scores 0.55. The reference uses
+the retained image's Python 3.11.5; production uses bundled 3.11.3. Source SHA-256:
+`6ebbe1fb51de14f0142ca4dc2d26efaaf184bb7e48732d2483c1597ea222c736`.
+
+The isolated extension stops at request index four: a proposed second pass uses
+file-local selected evidence, while the real pipeline's global selection state
+does not contain that retained SQLite request. No answer is fabricated. This is
+a replay-scope limit, not evidence of a production mismatch. Proof and scripts
+are retained in `/tmp/jg-django-parity/`. Whole-Django discovery, global completion
+order and role/output parity are not established by this single-file check.
+
+Any wider replay must restore actual pipeline state and delivered-response order,
+preserve arrays, and stop at unmatched requests. Late responses the client never
+received cannot be substituted as successful answers. Do not launch another paid
+query-breadth candidate on this evidence: source selection now matches for the
+examined inputs, and the missed condition later reached the solver explicitly.

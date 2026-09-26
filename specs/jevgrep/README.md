@@ -7,12 +7,16 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: replay retained real Django selection inputs and delivered answers against
-the frozen spike and production, without model calls, stopping at any unmatched
-request. The isolated [mechanism-first skill experiment](assets/query-framing-study.md)
+Next: assess whether the retained global Django request/completion trace supports
+a whole-pipeline no-model replay; do not manufacture missing response/state data.
+Both real SQLite first-pass replays match the frozen oracle, including positive
+source expansion. Their exact coverage and isolated second-pass limit are in the
+[mechanism-first skill experiment](assets/query-framing-study.md). That candidate
 failed the same Django regression at Sol $1.2353512; its remaining nine tasks stay
-unrun and the production skill is unchanged. Finish the exact packet-visibility
-comparison before proposing another candidate. No paid task is active.
+unrun and the production skill is unchanged. Packet-visibility comparison is
+complete: initial truncation hid selected source, but a later read and explicit
+recognition preceded replacing the failing regression with a type-changing test.
+Do not infer another query-breadth fix. No paid task is active.
 The frozen `installed-jg-cpython-parity-v1` cohort is complete and not accepted:
 7/10 solves versus 8/10 baseline, six cost wins, and 35.27% lower full Sol cost.
 [Confirmation evidence](assets/cpython-confirmation.md) owns all outcomes, trace
