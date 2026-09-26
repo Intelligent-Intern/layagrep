@@ -1,6 +1,7 @@
 import { parseArgs } from "node:util";
 import type { SearchInput } from "@repo/core";
 import { CliError } from "./errors";
+import { DEFAULT_MAX_SOURCE_BYTES } from "./render";
 
 export type Command =
   | { kind: "help" | "version" | "doctor" | "skill" | "cache-clear" }
@@ -61,7 +62,7 @@ export function parseCommand(args: string[]): Command {
   if (!first?.trim() || positionals.length > 2 || values.stdin)
     throw new CliError('Usage: jg "question" [root]. Run jg --help.');
   const rawBudget = values["max-source-bytes"];
-  const maxSourceBytes = rawBudget === undefined ? 0 : Number(rawBudget);
+  const maxSourceBytes = rawBudget === undefined ? DEFAULT_MAX_SOURCE_BYTES : Number(rawBudget);
   if (
     rawBudget !== undefined &&
     (!/^\d+$/.test(rawBudget) || !Number.isSafeInteger(maxSourceBytes))
@@ -96,7 +97,7 @@ Commands:
   --version       Show the installed version
 
 Search options:
-  --max-source-bytes N     Source allocation; 0 means unlimited (default)
+  --max-source-bytes N     Source allocation; 0 means unlimited (default: ${DEFAULT_MAX_SOURCE_BYTES})
   --hidden                Include hidden paths
   --no-ignore             Disable .gitignore/.ignore patterns
   --include-dependencies  Include dependency and build directories

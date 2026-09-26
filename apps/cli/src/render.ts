@@ -1,4 +1,4 @@
-import type { RetrievalResult } from "@repo/core";
+import type { FileEvidence, RetrievalResult } from "@repo/core";
 
 function quote(value: string): string {
   return JSON.stringify(value).replace(
@@ -7,24 +7,62 @@ function quote(value: string): string {
   );
 }
 
-/** Allocate whole excerpts so a byte limit cannot invalidate their source coordinates. */
-export function renderResult(result: RetrievalResult, maxSourceBytes = 0): string {
-  let remaining = maxSourceBytes || Infinity;
+export const DEFAULT_MAX_SOURCE_BYTES = 0;
+
+type Excerpt = FileEvidence["excerpts"][number];
+function containsLead(excerpt: Excerpt, range: FileEvidence["leads"][number]["range"]): boolean {
+  if (range.startLine < excerpt.range.startLine || range.endLine > excerpt.range.endLine)
+    return false;
+  const start = excerpt.sourceByteStart ?? excerpt.range.sourceByteStart;
+  const end = excerpt.sourceByteEnd ?? excerpt.range.sourceByteEnd;
+  if (start !== undefined && range.sourceByteStart !== undefined && range.sourceByteStart < start)
+    return false;
+  if (end !== undefined && range.sourceByteEnd !== undefined && range.sourceByteEnd > end)
+    return false;
+  return true;
+}
+
+/** Whole excerpts keep coordinates truthful; unlimited rendering retains its original ordering. */
+export function renderResult(
+  result: RetrievalResult,
+  maxSourceBytes = DEFAULT_MAX_SOURCE_BYTES,
+): string {
   const files = [...result.files]
     .sort((a, b) => b.score - a.score || (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
-    .map((file) => {
-      let omitted = file.sourceOmitted;
-      const excerpts = file.excerpts.filter(({ source }) => {
-        const bytes = Buffer.byteLength(source);
-        if (bytes > remaining) {
-          omitted = true;
-          return false;
-        }
-        remaining -= bytes;
-        return true;
-      });
-      return { file, excerpts, omitted };
-    });
+    .map((file) => ({ file, excerpts: file.excerpts, omitted: file.sourceOmitted }));
+  if (maxSourceBytes > 0) {
+    let remaining = maxSourceBytes;
+    const kept = files.map(() => new Set<number>());
+    const ranked = files.flatMap(({ file }, fileIndex) =>
+      file.excerpts.map((excerpt, excerptIndex) => ({
+        fileIndex,
+        excerptIndex,
+        bytes: Buffer.byteLength(excerpt.source),
+        // Context snippets have no reading-lead score: this prioritizes available evidence,
+        // not a complete confidence estimate for every selected or expanded source range.
+        score: file.leads.reduce(
+          (score, lead) =>
+            lead.score > 0.5 && containsLead(excerpt, lead.range)
+              ? Math.max(score, lead.score)
+              : score,
+          0,
+        ),
+      })),
+    );
+    // Stable sorting uses original file/excerpt order for equal or absent lead scores.
+    ranked.sort((a, b) => b.score - a.score);
+    for (const candidate of ranked)
+      if (candidate.bytes <= remaining) {
+        kept[candidate.fileIndex]!.add(candidate.excerptIndex);
+        remaining -= candidate.bytes;
+      }
+    for (const [index, entry] of files.entries()) {
+      entry.excerpts = entry.file.excerpts.filter((_, excerptIndex) =>
+        kept[index]!.has(excerptIndex),
+      );
+      entry.omitted ||= entry.excerpts.length !== entry.file.excerpts.length;
+    }
+  }
   const lines = [
     `Status: ${result.status}`,
     `Root: ${quote(result.root)}`,

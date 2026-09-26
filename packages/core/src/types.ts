@@ -38,7 +38,7 @@ export type RetrievalResult = {
 export type SearchInput = {
   root: string;
   query: string;
-  policy?: FilesystemPolicy & { maxSourceBytes?: number };
+  policy?: FilesystemPolicy;
   signal: AbortSignal;
   protectedPaths?: string[];
 };
