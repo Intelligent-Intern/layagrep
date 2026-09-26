@@ -10,7 +10,7 @@ You are implementing this spec. Status: **implementing**, updated **2026-09-26**
 The full `installed-jg-cpython-work-clock-v2` study is complete and accepted for
 its frozen artifact: eight baseline solves preserved, eight cost wins, 33.21%
 lower total Sol cost. [Confirmation evidence](assets/work-clock-confirmation.md)
-owns all ten results and their limits. No paid benchmark or grader remains active.
+owns all ten results and their limits. That prior study has no active jobs.
 
 Next: observe the running `installed-jg-freshness-v1` cohort, then grade and account
 each retained attempt and aggregate the whole study. Root execution session
