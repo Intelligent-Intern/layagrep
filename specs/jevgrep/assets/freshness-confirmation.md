@@ -69,3 +69,14 @@ but its added assertion covers explicit attribute retention only. Three local
 tests passed with 119 warnings; no test failure or rerun occurred. More separate
 exploration calls accompanied essentially the same full Sol bill. Evidence:
 `/tmp/jg-freshness-v1-xarray-comparison/findings.md`.
+
+Requests returned six files in 7,147 bytes with seven source blocks, including the
+entire content-length helper and the same six model-source blocks delivered by
+successful comparator runs. The agent read the helper again, then limited its
+fix to GET requests. Official GET assertions passed, but bodyless HEAD retained
+`Content-Length` and failed the required regression. The agent's new tests covered
+GET only; one focused and then four local tests passed. Other broad official
+failures involve legacy environment behavior, but they do not explain this
+explicit HEAD assertion failure. The relevant implementation was available;
+the patch and test scope were too narrow. Evidence:
+`/tmp/jg-freshness-v1-requests-comparison/findings.md`.
