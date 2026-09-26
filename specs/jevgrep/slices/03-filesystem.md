@@ -36,4 +36,4 @@ continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
 
-The named Docker filesystem gate passed, including the installed wide/deep plain-root and nested-repository journey. See [integration evidence](../assets/integration-verification.md).
+The named Docker filesystem gate passed, including the installed wide/deep plain-root and nested-repository journey. See [final merged verification](../assets/python-runtime.md).

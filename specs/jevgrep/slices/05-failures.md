@@ -36,4 +36,4 @@ continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
 
-The installed failure gate passed ten journeys. Focused Docker HTTP and retrieval tests cover the small request guard, concurrent authentication failure, interrupted retry waits and retained partial source; the corrected process-group head test passes. See [integration evidence](../assets/integration-verification.md).
+The final installed gate includes the failure journeys. Focused Docker HTTP and retrieval tests cover the small request guard, concurrent authentication failure, interrupted retry waits and retained partial source; the corrected process-group head test passes. See [final merged verification](../assets/python-runtime.md).

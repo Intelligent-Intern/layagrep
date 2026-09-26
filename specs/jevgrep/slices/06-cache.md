@@ -42,4 +42,4 @@ continue on the evidence if the user does not respond. Feedback that changes the
 public contract or acceptance measure requires updating this slice before broadening
 implementation. Record new choices and update the README handoff before ending.
 
-The named installed cache gate passes four journeys; the core cache gate passes eight tests with 45 assertions. Together they cover the freshness and recovery matrix above. See [integration evidence](../assets/integration-verification.md).
+The final installed and core cache checks cover the freshness and recovery matrix above. Exact native requests must be reused; ordering changes do not excuse an identical resend. See [final merged verification](../assets/python-runtime.md).

@@ -1,4 +1,10 @@
-# Installed integration verification
+# Historical integration verification
+
+This records earlier integration candidates, including retry and parser policies
+subsequently replaced during reference restoration. Counts and outstanding items
+below describe those checkpoints, not the current product. The
+[final merged verification](python-runtime.md) owns current gate evidence; the
+[cohort confirmation](cpython-confirmation.md) owns current task outcomes.
 
 Verified 2026-09-25 against the working integration candidate (`@dzhng/jevgrep`
 0.0.0). These are deterministic fixture checks, not live benchmark acceptance.
