@@ -12,14 +12,14 @@ its frozen artifact: eight baseline solves preserved, eight cost wins, 33.21%
 lower total Sol cost. [Confirmation evidence](assets/work-clock-confirmation.md)
 owns all ten results and their limits. No paid benchmark or grader remains active.
 
-Next: finish serial merged verification and no-call preparation, then validate
-and run the separate `installed-jg-freshness-v1` cohort against saved baselines. The freshness
-correction is integrated in `92ca7f9`; its isolated worktree is removed. Exact
-archive checks passed on macOS and both Linux architectures. The first full gate
-had one five-second timeout under concurrent platform testing; no test allowance
-was changed. [Freshness evidence](assets/source-freshness.md) owns the corrected
-archive identity, failure reproductions and verification status. Do not transfer
-the previous cohort's measured results to the corrected archive.
+Next: observe the running `installed-jg-freshness-v1` cohort, then grade and account
+each retained attempt and aggregate the whole study. Root execution session
+`16656` writes `/tmp/jg-freshness-v1-run.log`; revalidate that handle before any
+resume. The correction is integrated in `92ca7f9`; its isolated worktree is removed.
+Full merged verification and exact archive platform checks passed, followed by
+all ten frozen no-call validations. [Freshness evidence](assets/source-freshness.md)
+owns the archive identity, failure reproductions and verification results. Do not
+transfer the previous cohort's measured results to this corrected archive.
 
 Preserve healthy retrieval semantics and the canonical skill while fixing
 filesystem freshness. Keep the measured archive immutable; it matches the

@@ -42,9 +42,13 @@ Logs: `/tmp/jg-freshness-native.log` and
 The first merged default verification passed 109 tests but timed out one existing
 donor test at five seconds while both platform checks ran concurrently. This is
 not a passing full gate. The serial rerun passed that donor test in 0.51 seconds
-and all 110 Bun tests. The remaining full verification is running, with evidence
-in `/tmp/jg-freshness-merged-verify-serial.log`; no test allowance was changed.
+and completed successfully: 110 Bun tests, 23 parser/lifecycle tests, four release
+tests, 24 benchmark-harness tests and 24 installed tests, plus typecheck and lint.
+Evidence: `/tmp/jg-freshness-merged-verify-serial.log`; no test allowance was changed.
 
 The accepted work-clock cohort measured the preceding archive. A separate frozen
-ten-task treatment cohort must validate this corrected executable; saved baselines
-remain immutable and earlier treatment cells cannot be pooled into its result.
+ten-task treatment cohort is running at
+`evals/runs/swebench/installed-jg-freshness-v1/`. Preparation and all ten no-call
+validations passed before execution. Its archived runner owns the frozen inputs;
+saved baselines remain immutable and earlier treatment cells cannot be pooled
+into its result. Run log: `/tmp/jg-freshness-v1-run.log`.
