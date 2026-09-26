@@ -7,12 +7,12 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: close the whole-product review's two reproduced preservation defects:
-second-pass evidence must follow selection-completion order, and invalid TS/JS
-must retain the reference's comment ranges. Fixes are delegated in isolated
-worktrees. Then run the merged parity gate and finish whole-product review before
-freezing another package or starting paid confirmation. Passing the exercised
-fixtures was insufficient; the earlier paid start was premature.
+Next: finish the merged gate and whole-product review before freezing another
+package or starting paid confirmation. The two reproduced defects are fixed:
+second-pass evidence follows selection-completion order, and invalid TS/JS retains
+reference comment ranges. Their whole-CLI regressions passed red/green comparisons.
+Passing the earlier exercised fixtures was insufficient; the earlier paid start
+was premature. No additional paid run may precede a clean whole-product review.
 
 `installed-jg-reference-parity-v1` is stopped and superseded. Requests and
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted

@@ -140,7 +140,15 @@ order; the port used admission order. Delaying one file reverses meaningful
 array order despite identical model scores. Separately, TS/JS syntax fallback
 returned before collecting comments, so a selected fragment inside a block
 comment ended inside it instead of expanding to the reference's full comment.
-Both require whole-CLI regressions and fixes before another frozen candidate.
+Commits `a7a28bb` and `bcf3253` fix these defects with whole-CLI regressions that
+failed before the corrections and now compare complete native requests and stdout
+against the frozen executable. The merged gate and whole-product review must
+finish before another frozen candidate.
+
+The interrupted Django attempt has a known Sol subtotal of $0.9671056 and known
+Jev subtotal of $0.277447296. Neither is a complete total: the final coding-agent
+response was interrupted, and five of 1,267 Jev calls lack complete cost responses.
+These costs remain retained even though the attempt cannot count as a solve.
 
 Finish whole-product review before paid confirmation, in addition to matched
 HTTP tests and supported-runtime gates. The quality target remains every fixed
