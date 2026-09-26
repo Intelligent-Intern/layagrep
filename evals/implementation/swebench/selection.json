@@ -1,0 +1,64 @@
+{
+  "registeredAt": "2026-09-20T11:17:26.112876+00:00",
+  "dataset": {
+    "id": "SWE-bench/SWE-bench_Verified",
+    "revision": "78f471bf655a3137b2e8a75af1501690ec009ec3",
+    "split": "test",
+    "sha256": "030cfd7f2a704c4c0226e7f104c725a3b41230b1d3517f9c915ad7ea5be3fa25",
+    "rows": 500
+  },
+  "harnessCommit": "02e7a74ffd0b707aab73d203fe87bdc7c76afc8e",
+  "policy": "Sort repositories by SHA256(seed NUL repo); sort IDs within each repository by SHA256(seed NUL instance_id); round-robin until10. Next item is calibration, excluded from10. No difficulty/test/patch/platform/solution filtering. Infrastructure failures retained; no replacement.",
+  "seed": "jevgrep-swebench-verified-2026-09-20-v1",
+  "selectionFields": [
+    "instance_id",
+    "repo"
+  ],
+  "tasks": [
+    {
+      "instance_id": "pallets__flask-5014",
+      "repo": "pallets/flask"
+    },
+    {
+      "instance_id": "psf__requests-5414",
+      "repo": "psf/requests"
+    },
+    {
+      "instance_id": "django__django-14559",
+      "repo": "django/django"
+    },
+    {
+      "instance_id": "astropy__astropy-7606",
+      "repo": "astropy/astropy"
+    },
+    {
+      "instance_id": "matplotlib__matplotlib-20488",
+      "repo": "matplotlib/matplotlib"
+    },
+    {
+      "instance_id": "scikit-learn__scikit-learn-13496",
+      "repo": "scikit-learn/scikit-learn"
+    },
+    {
+      "instance_id": "pydata__xarray-4966",
+      "repo": "pydata/xarray"
+    },
+    {
+      "instance_id": "pylint-dev__pylint-6903",
+      "repo": "pylint-dev/pylint"
+    },
+    {
+      "instance_id": "pytest-dev__pytest-5840",
+      "repo": "pytest-dev/pytest"
+    },
+    {
+      "instance_id": "sympy__sympy-23824",
+      "repo": "sympy/sympy"
+    }
+  ],
+  "calibration": {
+    "instance_id": "sphinx-doc__sphinx-9320",
+    "repo": "sphinx-doc/sphinx"
+  },
+  "status": "registered before gold/test contents inspection; calibration admission pending"
+}

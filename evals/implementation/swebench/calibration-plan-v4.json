@@ -1,0 +1,144 @@
+{
+  "status": "frozen",
+  "purpose": "Separate official calibration task: development evidence to compare hierarchical whole-file and chunk context; excluded from the fixed ten-task solve-rate comparison.",
+  "artifacts": {
+    "evals/implementation/swebench/native_runner.py": "603d8ed691ed17350c1f7253bbffefb5c94e821c198fe00d54d1050757cde3b0",
+    "evals/implementation/swebench/agent-runtime/model_proxy.py": "b9ae3521babc5b684cf710187a8e699f25863c7a9f0e5d5410aaa2521770dae0",
+    "evals/runs/swebench/dataset/calibration-agent-inputs.json": "28e75f022622567f76dd03cf2a7dd949f5c78b41b1d7b857d0dcea9b63e1637a",
+    "evals/runs/tooling/swebench/hierarchy-spike.mjs": "c9d34ba5984d3f33a2bc1f7c5d245cfe5d483a3c7294b4423b71a74c7b3fab89",
+    "evals/implementation/swebench/hierarchy-spike.ts": "1c4b3b5f7a2f02bcee184cab7be6809865cb714cd2b8c3dfb585cc9f7fcf1393",
+    "evals/implementation/swebench/selection.json": "e35096da94db382bcd7fb6cfec55fe7ab2075aacb0964498ead9901db1c858e7",
+    "evals/accounting.md": "58c800776f73b170466adaca8d2b0940f5667027094d89245d041e1ba33b86b0",
+    "evals/implementation/swebench/skills/jevgrep/SKILL.md": "350dbbdebb59aaa180f877a4a332a74ad645000c0d507722186a841ca06edce3"
+  },
+  "cells": [
+    {
+      "id": "calibration-v4-claude-baseline",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "claude",
+      "arm": "baseline",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "max_cost_usd": 10
+    },
+    {
+      "id": "calibration-v4-codex-files",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "codex",
+      "arm": "files",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "timeout_seconds": 900,
+      "candidate": "evals/runs/tooling/swebench/hierarchy-spike.mjs"
+    },
+    {
+      "id": "calibration-v4-claude-chunks",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "claude",
+      "arm": "chunks",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "max_cost_usd": 10,
+      "candidate": "evals/runs/tooling/swebench/hierarchy-spike.mjs"
+    },
+    {
+      "id": "calibration-v4-codex-chunks",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "codex",
+      "arm": "chunks",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "timeout_seconds": 900,
+      "candidate": "evals/runs/tooling/swebench/hierarchy-spike.mjs"
+    },
+    {
+      "id": "calibration-v4-claude-files",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "claude",
+      "arm": "files",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "max_cost_usd": 10,
+      "candidate": "evals/runs/tooling/swebench/hierarchy-spike.mjs"
+    }
+  ],
+  "attempt_policy": "One attempt per cell in registered order. Preserve infrastructure failures. No outcome-selected retries or repairs in this comparison.",
+  "acceptance": "A candidate must first preserve official solve outcomes for each engine. Compare whole-task cost and time, including Jev latency and failure outcomes. One calibration task cannot establish general solve-rate equivalence.",
+  "retrieval": {
+    "threshold": 0.5,
+    "source_bytes": 64000,
+    "directory_evidence": "Immediate child paths only; lazy breadth-first traversal; no global inventory.",
+    "negative_evidence": "Checked file/folder/chunk scores; distinguish pruned descendants and failed/unvisited work.",
+    "output": "Summary of paths, availability, checked negatives and failures precedes source; full report remains available for selective reads."
+  },
+  "accounting": {
+    "jev_cost_usd": 0,
+    "jev_tokens_in_agent_total": false,
+    "claude": "Native reported task cost, preserving resolved model and cache categories.",
+    "codex": {
+      "basis": "API-equivalent standard-rate estimate; not subscription billing",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "verified_date": "2026-09-20",
+      "per_million_usd": {
+        "input": 4,
+        "cached_input": 0.4,
+        "cache_write": 5,
+        "output": 20
+      },
+      "long_context": {
+        "request_input_threshold": 272000,
+        "per_million_usd": {
+          "input": 8,
+          "cached_input": 0.8,
+          "cache_write": 10,
+          "output": 30
+        }
+      },
+      "tier_rule": "Apply each request tier from native per-request token_count usage, never cumulative task input. Do not double-count reasoning within output. Missing categories or tier evidence must remain explicit uncertainty."
+    }
+  },
+  "official_grading": "Pinned official harness and dataset from setup receipt. Unique run ID per cell; evaluator-only material outside agents. Report environment preparation and grading separately from native task wall time.",
+  "frozen_at": "2026-09-20T12:01:49.517588+00:00",
+  "protocol_revision": "v4: user-requested native Jevgrep skill and summary-first CLI output. Same hierarchical gates and file/chunk policies. Development revision; do not combine prior treatment iterations as this candidate.",
+  "prior_attempts": [
+    {
+      "cell": "calibration-v1-codex-baseline",
+      "reuse_as": "codex-baseline",
+      "reason": "Baseline prompt, model, source, runtime and limits unchanged; reuse the one recorded baseline, not a selection among attempts.",
+      "receipt": "evals/runs/swebench/calibration-v1/codex-baseline/receipt.json"
+    },
+    {
+      "cell": "calibration-v1-claude-chunks",
+      "use": "integration failure evidence only",
+      "reason": "Native trace ToolSearch looked for a deferred tool; no shell invocation, no Jev requests. Preserve full cost and grading, do not label it a Jev comparison."
+    },
+    {
+      "cell": "calibration-v2-claude-chunks",
+      "use": "integration failure evidence only",
+      "reason": "Proxy omitted ai-gateway-protocol-version; sole request returned HTTP 400 Unsupported gateway protocol version. No Jev answers or selected context. Preserve full cost and grading."
+    },
+    {
+      "cell": "calibration-v3-claude-chunks",
+      "use": "prior architecture iteration",
+      "reason": "Successful retrieval and official solve; native agent saw only head -200, motivating summary-first output and explicit skill."
+    },
+    {
+      "cell": "calibration-v3-codex-files",
+      "use": "prior architecture iteration, retrieval availability failure retained",
+      "reason": "Gateway upstream 504; tool timed out at 15 seconds and agent used ordinary search. Official solve passed."
+    }
+  ]
+}

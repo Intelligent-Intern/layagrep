@@ -1,0 +1,88 @@
+{
+  "attempt_policy": "One attempt per cell in registered order. Preserve infrastructure failures. No outcome-selected retries or repairs in this comparison.",
+  "acceptance": "A candidate must first preserve official solve outcomes for each engine. Compare whole-task cost and time, including Jev latency and failure outcomes. One calibration task cannot establish general solve-rate equivalence.",
+  "retrieval": {
+    "threshold": 0.5,
+    "source_bytes": 64000,
+    "directory_evidence": "Immediate child paths only; lazy breadth-first traversal; no global inventory.",
+    "negative_evidence": "Checked file/folder/chunk scores; distinguish pruned descendants and failed/unvisited work.",
+    "output": "Same summary and source; coverage records grouped losslessly with field names followed by value arrays.",
+    "source_partitioning": "Python AST declaration boundaries capped at 3500 UTF-8 bytes except indivisible long lines; otherwise line windows. Every above-threshold source unit is eligible within unchanged output budget.",
+    "recovery": "One retry per transient failed batch. 50,000 total requests solely as runaway-loop guard; no per-search deadline. Individual stalled request timeout 15 seconds. Overall native task deadline 900 seconds.",
+    "request_packing": "Enclosing class context shared once per request batch, with explicit references."
+  },
+  "accounting": {
+    "jev_cost_usd": 0,
+    "jev_tokens_in_agent_total": false,
+    "claude": "Native reported Opus 5 task list cost through Vercel AI Gateway; preserve canonical model and cache categories. Fresh route-matched baseline and treatment; do not pool with prior OAuth runs.",
+    "codex": {
+      "basis": "API-equivalent standard-rate estimate; not subscription billing",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "verified_date": "2026-09-20",
+      "per_million_usd": {
+        "input": 4,
+        "cached_input": 0.4,
+        "cache_write": 5,
+        "output": 20
+      },
+      "long_context": {
+        "request_input_threshold": 272000,
+        "per_million_usd": {
+          "input": 8,
+          "cached_input": 0.8,
+          "cache_write": 10,
+          "output": 30
+        }
+      },
+      "tier_rule": "Apply each request tier from native per-request token_count usage, never cumulative task input. Do not double-count reasoning within output. Missing categories or tier evidence must remain explicit uncertainty."
+    }
+  },
+  "official_grading": "Pinned official harness and dataset from setup receipt. Unique run ID per cell; evaluator-only material outside agents. Report environment preparation and grading separately from native task wall time.",
+  "status": "frozen",
+  "purpose": "Fresh paired Claude Opus 5 calibration through Vercel AI Gateway, with mandatory native Jevgrep skill and hierarchical guard-v13. Separate Sphinx calibration; not ten-task proof.",
+  "frozen_at": "2026-09-20T17:03:11.656683+00:00",
+  "artifacts": {
+    "evals/implementation/swebench/native_gateway_runner.py": "bdf421e58574347301302ea16c7b286ccbac924c680348d7b710810118295ba4",
+    "evals/implementation/swebench/native_gateway_skill_runner.py": "d2451118d02412a70cdc9f6336eb02fdb11a06a9267952fcd212085cad5c6ace",
+    "evals/implementation/swebench/agent-runtime/gateway_model_proxy.py": "5b5f5936086daa6c08ea34bce7affdad4fc4609a71d36bc37f52ca5ce3936b53",
+    "evals/implementation/swebench/skills/jevgrep/SKILL.md": "350dbbdebb59aaa180f877a4a332a74ad645000c0d507722186a841ca06edce3",
+    "evals/implementation/swebench/source-units-spike.ts": "2c5c46afe1b438f08f4fb07ce0b4eb77ede7229be8040a5888932cd601a49690",
+    "evals/implementation/swebench/coverage-spike.ts": "1d424e5792da0f5ef296008823a305a3a8df7f9e78254c2888ac2c5f9a8d4e05",
+    "evals/implementation/swebench/hierarchy-guard-spike.ts": "1fda1d41583ab56f49ab65d250940a640a3fd73e2d4f2acaf936eaad35fd7f6a",
+    "evals/implementation/swebench/selection.json": "e35096da94db382bcd7fb6cfec55fe7ab2075aacb0964498ead9901db1c858e7",
+    "evals/accounting.md": "58c800776f73b170466adaca8d2b0940f5667027094d89245d041e1ba33b86b0",
+    "evals/runs/swebench/dataset/calibration-agent-inputs.json": "28e75f022622567f76dd03cf2a7dd949f5c78b41b1d7b857d0dcea9b63e1637a",
+    "evals/runs/swebench/calibration-gateway-v1/hierarchy-guard.mjs": "8e2446e7e1bdccf590412997ebbb1bfc03b0d61fa21f5c233648fbf264705dfe"
+  },
+  "cells": [
+    {
+      "id": "calibration-gateway-v1-claude-baseline",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "claude",
+      "arm": "baseline",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "invocation": "required",
+      "gateway_model": "anthropic/claude-opus-5",
+      "max_cost_usd": 10
+    },
+    {
+      "id": "calibration-gateway-v1-claude-chunks",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "claude",
+      "arm": "chunks",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "invocation": "required",
+      "gateway_model": "anthropic/claude-opus-5",
+      "max_cost_usd": 10,
+      "candidate": "evals/runs/swebench/calibration-gateway-v1/hierarchy-guard.mjs"
+    }
+  ]
+}

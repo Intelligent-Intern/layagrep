@@ -1,0 +1,74 @@
+{
+  "status": "calibration-admitted;10task images untested;no agent runs",
+  "harness": {
+    "url": "https://github.com/SWE-bench/SWE-bench.git",
+    "commit": "02e7a74ffd0b707aab73d203fe87bdc7c76afc8e",
+    "clean": true,
+    "pyprojectSha256": "58c4f4f283c6f214166376f83dad8b18bc85f9a7c2c66216343de0498fd9fe19",
+    "requirementsSha256": "194a7e8a947c586ee1a2002fe72453de1682403ae2abe3f73a94e05cacda9bc2",
+    "python": "Python 3.12.14"
+  },
+  "dataset": {
+    "repo": "SWE-bench/SWE-bench_Verified",
+    "revision": "78f471bf655a3137b2e8a75af1501690ec009ec3",
+    "parquetSha256": "030cfd7f2a704c4c0226e7f104c725a3b41230b1d3517f9c915ad7ea5be3fa25",
+    "evalYamlSha256": "c056bd89e8c63930d4a0cd7d935b19f41685f4c9e0a993c3f45513ec95637c4a",
+    "selectionSha256": "e35096da94db382bcd7fb6cfec55fe7ab2075aacb0964498ead9901db1c858e7",
+    "selectionBeforeGoldMaterialization": true,
+    "selectionFields": [
+      "instance_id",
+      "repo"
+    ]
+  },
+  "host": {
+    "dockerClient": "29.4.1",
+    "dockerServer": "29.4.1",
+    "architecture": "arm64/aarch64",
+    "mode": "official amd64 image under Docker emulation",
+    "diskPolicy": "Single1.1GBuncompressed calibration image only;~30GBhost free after setup; official recommendation120GBfree. No10image parallel pull."
+  },
+  "calibration": {
+    "instance": "sphinx-doc__sphinx-9320",
+    "imageTag": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+    "imageDigests": [
+      "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320@sha256:0dd7b74de29c5734fbcd2fb9ab5295f610b5b281bd2fdd87e9c3c1d3f272f28a"
+    ],
+    "imageId": "sha256:0dd7b74de29c5734fbcd2fb9ab5295f610b5b281bd2fdd87e9c3c1d3f272f28a",
+    "imageBytes": 1099981345,
+    "repoPath": "/testbed",
+    "imageCheckout": "3ca9dfaa46ce0679032953163e9cf21be99076d2",
+    "datasetBaseCommit": "e05cef574b8f23ab1b57f57e7da6dee509a4e230",
+    "setupDeltaFiles": [
+      "setup.py",
+      "tox.ini"
+    ],
+    "testPython": "/opt/miniconda3/envs/testbed/bin/python Python3.9.20",
+    "controls": {
+      "noop": {
+        "report": "evals/runs/tooling/swebench/logs/evaluation/jevgrep-calibration-noop-20260920-v1/results.json",
+        "sha256": "02556b587d70591714ae7557ec2ece7441c8691be423e528083c78db04f92988",
+        "resolved": 0,
+        "completed": 1,
+        "errors": 0,
+        "infraFailures": 0
+      },
+      "gold": {
+        "report": "evals/runs/tooling/swebench/logs/evaluation/jevgrep-calibration-gold-20260920-v1/results.json",
+        "sha256": "70c785a810230861f790a8eaef6e266fd225e8ecd9b3f7b6e6ac7137f93e1291",
+        "resolved": 1,
+        "completed": 1,
+        "errors": 0,
+        "infraFailures": 0
+      }
+    },
+    "controlReceipt": "evals/runs/tooling/swebench/controls-receipt.json",
+    "isolation": "Fresh official Docker container for each control; default official network policy; no user source mounts; no source/gold contents displayed. No-op non-code dotfile required because batch harness skips empty patches."
+  },
+  "integration": "Use matched fresh image checkout per arm; expose only problem_statement and public repo to native agents, keep grading dataset and hidden tests outside. Candidate patch relative pristine image HEAD; official run_evaluation with pinned local parquet and unique run ID. Pin each image digest as admitted, retain infra failures, no subset replacement.",
+  "remaining": [
+    "Provision actual native Sol/Opus execution/export wrapper without hidden data mounts.",
+    "Admit remaining10official environments serially as disk permits, preserving fixed IDs.",
+    "Register solve-rate noninferiority and task dollar-cost/wall-time policy before paid runs.",
+    "Validate pinned scripts/dependency lock on a new host; current requirements freeze is macOS/Python3.12-specific."
+  ]
+}

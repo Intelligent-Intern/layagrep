@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "selection_id": "discovery-selection-v1",
+  "status": "selection_frozen_runtime_admission_pending",
+  "dataset": {
+    "name": "SWE-bench/SWE-bench_Verified",
+    "revision": "78f471bf655a3137b2e8a75af1501690ec009ec3",
+    "parquet_sha256": "030cfd7f2a704c4c0226e7f104c725a3b41230b1d3517f9c915ad7ea5be3fa25"
+  },
+  "selection_method": {
+    "basis": "Manual purposive selection from public issue text, qualified using pre-fix source. Not random and not an exhaustive ranking of all 500 tasks.",
+    "include": [
+      "Issue leaves internal implementation cause to be located.",
+      "Pre-fix source shows interacting mechanisms worth investigating.",
+      "Public API names and reproduction file paths are allowed."
+    ],
+    "exclude": [
+      "Exact implementation path/line with a narrow diagnosis, a proposed patch, or a fix recipe.",
+      "Previously evaluated tasks in this project."
+    ],
+    "forbidden_selection_inputs": [
+      "gold patches",
+      "hidden test expectations",
+      "agent solve outcomes",
+      "Jev relevance scores"
+    ],
+    "issue_text": "Unmodified; no clues removed.",
+    "limitation": "Source qualification supports a discovery hypothesis, not proof that retrieval helps or that every inspected file is required. Report baseline search behavior to validate actual discovery effort; retain all selected outcomes."
+  },
+  "evaluation_policy": {
+    "engines": [
+      "gpt-5.6-sol (medium)",
+      "Claude Opus (high)"
+    ],
+    "arms": [
+      "baseline",
+      "required initial jevgrep skill, ordinary search allowed afterward"
+    ],
+    "quality": "Official task solve rate must be same or better for each engine.",
+    "efficiency": "Compare whole-task elapsed time and coding-agent cost, including failed attempts. Jev tokens and cost are excluded (treated as free).",
+    "scope": "Targeted discovery workload; do not present as representative overall SWE-bench performance. Keep earlier location-given cohort separate.",
+    "admission": "Verify pinned runtime and official reference/no-op controls before native evaluation. Record infrastructure exclusions; do not silently replace tasks based on agent outcomes.",
+    "production_skill": "May skip retrieval when location is already known; this subset deliberately tests situations where initial discovery is plausible."
+  },
+  "agent_input": {
+    "path": "evals/runs/swebench/discovery-selection-v1/agent-inputs.json",
+    "sha256": "be7470362f832774d1ddb0cf0f203eae11cd51e2f1b3dd674a5a8bfc7bbd6f3d",
+    "allowed_fields": [
+      "instance_id",
+      "repo",
+      "base_commit",
+      "image",
+      "problem_statement"
+    ],
+    "isolation": "Selection rationale and inspected source paths are operator-only and must not be included in agent prompts."
+  },
+  "selected": [
+    {
+      "instance_id": "django__django-15280",
+      "title": "Nested prefetch loses the intended deferred-field state",
+      "repo": "django/django",
+      "base_commit": "973fa566521037ac140dcece73fceae50ee522f1",
+      "problem_statement_sha256": "064a07fb72e08e129f1fbe7f8d633a6b54b3e15107da3af57dc8ddc9b8da0ad8",
+      "discovery_rationale": "Trace nested prefetch object assignment, reverse-relation caches, and deferred attribute loading. The reproduction names public ORM APIs and user models, but provides no implementation path or fix.",
+      "operator_only_source_evidence": [
+        {
+          "path": "django/db/models/query.py",
+          "start_line": 1680,
+          "end_line": 1951,
+          "sha256": "d2813bd0aa178d1476878d0e12a0cb00202fcb78872fdb64e674809edecf3c66",
+          "url": "https://raw.githubusercontent.com/django/django/973fa566521037ac140dcece73fceae50ee522f1/django/db/models/query.py"
+        },
+        {
+          "path": "django/db/models/fields/related_descriptors.py",
+          "start_line": 114,
+          "end_line": 177,
+          "sha256": "6fc72f39ca5bbe2706188770af7218995e41fc6b59f78413ff8a942d88fbb106",
+          "url": "https://raw.githubusercontent.com/django/django/973fa566521037ac140dcece73fceae50ee522f1/django/db/models/fields/related_descriptors.py"
+        }
+      ]
+    },
+    {
+      "instance_id": "pydata__xarray-3095",
+      "title": "Copy changes Unicode coordinate index dtype",
+      "repo": "pydata/xarray",
+      "base_commit": "1757dffac2fa493d7b9a074b84cf8c830a706688",
+      "problem_statement_sha256": "3d8f2d8422b56bd5980ec478be1413ef87805484446fc15dbd482342a59abb25",
+      "discovery_rationale": "Follow Dataset and DataArray copy into IndexVariable and its pandas index adapter. The issue names IndexVariable, which is a useful clue, but does not identify the adapter reconstruction or provide a fix.",
+      "operator_only_source_evidence": [
+        {
+          "path": "xarray/core/dataset.py",
+          "start_line": 842,
+          "end_line": 842,
+          "sha256": "878d68d031b88d53cfc37e513c3b7cf4ac98b9573ab525a60eba9682f74b2089",
+          "url": "https://raw.githubusercontent.com/pydata/xarray/1757dffac2fa493d7b9a074b84cf8c830a706688/xarray/core/dataset.py"
+        },
+        {
+          "path": "xarray/core/dataarray.py",
+          "start_line": 777,
+          "end_line": 777,
+          "sha256": "40e180d89ffeb6bcd41a956a7d9577051e0bb102ddcb72b045d8d799da5ef956",
+          "url": "https://raw.githubusercontent.com/pydata/xarray/1757dffac2fa493d7b9a074b84cf8c830a706688/xarray/core/dataarray.py"
+        },
+        {
+          "path": "xarray/core/variable.py",
+          "start_line": 1920,
+          "end_line": 1950,
+          "sha256": "c3061ed6832cc78197118c32e6cb647cb11a237afa3fe670d7f00eab70ca3f44",
+          "url": "https://raw.githubusercontent.com/pydata/xarray/1757dffac2fa493d7b9a074b84cf8c830a706688/xarray/core/variable.py"
+        },
+        {
+          "path": "xarray/core/indexing.py",
+          "start_line": 1229,
+          "end_line": 1278,
+          "sha256": "6a6ec850c4b810fe4bba727f540407c1da005d446235d913c48e81835fa87a72",
+          "url": "https://raw.githubusercontent.com/pydata/xarray/1757dffac2fa493d7b9a074b84cf8c830a706688/xarray/core/indexing.py"
+        }
+      ]
+    },
+    {
+      "instance_id": "psf__requests-6028",
+      "title": "Proxy authentication returns HTTP 407",
+      "repo": "psf/requests",
+      "base_commit": "0192aac24123735b3eaf9b08df46429bb770c283",
+      "problem_statement_sha256": "1d82b6998adb429d6d13a59c0c321de5ea24889a19843d4de7ea4dff06739cc0",
+      "discovery_rationale": "Locate proxy credential handling across session preparation, redirect rebuilding, adapter proxy managers and URL parsing. The issue gives a public request and Python-version clue, not a Requests implementation location.",
+      "operator_only_source_evidence": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 272,
+          "end_line": 297,
+          "sha256": "66ef98f583e5c1322cc85c7586f22b737ce2c9e169b853ea70eb92bb3f01356b",
+          "url": "https://raw.githubusercontent.com/psf/requests/0192aac24123735b3eaf9b08df46429bb770c283/requests/sessions.py"
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 167,
+          "end_line": 193,
+          "sha256": "6097ffd12d892f97c4b3ac8f282de243e22ed146710dbf47e96e62a5506b2171",
+          "url": "https://raw.githubusercontent.com/psf/requests/0192aac24123735b3eaf9b08df46429bb770c283/requests/adapters.py"
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 373,
+          "end_line": 390,
+          "sha256": "6097ffd12d892f97c4b3ac8f282de243e22ed146710dbf47e96e62a5506b2171",
+          "url": "https://raw.githubusercontent.com/psf/requests/0192aac24123735b3eaf9b08df46429bb770c283/requests/adapters.py"
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 985,
+          "end_line": 985,
+          "sha256": "7938f802679da01f5768d41526f22b63fcef2a96c491ec030b755c87bab3958d",
+          "url": "https://raw.githubusercontent.com/psf/requests/0192aac24123735b3eaf9b08df46429bb770c283/requests/utils.py"
+        }
+      ]
+    },
+    {
+      "instance_id": "pylint-dev__pylint-7080",
+      "title": "Recursive linting ignores ignore-paths",
+      "repo": "pylint-dev/pylint",
+      "base_commit": "3c5eca2ded3dd2b59ebaf23eb289453b5d2930f0",
+      "problem_statement_sha256": "82319497af035b3cdcd4ee71b5fccd578074989dfa157dc54ecc5bf8ea76ceab",
+      "discovery_rationale": "Trace recursive filesystem discovery, module expansion and path-pattern matching. Paths in the issue are user-project examples, not Pylint implementation paths.",
+      "operator_only_source_evidence": [
+        {
+          "path": "pylint/lint/pylinter.py",
+          "start_line": 585,
+          "end_line": 635,
+          "sha256": "e0d56647fa35a5e10b22ca3fbe9f5e9712552912dd24bac4bbc1f4206f639b36",
+          "url": "https://raw.githubusercontent.com/pylint-dev/pylint/3c5eca2ded3dd2b59ebaf23eb289453b5d2930f0/pylint/lint/pylinter.py"
+        },
+        {
+          "path": "pylint/lint/expand_modules.py",
+          "start_line": 44,
+          "end_line": 110,
+          "sha256": "33e3dafb976f1a267b580ea063159c7f31fe91e7bbab3b7c5f88ed147d7250e6",
+          "url": "https://raw.githubusercontent.com/pylint-dev/pylint/3c5eca2ded3dd2b59ebaf23eb289453b5d2930f0/pylint/lint/expand_modules.py"
+        }
+      ]
+    },
+    {
+      "instance_id": "sphinx-doc__sphinx-11445",
+      "title": "rst_prolog removes headings containing domain roles",
+      "repo": "sphinx-doc/sphinx",
+      "base_commit": "71db08c05197545944949d5aa76cd340e7143627",
+      "problem_statement_sha256": "08000b81dab279b65ecdf12560d94509e19e03f5f6d7151da5f6eefea9d5b31c",
+      "discovery_rationale": "Trace parser preprocessing into prolog insertion and docinfo recognition; distinguish that from downstream heading/toctree rendering. Paths are reproduction documents, not Sphinx implementation locations.",
+      "operator_only_source_evidence": [
+        {
+          "path": "sphinx/parsers.py",
+          "start_line": 61,
+          "end_line": 86,
+          "sha256": "22e96f61edd7b2367a36231f266ebb4f2cc93883978688b6b9003477359579b5",
+          "url": "https://raw.githubusercontent.com/sphinx-doc/sphinx/71db08c05197545944949d5aa76cd340e7143627/sphinx/parsers.py"
+        },
+        {
+          "path": "sphinx/util/rst.py",
+          "start_line": 28,
+          "end_line": 28,
+          "sha256": "9c67e10d35430920285039819c2665801879da44bbd8ab3ed3bdaee2feb372a8",
+          "url": "https://raw.githubusercontent.com/sphinx-doc/sphinx/71db08c05197545944949d5aa76cd340e7143627/sphinx/util/rst.py"
+        },
+        {
+          "path": "sphinx/util/rst.py",
+          "start_line": 78,
+          "end_line": 97,
+          "sha256": "9c67e10d35430920285039819c2665801879da44bbd8ab3ed3bdaee2feb372a8",
+          "url": "https://raw.githubusercontent.com/sphinx-doc/sphinx/71db08c05197545944949d5aa76cd340e7143627/sphinx/util/rst.py"
+        }
+      ]
+    },
+    {
+      "instance_id": "matplotlib__matplotlib-20826",
+      "title": "Clearing axes restores unwanted ticks and shared-axis labels",
+      "repo": "matplotlib/matplotlib",
+      "base_commit": "a0d2e399729d36499a1924e5ca5bc067c8396810",
+      "problem_statement_sha256": "881edf60640e55712a3d98f4ab4da1ef4c7e1976c75cb152ed0507cc5522d216",
+      "discovery_rationale": "Follow public Axes.clear through axis reset and shared-subplot label initialization. The issue identifies the triggering public API, but not which layer resets tick state.",
+      "operator_only_source_evidence": [
+        {
+          "path": "lib/matplotlib/axes/_base.py",
+          "start_line": 1182,
+          "end_line": 1230,
+          "sha256": "b0277f5ddb763a01166831ac8b219babe6c325c2a39e14a295805869abb4cb55",
+          "url": "https://raw.githubusercontent.com/matplotlib/matplotlib/a0d2e399729d36499a1924e5ca5bc067c8396810/lib/matplotlib/axes/_base.py"
+        },
+        {
+          "path": "lib/matplotlib/axis.py",
+          "start_line": 788,
+          "end_line": 811,
+          "sha256": "34a52dd42355cfe3db7df1e164f677e16f8cd18b1043615e1725b5b4d8c74bd8",
+          "url": "https://raw.githubusercontent.com/matplotlib/matplotlib/a0d2e399729d36499a1924e5ca5bc067c8396810/lib/matplotlib/axis.py"
+        },
+        {
+          "path": "lib/matplotlib/gridspec.py",
+          "start_line": 298,
+          "end_line": 315,
+          "sha256": "6ff0df559599ed553f0098694de49f549052340043dfc965fb69c133f8d5c18c",
+          "url": "https://raw.githubusercontent.com/matplotlib/matplotlib/a0d2e399729d36499a1924e5ca5bc067c8396810/lib/matplotlib/gridspec.py"
+        }
+      ]
+    }
+  ],
+  "screened_exclusions": [
+    {
+      "instance_id": "django__django-11138",
+      "reason": "Exact MySQL backend source line linked."
+    },
+    {
+      "instance_id": "scikit-learn__scikit-learn-14629",
+      "reason": "Exact validation source range linked and fix described."
+    },
+    {
+      "instance_id": "scikit-learn__scikit-learn-14710",
+      "reason": "Proposed patch and internal traceback."
+    },
+    {
+      "instance_id": "scikit-learn__scikit-learn-11578",
+      "reason": "Internal function/path and proposed solution."
+    },
+    {
+      "instance_id": "pydata__xarray-6721",
+      "reason": "Detailed internal traceback and source lines expose the implementation chain."
+    },
+    {
+      "instance_id": "pytest-dev__pytest-7982",
+      "reason": "Regression commit and explicit instruction to remove follow_symlinks=False."
+    },
+    {
+      "instance_id": "sphinx-doc__sphinx-8721",
+      "reason": "Narrow extension owner sphinx.ext.viewcode directly identified; conservatively excluded."
+    }
+  ],
+  "considered_not_selected": [
+    {
+      "instance_id": "pytest-dev__pytest-7571",
+      "reason": "Named caplog fixture and setter suggest narrower ownership; weaker discovery case than selected tasks."
+    },
+    {
+      "instance_id": "matplotlib__matplotlib-23299",
+      "reason": "Issue supplies internal Gcf/_pylab_helpers ownership clues; preferred the less-directed axes clearing issue."
+    }
+  ]
+}

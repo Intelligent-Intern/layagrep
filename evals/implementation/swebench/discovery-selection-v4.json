@@ -1,0 +1,53 @@
+{
+  "status": "issue roster frozen; pre-fix-source qualification and runtime admission pending; no inference performed",
+  "selected_at": "2026-09-23T21:30:12.913370+00:00",
+  "dataset": {
+    "name": "SWE-bench/SWE-bench_Verified",
+    "revision": "78f471bf655a3137b2e8a75af1501690ec009ec3",
+    "parquet_sha256": "030cfd7f2a704c4c0226e7f104c725a3b41230b1d3517f9c915ad7ea5be3fa25"
+  },
+  "selected": [
+    {
+      "instance_id": "django__django-15629",
+      "repo": "django/django",
+      "base_commit": "694cf458f16b8d340a3195244196980b2dec34fd",
+      "discovery_hypothesis": "Collation propagation from changed primary keys to related foreign keys requires locating schema/migration behavior across models; issue supplies desired SQL, not an implementation patch."
+    },
+    {
+      "instance_id": "sphinx-doc__sphinx-10449",
+      "repo": "sphinx-doc/sphinx",
+      "base_commit": "36367765fe780f962bba861bf368a765380bbc68",
+      "discovery_hypothesis": "Autoclass return-type output depends on configuration, constructor annotations and rendering; public reproduction contains no internal implementation path."
+    },
+    {
+      "instance_id": "psf__requests-1142",
+      "repo": "psf/requests",
+      "base_commit": "22623bd8c265b78b161542663ee980738441c307",
+      "discovery_hypothesis": "Unexpected Content-Length on a public GET request leaves header preparation and request dispatch ownership to discover; no internal path, traceback or patch."
+    },
+    {
+      "instance_id": "sympy__sympy-16792",
+      "repo": "sympy/sympy",
+      "base_commit": "09786a173e7a0a488f46dd6000177c23e5d24eed",
+      "discovery_hypothesis": "Unused matrix argument acquires a scalar C signature through autowrap/code generation; issue names broad codegen ownership but no source path or implementation patch."
+    }
+  ],
+  "agent_input": {
+    "path": "evals/runs/swebench/discovery-selection-v4/agent-inputs.json",
+    "sha256": "002547b420e1f7dcfe21574140f697cf0cdffdbab34920323b2eba8f72e71c5f",
+    "allowed_fields": [
+      "instance_id",
+      "repo",
+      "base_commit",
+      "image",
+      "problem_statement"
+    ]
+  },
+  "artifacts": {
+    "evals/runs/swebench/discovery-selection-v4/screening-policy.json": "3678f325cfdf2b0b90ff1fb7d52a187b47f60a2c11786a2e0824bd5c3eae46dc",
+    "evals/runs/swebench/discovery-selection-v4/screening.json": "a4318ce8d2d1c74db3173715686f247ba7a562f58e6539462e31def378638525",
+    "evals/runs/swebench/discovery-selection-v4/public-roster.json": "7103f73548e313076df65cae35a09e2f041204f7ae7553b623a283745ffff447",
+    "evals/runs/swebench/discovery-selection-v4/prior-native-task-ids.json": "21475650318333bca293c902e3891c000e5eebc76c2dac162e2b060da003bb84"
+  },
+  "scope": "Additional development cases, not a representative sample or untouched final holdout. Do not replace based on agent performance. Rationale must not enter native prompts. Prior v60 failures remain in their own cohort."
+}

@@ -1,0 +1,26 @@
+{
+  "status": "source-qualified; runtime admission pending; no candidate-specific or native inference on these cases",
+  "selected_at": "2026-09-23T01:37:20.057060+00:00",
+  "dataset": {
+    "name": "SWE-bench/SWE-bench_Verified",
+    "revision": "78f471bf655a3137b2e8a75af1501690ec009ec3",
+    "parquet_sha256": "030cfd7f2a704c4c0226e7f104c725a3b41230b1d3517f9c915ad7ea5be3fa25"
+  },
+  "agent_input": {
+    "path": "evals/runs/swebench/discovery-selection-v3/qualified-agent-inputs.json",
+    "sha256": "2a100e849ed3d8929d17cb7d172b68f29b3e10f0cd0fecca9318a487cb57212c"
+  },
+  "public_input_sha256": "b0ff176f31aea2c6c326382d70a5a99e245d3a5d750623a103620b66a509ed71",
+  "selected": [
+    {
+      "instance_id": "django__django-11211",
+      "hypothesis": "Public GenericForeignKey/UUID entry point requires following key normalization across delegated prefetch association."
+    },
+    {
+      "instance_id": "pydata__xarray-6938",
+      "hypothesis": "Public swap_dims mutation requires tracing delegated conversion and subtype-dependent object identity across files."
+    }
+  ],
+  "selection_basis": "Previously retained public-issue and pre-fix-source qualification. No gold patches, hidden test contents, native outcomes, or new-case Jev scores used. Operator observations are excluded from native prompts. See local screening record.",
+  "scope": "Additional exploratory discovery cases, not a random representative sample. Baseline traces must validate the discovery hypothesis."
+}

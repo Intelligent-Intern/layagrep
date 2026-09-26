@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "dataset": {
+    "name": "SWE-bench/SWE-bench_Verified",
+    "revision": "78f471bf655a3137b2e8a75af1501690ec009ec3",
+    "parquet_sha256": "030cfd7f2a704c4c0226e7f104c725a3b41230b1d3517f9c915ad7ea5be3fa25"
+  },
+  "selection_method": {
+    "basis": "Manual purposive selection from public issue text, qualified using pre-fix source. Not random and not an exhaustive ranking of all 500 tasks.",
+    "include": [
+      "Issue leaves internal implementation cause to be located.",
+      "Pre-fix source shows interacting mechanisms worth investigating.",
+      "Public API names and reproduction file paths are allowed."
+    ],
+    "exclude": [
+      "Exact implementation path/line with a narrow diagnosis, a proposed patch, or a fix recipe.",
+      "Previously evaluated tasks in this project."
+    ],
+    "forbidden_selection_inputs": [
+      "gold patches",
+      "hidden test expectations",
+      "agent solve outcomes",
+      "Jev relevance scores"
+    ],
+    "issue_text": "Unmodified; no clues removed.",
+    "limitation": "Source qualification supports a discovery hypothesis, not proof that retrieval helps or that every inspected file is required. Report baseline search behavior to validate actual discovery effort; retain all selected outcomes."
+  },
+  "evaluation_policy": {
+    "engines": [
+      "gpt-5.6-sol (medium)",
+      "Claude Opus (high)"
+    ],
+    "arms": [
+      "baseline",
+      "required initial jevgrep skill, ordinary search allowed afterward"
+    ],
+    "quality": "Official task solve rate must be same or better for each engine.",
+    "efficiency": "Compare whole-task elapsed time and coding-agent cost, including failed attempts. Jev tokens and cost are excluded (treated as free).",
+    "scope": "Targeted discovery workload; do not present as representative overall SWE-bench performance. Keep earlier location-given cohort separate.",
+    "admission": "Verify pinned runtime and official reference/no-op controls before native evaluation. Record infrastructure exclusions; do not silently replace tasks based on agent outcomes.",
+    "production_skill": "May skip retrieval when location is already known; this subset deliberately tests situations where initial discovery is plausible."
+  },
+  "selection_id": "discovery-selection-v2",
+  "status": "selection_frozen_runtime_admission_pending",
+  "agent_input": {
+    "path": "evals/runs/swebench/discovery-selection-v2/qualified-agent-inputs.json",
+    "sha256": "fe68f3cbe001bd1477e7ad7d6535e4550ddcd9580b98d641c7faa300d099cff8",
+    "allowed_fields": [
+      "instance_id",
+      "repo",
+      "base_commit",
+      "image",
+      "problem_statement"
+    ],
+    "isolation": "Selection rationale and inspected source paths are operator-only and must not be included in agent prompts."
+  },
+  "fixed_candidate": {
+    "candidate_bundle": "evals/runs/swebench/compact-v29/compact.mjs",
+    "candidate_sha256": "51a5ff5f9d86bebb0d1e0b727affe1df2d8a2ed94a03a4516512cb8e03f57b9d",
+    "skill_variant": "brief",
+    "skill_sha256": "35192030d3cb7182b930deaae033300b8d316e07e6b4d84575254c835f792807"
+  },
+  "selected": [
+    {
+      "instance_id": "sympy__sympy-21379",
+      "repo": "sympy/sympy",
+      "base_commit": "624217179aaf8d094e6ff75b7493ad1ee47599b0",
+      "problem_statement_sha256": "e199bb269f9d7eedd813b73859ebc266bbf9180ba44e93fee83257f13a7b3c38",
+      "operator_only_source_evidence": [
+        {
+          "path": "sympy/core/basic.py",
+          "lines": [
+            1027,
+            1064
+          ],
+          "observation": "Recursive substitution reconstructs changed expressions through self.func(*args), rather than simply replacing a token."
+        },
+        {
+          "path": "sympy/core/assumptions.py",
+          "lines": [
+            449,
+            517
+          ],
+          "observation": "Property lookup delegates to assumption handlers, stores intermediate results and explores prerequisite facts."
+        },
+        {
+          "path": "sympy/functions/elementary/hyperbolic.py",
+          "lines": [
+            242,
+            269
+          ],
+          "observation": "Realness inference decomposes arguments and asks assumptions about modular expressions, creating a route from the reported hyperbolic expression into other evaluators."
+        }
+      ],
+      "limitation": "Baseline may reproduce the exception and use its traceback; actual discovery effort must be measured, not assumed."
+    },
+    {
+      "instance_id": "django__django-15563",
+      "repo": "django/django",
+      "base_commit": "9ffd4eae2ce7a7100c98f681e2b6ab818df384a4",
+      "problem_statement_sha256": "46a090e69eecd18516e4819f11699ec9c5b3d2226db86a616217d9115cdfb5a7",
+      "operator_only_source_evidence": [
+        {
+          "path": "django/db/models/query.py",
+          "lines": [
+            981,
+            1006
+          ],
+          "observation": "Public update delegates field selection to UpdateQuery and execution to the SQL compiler."
+        },
+        {
+          "path": "django/db/models/sql/subqueries.py",
+          "lines": [
+            80,
+            140
+          ],
+          "observation": "Inherited fields are grouped by ancestor model, but related update queries share one related_ids collection."
+        },
+        {
+          "path": "django/db/models/sql/compiler.py",
+          "lines": [
+            1820,
+            1869
+          ],
+          "observation": "Pre-update selection gathers primary keys from one selected column and supplies those identities to related updates."
+        },
+        {
+          "path": "django/db/models/options.py",
+          "lines": [
+            690,
+            730
+          ],
+          "observation": "Model metadata exposes parent relationships and ancestor links."
+        }
+      ],
+      "limitation": "The public issue supplies a reproducer and incorrect SQL. Agents may locate the mechanism quickly; baseline traces must establish actual discovery work. These observations are not a required-file rubric or an agent hint."
+    }
+  ],
+  "pre_inference_exclusions": [
+    {
+      "instance_id": "astropy__astropy-13579",
+      "reason": "The issue names SlicedLowLevelWCS directly, and its inverse conversion implementation is a short, directly discoverable method in the corresponding wrapper. This is a weaker test of broad initial discovery than intended. No agent outcome was observed and no attempted task is being excluded.",
+      "source_path": "astropy/wcs/wcsapi/wrappers/sliced_wcs.py",
+      "lines": [
+        245,
+        267
+      ]
+    },
+    {
+      "instance_id": "sympy__sympy-12419",
+      "reason": "Considered from public text and pre-fix source; Identity._entry is a short direct implementation once the named identity-matrix type is located. Prefer a second repository and the multi-parent SQL update path for this small exploratory extension. No inference or outcomes observed.",
+      "source_path": "sympy/matrices/expressions/matexpr.py",
+      "lines": [
+        439,
+        490
+      ]
+    }
+  ]
+}

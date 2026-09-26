@@ -1,0 +1,134 @@
+{
+  "runtime_binding": "All 24 cells bind explicit immutable runtime IDs before inference. Both arms in each pair use the same runtime and pristine source tree.",
+  "attempt_policy": "One fresh native attempt per cell, in listed order. No outcome-selected retries or repairs. Preserve all failures and costs; infrastructure or missing accounting prevents a clean acceptance claim.",
+  "grading": "Pinned official harness and dataset. Unique run ID per cell; gold/test material remains only in evaluator workspace. Grade final patch even on native failure when available; classify empty patches, unresolved cases and infrastructure failures separately.",
+  "acceptance": "For each engine separately, treatment must match or improve official solve rate and reduce whole-task elapsed time and coding-agent cost. Report totals, paired distributions, all failed attempts, and cost per solved task. Six purposively selected tasks are exploratory evidence; repeat a promising result with fresh counterbalanced runs before claiming a stable benefit. Do not claim representative full SWE-bench performance.",
+  "delivery_audit": "Verify every treatment invokes the CLI through the skill and retain its exact queries and model-visible output. Report skill discovery/read, summary visibility, head filtering, additional context reads, checked-negative coverage and actual selected sources; a saved sidecar alone is not consumption evidence.",
+  "accounting": {
+    "jev_cost_usd": 0,
+    "jev_tokens_in_agent_total": false,
+    "claude": "Native reported Opus 5 list cost via Vercel AI Gateway; preserve model/cache categories. Any incomplete upstream stream makes total billing uncertain and requires incident audit.",
+    "codex": {
+      "basis": "API-equivalent standard-rate estimate; not subscription billing",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "verified_date": "2026-09-20",
+      "per_million_usd": {
+        "input": 4,
+        "cached_input": 0.4,
+        "cache_write": 5,
+        "output": 20
+      },
+      "long_context": {
+        "request_input_threshold": 272000,
+        "per_million_usd": {
+          "input": 8,
+          "cached_input": 0.8,
+          "cache_write": 10,
+          "output": 30
+        }
+      },
+      "tier_rule": "Apply each request tier from native per-request token_count usage, never cumulative task input. Do not double-count reasoning within output. Missing categories or tier evidence must remain explicit uncertainty."
+    }
+  },
+  "nested_agents": "Preserve native event streams and all Codex session rollouts. Include coding-agent subagent usage where present; do not claim complete cost from parent-only totals if children are unaccounted. Jev remains free.",
+  "preparation_and_grading_time": "Report separately from native agent execution; do not overlap grading/build work with a timed native attempt.",
+  "request_guard": {
+    "limit": 50000,
+    "purpose": "runaway-loop safety only",
+    "search_deadline": null,
+    "stalled_request_timeout_seconds": 15
+  },
+  "task_selection": {
+    "path": "evals/implementation/swebench/discovery-selection-v1.json",
+    "sha256": "333fbedd54ddec5bc18adb48bed6dfdb47d853bbd86e63a88ce00fa2304dfa20",
+    "scope": "Targeted discovery workload, not general SWE-bench score."
+  },
+  "status": "frozen",
+  "frozen_at": "2026-09-22T08:34:59.182081+00:00",
+  "purpose": "Two-task Opus exploratory comparison of eight-worker hierarchical retrieval plus caller-aware one-hop references and reliable result waiting. Both tasks informed tuning; this is not held-out/general SWE-bench evidence. Sol access remains unavailable and global acceptance is unproven.",
+  "protocol_revision": "v26; four fresh native cells; no old baselines or outcome-selected retries",
+  "review": "combined-spike-v26/review-triage.json; confirmed findings fixed, retained limitations explicit; parser and CLI behavior tests pass",
+  "cells": [
+    {
+      "id": "combined-native-v26-django__django-15280-claude-baseline",
+      "instance_id": "django__django-15280",
+      "engine": "claude",
+      "arm": "baseline",
+      "invocation": "required",
+      "source_image": "swebench/sweb.eval.x86_64.django_1776_django-15280:latest",
+      "source_pinned_ref": "swebench/sweb.eval.x86_64.django_1776_django-15280@sha256:d1fc6c4600c4e41b9f1894611a22b91f30baa109270ee8205a42de90d995b54d",
+      "image": "sha256:afa6f7b6e5f59e50a4d9908713e9b8ab1f3950552f976f0a4e6ad609efe805d8",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "gateway_model": "anthropic/claude-opus-5",
+      "max_cost_usd": 10
+    },
+    {
+      "id": "combined-native-v26-django__django-15280-claude-chunks",
+      "instance_id": "django__django-15280",
+      "engine": "claude",
+      "arm": "chunks",
+      "invocation": "required",
+      "source_image": "swebench/sweb.eval.x86_64.django_1776_django-15280:latest",
+      "source_pinned_ref": "swebench/sweb.eval.x86_64.django_1776_django-15280@sha256:d1fc6c4600c4e41b9f1894611a22b91f30baa109270ee8205a42de90d995b54d",
+      "image": "sha256:afa6f7b6e5f59e50a4d9908713e9b8ab1f3950552f976f0a4e6ad609efe805d8",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "candidate": "evals/runs/swebench/combined-spike-v26/combined.mjs",
+      "gateway_model": "anthropic/claude-opus-5",
+      "max_cost_usd": 10
+    },
+    {
+      "id": "combined-native-v26-pydata__xarray-3095-claude-chunks",
+      "instance_id": "pydata__xarray-3095",
+      "engine": "claude",
+      "arm": "chunks",
+      "invocation": "required",
+      "source_image": "swebench/sweb.eval.x86_64.pydata_1776_xarray-3095:latest",
+      "source_pinned_ref": "swebench/sweb.eval.x86_64.pydata_1776_xarray-3095@sha256:fb721923cba0d05faafdafb2fb76e6caa3adc22fd4fdcbf2de45741312f91c74",
+      "image": "sha256:4669929ec727f1f58060b56bd358d270b45fb4db8d357141ce14346069e59a98",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "candidate": "evals/runs/swebench/combined-spike-v26/combined.mjs",
+      "gateway_model": "anthropic/claude-opus-5",
+      "max_cost_usd": 10
+    },
+    {
+      "id": "combined-native-v26-pydata__xarray-3095-claude-baseline",
+      "instance_id": "pydata__xarray-3095",
+      "engine": "claude",
+      "arm": "baseline",
+      "invocation": "required",
+      "source_image": "swebench/sweb.eval.x86_64.pydata_1776_xarray-3095:latest",
+      "source_pinned_ref": "swebench/sweb.eval.x86_64.pydata_1776_xarray-3095@sha256:fb721923cba0d05faafdafb2fb76e6caa3adc22fd4fdcbf2de45741312f91c74",
+      "image": "sha256:4669929ec727f1f58060b56bd358d270b45fb4db8d357141ce14346069e59a98",
+      "model": "opus",
+      "effort": "high",
+      "timeout_seconds": 900,
+      "gateway_model": "anthropic/claude-opus-5",
+      "max_cost_usd": 10
+    }
+  ],
+  "artifacts": {
+    "evals/implementation/swebench/native_stream_delivery_runner.py": "51f83f53747ada0a070c4740e884ddd5eefcddbe1a7641a673c5c52146d15784",
+    "evals/implementation/swebench/native_stream_delivery_skill_runner.py": "3bb7af4e7f6f6e0981c3e5923c482ffe2de058c16f16ff0504aa6662e4639b87",
+    "evals/implementation/swebench/agent-runtime/gateway_stream_proxy.py": "8fdcb1f8854b81dfac2de4432b63f2cbad2fe2cb58dcf2f07726a08450dd18dc",
+    "evals/implementation/swebench/skill-variants/delivery/jevgrep/SKILL.md": "ab35118f4b2f0230043e6acdfe6d0fc1e33e5f4aa09e8a464330dddeb738272c",
+    "evals/implementation/swebench/hierarchy-combined-v26-spike.ts": "8caf9fff003c331ec48f87e596c563c5c10bd09b1849e3774e80d2c188884636",
+    "evals/implementation/swebench/reference-context-v26-spike.ts": "f0020ca4f3d458e94f2071d565aa62042f8605b93a9f8d63b331955eeb386f25",
+    "evals/implementation/swebench/source-units-spike.ts": "2c5c46afe1b438f08f4fb07ce0b4eb77ede7229be8040a5888932cd601a49690",
+    "evals/implementation/swebench/source-packet-spike.ts": "336d39aacd4168092c38005e7f6b7107ed75fa64aba2497c8dd2ac259c815627",
+    "evals/implementation/swebench/coverage-spike.ts": "1d424e5792da0f5ef296008823a305a3a8df7f9e78254c2888ac2c5f9a8d4e05",
+    "evals/runs/swebench/combined-spike-v26/combined.mjs": "b3dbe8cfc4a6bc79249e31fd322f58a608e24393d29a8735dabf84b317234a3a",
+    "evals/runs/swebench/discovery-selection-v1/offline-runtime/Dockerfile": "bc88f6edd5bdfe8dba59a6f4a1d1b12ee5de642540ccf384ad4e2b09f5e9ce58",
+    "evals/runs/swebench/discovery-selection-v1/agent-inputs.json": "be7470362f832774d1ddb0cf0f203eae11cd51e2f1b3dd674a5a8bfc7bbd6f3d",
+    "evals/implementation/swebench/discovery-selection-v1.json": "333fbedd54ddec5bc18adb48bed6dfdb47d853bbd86e63a88ce00fa2304dfa20",
+    "evals/accounting.md": "58c800776f73b170466adaca8d2b0940f5667027094d89245d041e1ba33b86b0",
+    "evals/runs/swebench/discovery-selection-v1/environments/django__django-15280/receipt.json": "5f87d2d6b4989dc447e5a29bb779ecc6b67603528213530ce929e649bb262e58",
+    "evals/runs/swebench/discovery-selection-v1/environments/pydata__xarray-3095/receipt.json": "c0468ef31c2486728ae9245f4cbd2c5bd76a62c9837daa145bf40f4992bcd666"
+  },
+  "selection_reason": "Django requires related-instance/prefetch discovery; Xarray crosses copy implementation and storage adapter. Same two tuning tasks deliberately retained to test the hypothesized mechanism. Neither is claimed held out."
+}

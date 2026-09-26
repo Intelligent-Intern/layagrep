@@ -1,0 +1,83 @@
+{
+  "attempt_policy": "One attempt per cell in registered order. Preserve infrastructure failures. No outcome-selected retries or repairs in this comparison.",
+  "acceptance": "A candidate must first preserve official solve outcomes for each engine. Compare whole-task cost and time, including Jev latency and failure outcomes. One calibration task cannot establish general solve-rate equivalence.",
+  "retrieval": {
+    "threshold": 0.5,
+    "source_bytes": 64000,
+    "directory_evidence": "Immediate child paths only; lazy breadth-first traversal; no global inventory.",
+    "negative_evidence": "Checked file/folder/chunk scores; distinguish pruned descendants and failed/unvisited work.",
+    "output": "Same summary and source; coverage records grouped losslessly with field names followed by value arrays.",
+    "source_partitioning": "Python AST declaration boundaries capped at 3500 UTF-8 bytes except indivisible long lines; otherwise line windows. Every above-threshold source unit is eligible within unchanged output budget.",
+    "recovery": "One retry for transient errors within 40 total HTTP requests and 90-second deadline; independent batches continue. All failed attempts retained."
+  },
+  "accounting": {
+    "jev_cost_usd": 0,
+    "jev_tokens_in_agent_total": false,
+    "claude": "Native reported task cost, preserving resolved model and cache categories.",
+    "codex": {
+      "basis": "API-equivalent standard-rate estimate; not subscription billing",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "verified_date": "2026-09-20",
+      "per_million_usd": {
+        "input": 4,
+        "cached_input": 0.4,
+        "cache_write": 5,
+        "output": 20
+      },
+      "long_context": {
+        "request_input_threshold": 272000,
+        "per_million_usd": {
+          "input": 8,
+          "cached_input": 0.8,
+          "cache_write": 10,
+          "output": 30
+        }
+      },
+      "tier_rule": "Apply each request tier from native per-request token_count usage, never cumulative task input. Do not double-count reasoning within output. Missing categories or tier evidence must remain explicit uncertainty."
+    }
+  },
+  "official_grading": "Pinned official harness and dataset from setup receipt. Unique run ID per cell; evaluator-only material outside agents. Report environment preparation and grading separately from native task wall time.",
+  "status": "frozen",
+  "purpose": "Fresh paired Sol calibration of bounded recovery plus lossless compact coverage on the separate Sphinx task. Exploratory, excluded from ten-task comparison.",
+  "frozen_at": "2026-09-20T15:38:43.043492+00:00",
+  "artifacts": {
+    "evals/implementation/swebench/native_runner.py": "8340b55e3ecab37dc4e6e003673ee5de68a9e84502fd88ae1b39f1f378f2682f",
+    "evals/implementation/swebench/agent-runtime/model_proxy.py": "b9ae3521babc5b684cf710187a8e699f25863c7a9f0e5d5410aaa2521770dae0",
+    "evals/runs/swebench/dataset/calibration-agent-inputs.json": "28e75f022622567f76dd03cf2a7dd949f5c78b41b1d7b857d0dcea9b63e1637a",
+    "evals/implementation/swebench/source-units-spike.ts": "2c5c46afe1b438f08f4fb07ce0b4eb77ede7229be8040a5888932cd601a49690",
+    "evals/implementation/swebench/selection.json": "e35096da94db382bcd7fb6cfec55fe7ab2075aacb0964498ead9901db1c858e7",
+    "evals/accounting.md": "58c800776f73b170466adaca8d2b0940f5667027094d89245d041e1ba33b86b0",
+    "evals/implementation/swebench/skills/jevgrep/SKILL.md": "350dbbdebb59aaa180f877a4a332a74ad645000c0d507722186a841ca06edce3",
+    "evals/implementation/swebench/native_skill_runner.py": "f8bebe00891e516344c3a436e76353920f8bcf11549275a40050b05a64e77209",
+    "evals/implementation/swebench/hierarchy-compact-spike.ts": "78c91b0672a8de21df319f35582e6a70d1e4ee26d0a5db303fbf77baa93b0143",
+    "evals/implementation/swebench/coverage-spike.ts": "1d424e5792da0f5ef296008823a305a3a8df7f9e78254c2888ac2c5f9a8d4e05",
+    "evals/runs/swebench/calibration-v10/hierarchy-compact.mjs": "126370e4ce078b5547e50685c4b8add38d5436ce92a16923c71282f305ab209f"
+  },
+  "cells": [
+    {
+      "id": "calibration-v10-codex-baseline",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "codex",
+      "arm": "baseline",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "timeout_seconds": 900,
+      "invocation": "required"
+    },
+    {
+      "id": "calibration-v10-codex-chunks",
+      "instance_id": "sphinx-doc__sphinx-9320",
+      "engine": "codex",
+      "arm": "chunks",
+      "source_image": "swebench/sweb.eval.x86_64.sphinx-doc_1776_sphinx-9320:latest",
+      "image": "sha256:c677ec3e437379acbdf545c59b07525af6a8572dcb37f7cd8822574782bbcbff",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "timeout_seconds": 900,
+      "candidate": "evals/runs/swebench/calibration-v10/hierarchy-compact.mjs",
+      "invocation": "required"
+    }
+  ]
+}
