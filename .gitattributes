@@ -1,0 +1,2 @@
+# Verbatim packet evidence keeps spaces after numbered blank source lines.
+specs/done/provider-support/assets/provider-stdout.txt whitespace=-blank-at-eol
