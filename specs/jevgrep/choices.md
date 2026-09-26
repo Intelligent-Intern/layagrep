@@ -165,3 +165,15 @@ cannot satisfy the cohort gate, and the runner has no baseline execution path.
 Gap: artifact layout and execution mechanics were delegated. Reach: results from
 different candidates cannot be pooled into acceptance; failed attempts and unknown
 bills remain visible. Verdict: sound. Confidence: high.
+
+### Reuse installed command journeys for native macOS verification
+
+When: supported-runtime verification. Install a tarball into a temporary npm
+prefix, give its process a PATH containing only Node, and drive the same keyless
+commands and Python HTTP search used in Docker. Filesystem and failure suites
+remain Docker-only. The native result records its actual Node/macOS version.
+
+Gap: the native smoke mechanism was delegated. Reach: portable assertions stay
+shared while Linux tool-absence assertions retain their own Docker scope; a Mac
+with Python installed cannot accidentally satisfy a runtime dependency through
+PATH. Verdict: sound. Confidence: high.

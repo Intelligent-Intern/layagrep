@@ -98,3 +98,17 @@ tarball additionally passes installed runtime, source-budget and head checks.
 Maintained cohort accounting passes 14 Docker tests, including retained response
 costs when transport logs are missing. Missing coverage leaves total Jev cost
 unknown while preserving its known subtotal; Sol scoring is unchanged.
+
+## Full deterministic closeout gate
+
+`bun run verify` passed on the integrated source-budget/native-harness branch:
+62 Bun tests (402 assertions), 15 Node parser tests, three release-validator tests,
+14 maintained runner tests, and all 20 installed journeys. Typecheck and lint also
+passed. Installed containers now have CPU/memory/process ceilings and dropped
+capabilities, matching the spec's bounded test-isolation requirement. The native
+smoke uses the same portable journeys; the parser selector retains the split
+local-command case so its earlier coverage is not lost.
+
+This is deterministic correctness evidence. It does not resolve the known
+spike-versus-production context-expansion difference or substitute for the live
+cohort quality gate. See [runtime evidence](runtime-verification.md).

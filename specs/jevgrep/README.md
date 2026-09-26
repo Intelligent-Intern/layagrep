@@ -15,9 +15,13 @@ Requests trial officially solved and reduced Sol cost against uncapped, but stil
 cost more than baseline. See [source-budget decision](assets/source-budget-decision.md)
 and [the uncapped trace report](assets/installed-requests-checkpoint.md).
 
-Slices 01–07 have their named evidence. Native macOS installed verification is
-being completed independently. Remaining work: frozen cohort acceptance, supported
-Linux architecture checks, release closeout, whole-spec review and close-spec.
+Slices 01–07 have their named evidence. Native macOS and both Linux architectures have
+focused [installed-runtime evidence](assets/runtime-verification.md). The full deterministic `verify` gate passes. Remaining work: diagnose the
+spike-versus-production expansion difference, finish frozen cohort acceptance,
+release closeout, whole-spec review and close-spec.
+The spike expands already expanded context on its second pass; production does
+not. Current helper/template tests do not establish full-pipeline parity. Diagnose
+this with identical-source/answer replay while the frozen cohort stays unchanged.
 Never rerun saved baselines or pool candidates. Report Jev API cost separately;
 only full Sol task cost is scored. See [integrated verification](assets/integration-verification.md),
 [contracts](contracts.md), and [decision map](map.md).

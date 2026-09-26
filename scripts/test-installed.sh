@@ -48,4 +48,6 @@ node_args=(node --test --test-concurrency=1)
 if [[ -n "$pattern" ]]; then node_args+=(--test-name-pattern "$pattern"); fi
 node_args+=(/test/installed.test.mjs)
 docker build "${platform[@]}" "${build_args[@]}" -f "$context_dir/test/runtime.Dockerfile" -t "$image" "$context_dir"
-docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,nodev,size=256m "${platform[@]}" "$image" "${node_args[@]}"
+docker run --rm --network none --read-only --cpus 2 --memory 2g --pids-limit 256 \
+  --cap-drop ALL --security-opt no-new-privileges \
+  --tmpfs /tmp:rw,nosuid,nodev,size=256m "${platform[@]}" "$image" "${node_args[@]}"

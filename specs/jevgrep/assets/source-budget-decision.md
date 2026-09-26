@@ -66,3 +66,26 @@ and $0.006980 respectively. Fewer turns and less generated text explain much of
 the saving against uncapped, but their causal connection to the byte cap remains
 uncertain. Better test evidence is a possible future hypothesis, not an untested
 change folded into this frozen policy.
+
+## Accepted spike comparison prompted by user review
+
+The accepted spike's Requests treatment cost $0.2597596 versus $0.2685004
+baseline (3.26% lower). Its stdout was 7,059 UTF-8 bytes, compared with 2,852
+uncapped production and 2,183 capped production. It returned five relevant files,
+reported incomplete discovery and a scoped `AGENTS.md` lookup, and supplied more
+request construction, header preparation and surrounding method context. The
+production packets supplied six paths, less source and no scoped guidance lookup.
+These are actual packet differences, not proof of their causal contribution.
+
+The production skill was also rewritten from the accepted skill: detailed
+symbol-first reads, lookup reuse and explicit polling instructions were shortened.
+Production traces include repeated guidance searches and broader follow-up reads.
+All runs retain the faulty content-length method. The source-cap comparison
+therefore does not establish parity with the winning spike; one can reduce cost
+against the uncapped production run while still regress against the spike.
+
+The causal split between changed representation, changed agent instructions,
+live classification/query variation and Sol behavior is unresolved. This needs
+an exact spike-versus-production trace/request comparison before attributing the
+regression to normal variance or calling the production policy a reproduced win.
+The active frozen cohort remains unchanged and must be reported in full.
