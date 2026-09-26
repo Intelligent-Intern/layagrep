@@ -86,3 +86,42 @@ The official pass and lower complete Sol bill satisfy the registered continuatio
 rule, so the sequential runner has started the remaining nine tasks in this same
 plan. No Django replacement or baseline execution occurs. Production CLI and
 canonical skill remain unchanged; full-cohort acceptance is still unproven.
+
+
+## Django paired trace
+
+The successful retrieval returns 43 files and no excerpts (6,796 UTF-8 bytes),
+fully visible to Sol. SQLite ranks eleventh. Sol then reads its schema editor
+before the first patch and repairs the same-type collation rebuild condition;
+the prior failed faithful run omitted that repair. The field and SQLite changes
+match baseline and accepted spike. Both runs replace a malformed direct schema
+fixture with a type-changing migration test, but this time the implementation
+already handles collation-only changes. The official regression verifies that
+missing same-type scenario, including many-to-many references and reversal.
+
+Own final verification is 300 tests run: 271 pass, 29 skipped; the focused suite
+has 17 passes. Its own added migration regression changes AutoField to CharField
+and does not independently cover same-type or many-to-many propagation. Base
+SQL dispatch still differs from baseline/spike (truthy new collation versus
+old/new comparison), and no live MySQL test establishes cross-backend equivalence.
+These are limitations, not newly demonstrated runtime failures.
+
+The observed difference is the agent reading and fixing the missing SQLite
+condition. Query and downstream decisions vary; this pair does not isolate an
+improved retrieval mechanism or a clock effect. Exact query, native command
+ordinals, packet, patch and comparisons are retained at
+`/tmp/jg-work-clock-django-comparison/`, backed by the study's immutable traces.
+
+
+## Continuing cohort
+
+Scikit-learn officially resolved with no infrastructure/error result. Its complete
+10-request Sol bill is **$0.2331192**, below the **$0.2944360** baseline. Jev's
+known subtotal is **$0.062132532**; accounting still marks the total incomplete,
+so it is not presented as a full total despite 218 cost-bearing responses.
+
+The production patch again calls `check_random_state` unconditionally. It repeats
+the compatibility issue established in the first faithful cohort: with shuffling
+disabled, invalid ignored seeds accepted before the patch now raise. The official
+solve remains recorded, alongside this broader-quality caveat. No agent or
+baseline is rerun. Astropy is the current active cell in the sequential runner.

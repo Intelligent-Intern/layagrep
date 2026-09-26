@@ -9,8 +9,8 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
 The only active confirmation is `installed-jg-cpython-work-clock-v1`.
 Django officially solved below its immutable baseline; the registered rule now
-permits the other nine tasks in that same frozen plan. The sequential runner has
-started scikit-learn. Collect every terminal receipt, official grade and complete
+permits the other nine tasks in that same frozen plan. Scikit-learn also officially solved below baseline; the sequential runner is
+now on Astropy. Collect every terminal receipt, official grade and complete
 Sol bill, then aggregate the full cohort. Never replace an attempt or rerun a
 baseline. [Timing protocol and current evidence](assets/timing-protocol.md) own
 this study's procedure and results.
