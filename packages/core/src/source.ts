@@ -219,10 +219,18 @@ export async function inspect(
     );
   const { source, path } = snapshot;
   const text = sourceText(source);
+  // Context windows use conservative whole-line Python comments, including inside multiline strings.
+  const pythonComments = /\.pyi?$/.test(path)
+    ? source
+        .split("\n")
+        .flatMap((line, index) =>
+          /^\s*#/.test(line) ? [{ startLine: index + 1, endLine: index + 1 }] : [],
+        )
+    : [];
   const fallback = (reason: Inspection["fallback"]): Inspection => ({
     mode: "text",
     fallback: reason,
-    comments: [],
+    comments: pythonComments,
     units: source
       ? textUnits(text, { startLine: 1, endLine: text.lineCount }, "source", maxUnitBytes, true)
       : [],
@@ -237,12 +245,7 @@ export async function inspect(
     if (!tree) return fallback("syntax");
     try {
       units = pythonUnits(tree.rootNode, source);
-      const stack = [tree.rootNode];
-      while (stack.length) {
-        const node = stack.pop()!;
-        if (node.type === "comment") comments.push(nodeRange(node));
-        else stack.push(...children(node));
-      }
+      comments = pythonComments;
       mode = "python";
     } finally {
       tree.delete();

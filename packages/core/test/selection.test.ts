@@ -36,7 +36,7 @@ test("selected source and optional leads retain distinct meanings and exact orig
     { name: "selected", score: 0.8 },
     { name: "lead", score: 0.4 },
   ]);
-  expect(result.file.excerpts[0]!.source).toBe(source.split("\n").slice(0, 7).join("\n") + "\n");
+  expect(result.file.excerpts[0]!.source).toBe(source.split("\n").slice(0, 7).join("\n"));
   expect(result.file.excerpts.some((excerpt) => excerpt.source.includes("function lead"))).toBe(
     false,
   );
@@ -63,7 +63,7 @@ test("strict thresholds keep .context out of leads without conflating it with so
   expect(result.file.leads.map((lead) => lead.name)).toEqual(["Example.alpha", "Example.gamma"]);
 });
 
-test("Python neighbors are rendering context and follow-up passes do not expand that context again", async () => {
+test("follow-up context expands without promoting its neighbors to positive evidence", async () => {
   const method = (name: string) =>
     `    def ${name}(self):\n        a = 1\n        b = 2\n        c = 3\n        d = 4\n        e = 5\n        return a + b + c + d + e\n\n`;
   const source =
@@ -100,7 +100,8 @@ test("Python neighbors are rendering context and follow-up passes do not expand 
     first.file,
   );
   expect(calls).toBeGreaterThan(0);
-  expect(second.file.excerpts).toEqual(first.file.excerpts);
+  expect(second.file.rendered).toEqual([{ startLine: 1, endLine: source.split("\n").length }]);
+  expect(second.file.excerpts[0]!.source).toBe(source);
   expect(second.file.selected).toEqual(first.file.selected);
   expect(second.file.roles).toEqual(["implementation"]);
 });
@@ -195,7 +196,7 @@ test("malformed group answers stay unknown without discarding previous successes
   );
   expect(second.issues).toEqual([{ kind: "provider", count: 1 }]);
   expect(second.file.selected).toEqual(first.file.selected);
-  expect(second.file.excerpts).toEqual(first.file.excerpts);
+  expect(second.file.excerpts[0]!.source).toBe(source.split("\n").slice(0, 7).join("\n"));
 });
 
 test("ordinary large-source requests retain the frozen opening and eight-line window", async () => {

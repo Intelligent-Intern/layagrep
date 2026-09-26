@@ -1,6 +1,13 @@
 import { EvaluationFailure } from "./gateway";
 import { evidenceRequest, type Evidence } from "./requests";
-import { inspect, pythonNeighborhood, sourceForUnit, type Range, type SourceUnit } from "./source";
+import {
+  inspect,
+  pythonNeighborhood,
+  sourceForUnit,
+  splitSource,
+  type Range,
+  type SourceUnit,
+} from "./source";
 import type { Evaluator, FileEvidence, ReadingLead, EvidenceRange } from "./types";
 
 import type { Snapshot } from "./filesystem";
@@ -23,7 +30,7 @@ function mergeSpans(spans: Span[]): Span[] {
   return merged;
 }
 
-/** Classify declarations once per pass; rendering always expands selected evidence, never prior rendering. */
+/** The bounded follow-up expands prior context once more; positive selections retain separate provenance. */
 export async function selectFile(
   snapshot: Snapshot,
   query: string,
@@ -79,21 +86,59 @@ export async function selectFile(
       unit.sourceByteEnd !== offsets[unit.range.endLine]
     );
   }
-  const syntax = await inspect(snapshot, { maxUnitBytes: sourceUnitBytes });
+  const giantLine = lines.some((line) => Buffer.byteLength(line) > sourceUnitBytes);
+  const syntax = await inspect(snapshot, {
+    maxUnitBytes: giantLine ? sourceUnitBytes : Math.max(sourceUnitBytes, bytes.length),
+  });
+  // Giant lines retain byte coordinates; ordinary fallback uses complete-source line fragments.
+  let units = syntax.units;
+  if (!giantLine && (syntax.mode === "text" || units.every((unit) => unit.partial))) {
+    units = splitSource(snapshot, 3000).map((unit) => ({
+      ...unit,
+      range: {
+        ...unit.range,
+        endLine: lineAt(Math.max(unit.sourceByteStart, unit.sourceByteEnd - 1)),
+      },
+    }));
+  }
+  if (!giantLine)
+    units = units.flatMap((unit) => {
+      if (
+        Buffer.byteLength(lines.slice(unit.range.startLine - 1, unit.range.endLine).join("\n")) <=
+        sourceUnitBytes
+      )
+        return [unit];
+      const blocks: SourceUnit[] = [];
+      for (let start = unit.range.startLine; start <= unit.range.endLine; start += 16) {
+        const end = Math.min(unit.range.endLine, start + 15);
+        blocks.push({
+          id: `${unit.name}:${start}:${end}`,
+          name: unit.name,
+          range: { startLine: start, endLine: end },
+          sourceByteStart: offsets[start - 1]!,
+          sourceByteEnd: offsets[end]!,
+          partial: true,
+        });
+      }
+      return blocks;
+    });
   const selected: Span[] = (previous?.selected ?? []).map(spanForRange);
+  const contextSpans: Span[] = (previous?.rendered ?? []).map(spanForRange);
   const leads = new Map<string, ReadingLead>();
   function addLead(lead: ReadingLead) {
     const key = JSON.stringify([lead.name, lead.range]);
-    const old = leads.get(key);
-    if (!old || lead.score > old.score) leads.set(key, lead);
+    leads.set(key, lead);
   }
   for (const lead of previous?.leads ?? []) addLead({ ...lead, range: { ...lead.range } });
   const groups: SourceUnit[][] = [];
   let pending: SourceUnit[] = [];
-  for (const unit of syntax.units) {
+  for (const unit of units) {
     if (
       pending.length &&
-      (pending.length >= 8 || unit.sourceByteEnd - pending[0]!.sourceByteStart > 14000)
+      (pending.length >= 8 ||
+        Buffer.byteLength(
+          lines.slice(pending[0]!.range.startLine - 1, unit.range.endLine).join("\n"),
+        ) > 14000)
     ) {
       groups.push(pending);
       pending = [];
@@ -108,6 +153,7 @@ export async function selectFile(
       if (prepared === null) {
         invalidated = true;
         selected.length = 0;
+        contextSpans.length = 0;
         leads.clear();
         break;
       }
@@ -143,7 +189,11 @@ export async function selectFile(
         return { unit, value };
       });
       for (const { unit, value } of values) {
-        if (value > 0.5) selected.push({ start: unit.sourceByteStart, end: unit.sourceByteEnd });
+        if (value > 0.5) {
+          const span = { start: unit.sourceByteStart, end: unit.sourceByteEnd };
+          selected.push(span);
+          contextSpans.push(span);
+        }
         if (value > 0.25 && !unit.name.endsWith(".context"))
           addLead({
             name: unit.name,
@@ -160,7 +210,7 @@ export async function selectFile(
   const chosen = mergeSpans(selected),
     wholeRanges: Range[] = [],
     rendered: Span[] = [];
-  for (const span of chosen) {
+  for (const span of mergeSpans(contextSpans)) {
     const range = rangeForSpan(span);
     if (range.sourceByteStart !== undefined) rendered.push(span);
     else wholeRanges.push(range);
@@ -212,25 +262,33 @@ export async function selectFile(
     rendered.push({ start: segmentStart, end: offsets[window.endLine]! });
   }
   const output = mergeSpans(rendered);
+  function renderedRange(span: Span): EvidenceRange {
+    const range = rangeForSpan(span);
+    // A trailing empty line has no byte interval, but remains part of a line-based window.
+    if (
+      range.sourceByteStart === undefined &&
+      span.end === bytes.length &&
+      windows.some((window) => window.endLine === lines.length)
+    )
+      range.endLine = lines.length;
+    return range;
+  }
   const file: FileEvidence = {
     path: snapshot.path,
     contentHash: snapshot.contentHash,
     score,
     roles: [...(previous?.roles ?? [])],
-    leads: [...leads.values()].sort(
-      (a, b) =>
-        a.range.startLine - b.range.startLine ||
-        a.range.endLine - b.range.endLine ||
-        a.name.localeCompare(b.name),
-    ),
+    leads: [...leads.values()],
     selected: chosen.map(rangeForSpan),
-    rendered: output.map(rangeForSpan),
+    rendered: output.map(renderedRange),
     excerpts: output.map((span) => {
-      const range = rangeForSpan(span),
+      const range = renderedRange(span),
         partial = range.sourceByteStart !== undefined;
       return {
         range,
-        source: bytes.subarray(span.start, span.end).toString("utf8"),
+        source: partial
+          ? bytes.subarray(span.start, span.end).toString("utf8")
+          : lines.slice(range.startLine - 1, range.endLine).join("\n"),
         ...(partial ? { sourceByteStart: span.start, sourceByteEnd: span.end, partial: true } : {}),
       };
     }),
