@@ -175,3 +175,18 @@ Gap: the native smoke mechanism was delegated. Reach: portable assertions stay
 shared while Linux tool-absence assertions retain their own Docker scope; a Mac
 with Python installed cannot accidentally satisfy a runtime dependency through
 PATH. Verdict: sound. Confidence: high.
+
+### Preserve the winner while deferring throughput changes
+
+When: reference restoration. A minified file can contain several declarations on
+one line; the winning strategy may ask about that line repeatedly under different
+declaration names. Combining those questions could change Jev's answers, so this
+port keeps them. Separately, saving a cache answer scans existing entries to
+enforce the disk limit. A large cache therefore has repeated scanning overhead.
+
+Gap: review found performance costs that are outside the user's current solve-rate
+and task-cost acceptance priorities. Reach: the confirmation does not establish
+whole-computer throughput or optimal cache maintenance. Verdict: sound for this
+confirmation, with medium confidence: retain measured retrieval behavior and
+report the cache limitation; test any later optimization as a separately identified
+artifact rather than silently changing the candidate being confirmed.

@@ -29,10 +29,15 @@ started. No saved baseline was rerun. The frozen study and all receipts remain a
 - Astropy is an operator-interrupted attempt, not a completed solve measurement.
 
 Independent whole-spec review also found repeated same-line declaration work and
-quadratic cache-retention scanning. They remain open review items. The frozen
-reference also repeats same-line work; do not silently alter its ordinary input
-semantics while restoring parity. Cache maintenance can be improved separately
-only while preserving answer/cache behavior.
+quadratic cache-retention scanning. These remain explicit performance follow-ups,
+not fixes folded into this restoration. The frozen reference repeats same-line
+work; changing that would change its questions and require a separate experiment.
+Cache retention is finite and space-bounded, but scanning after each write can be
+slow for large caches. It does not justify changing the frozen retrieval policy
+or claiming whole-computer performance. The user's acceptance priorities remain
+solve rate and full task cost; timing is diagnostic. Any subsequent cache
+maintenance change must preserve answer/cache behavior and identify its artifact
+separately from this confirmation.
 
 ## Preservation evidence
 
@@ -65,7 +70,10 @@ tests, three release tests, 14 benchmark-harness tests and all 20 installed
 journeys, including discovery's
 declaration index, large-test suggestions, TypeScript context expansion and the
 large-file anchor/selection boundary. Native and alternate-architecture
-verification still need the final restored archive.
+verification uses the final restored archive. SHA-256
+`10cc842f25a11ff1c62cb109df27cd08b9875892907f2e89eb7bac26665a1e85`
+passed native macOS arm64 on Node 24.14.0 and both Linux amd64 and arm64 installed
+smokes on Node 22.23.3. These are package/runtime checks, not live quality results.
 
 Required product differences remain explicit: executable `jg`, Node-only runtime,
 credential storage, cache, filesystem eligibility and freshness, stdout-only
