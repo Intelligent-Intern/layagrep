@@ -92,8 +92,27 @@ policy. Treating the selection ceiling as permission to classify text fragments
 instead was another unvalidated behavioral change; it can multiply requests and
 remove the class anchor that reconsiders skipped directories.
 
-The superseded production platform checks do not cover the restored artifact.
-Before the next paid cohort, finish parser parity, run the installed and native
-gates on the restored package, and record its immutable archive hash. The final
-quality gate remains one frozen ten-task cohort with every baseline solve
-preserved and at least seven solved strict Sol-cost wins; Jev billing is separate.
+## Restored live confirmation
+
+The new frozen study is
+`evals/runs/swebench/installed-jg-reference-parity-v1/plan.json`. All ten no-call
+validations passed before paid execution. Requests ran first; the remaining
+cells run sequentially under the same package and prompt. Completed attempts are
+retained, never rerun by continuation.
+
+Requests officially resolved. Full Sol cost was **$0.3331174** across 11 billed
+generations versus **$0.2685004** baseline: a solve, but not a cost win. Observed
+Jev cost was **$0.01031814**, separately reported for all 63 client calls
+(245,670 input and 7,911 output tokens; 69 provider attempts). Jev is excluded
+from scored task cost.
+
+The live source blocks match the accepted spike packet exactly. The restored
+packet reports complete discovery, adds two reading leads, and returns
+`requests/api.py` where the accepted packet returned `requests/utils.py`.
+Historical live answers were not retained, and the coding agent generated its
+own query, so these live differences alone do not establish a port mismatch or
+explain the cost increase. Full traces and patch are retained for comparison.
+
+The quality gate remains every baseline solve preserved and at least seven
+solved strict Sol-cost wins in this single frozen ten-task cohort. One restored
+solve and deterministic parity do not satisfy it.

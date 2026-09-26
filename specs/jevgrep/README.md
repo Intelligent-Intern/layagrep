@@ -7,28 +7,31 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: finish the restored package's supported-runtime verification, then freeze
-one new official cohort using the existing baselines.
+Next: finish and grade the frozen `installed-jg-reference-parity-v1` cohort,
+account for every attempt, and compare its traces with the fixed baselines.
 The user explicitly rejected architecture changes disguised as implementation
-cleanup. No further paid treatment should start before this parity gate passes.
+cleanup. The deterministic parity and supported-runtime gates now pass.
 Selection, discovery, parser fallback, output, skill and guidance repairs are
 integrated. Matched HTTP comparisons exercise the production entry point against
 the frozen winner; the preservation matrix records their scope and limits.
+The exact archive passed macOS arm64 and Linux amd64/arm64 checks. Requests
+officially solved but exceeded baseline cost. The other nine cells are running
+sequentially, with no policy changes or baseline reruns.
 
 The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
 superseded, retaining completed outcomes and interrupted traces. It is not a
 release acceptance cohort. Never rerun saved baselines or pool candidates.
 Report Jev observed API costs separately from scored full Sol cost.
 
-Restore reference expansion, discovery inputs/order, excerpt presentation, scoped
+Keep the restored expansion, discovery inputs/order, excerpt presentation, scoped
 guidance and exact accepted skill (only rename executable to `jg`). Required
 Node-only runtime, auth, cache, filesystem protections and truthful failure
 handling remain, but must not silently change healthy retrieval decisions.
 The earlier deterministic and platform gates passed for the deviating port;
 they do not prove parity. See [parity restoration](assets/parity-restoration.md) and the
 [source-budget investigation](assets/source-budget-decision.md).
-After parity: frozen quality confirmation, affected runtime gates, whole-spec
-review and close-spec. See [contracts](contracts.md) for the corrected contract.
+Remaining: frozen quality confirmation, whole-spec review and close-spec.
+See [contracts](contracts.md) for the corrected contract.
 
 No user decision blocks starting. External verification dependencies are a working
 Docker daemon, explicit Gateway credentials for live tests, retained official task
@@ -45,7 +48,7 @@ not claims about the current scaffold.
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
 - [x] [02 — Bundled parser parity](slices/02-parser.md)
 - [x] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
-- [ ] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
+- [x] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
 - [x] [05 — Faults, cancellation and partial results](slices/05-failures.md)
 - [x] [06 — Default-on fresh cache](slices/06-cache.md)
 - [x] [07 — Preserved output policy](slices/07-output-policy.md)

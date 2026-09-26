@@ -1,6 +1,7 @@
 # Deliver the installed CLI and agent workflow
 
-Status: reopened for faithful end-to-end reference parity. Depends on: 01, 02, 03. Read [contracts](../contracts.md) first.
+Status: verified on the restored package (2026-09-26). Depends on: 01, 02, 03.
+Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
@@ -23,6 +24,12 @@ needed. CLI transcripts replace visual/screenshot gates for this product.
 ## Verification and verdict
 
 Docker fixture exercises installed auth, help, doctor, query, skill and partial output with empty stderr and isolated HOME/XDG. Pack excludes evals, secrets and workspace dependencies. Run one explicit live Jev query, then Sol through installed skill/CLI on the saved Requests task; inspect query, stdout, subsequent reads, patch, official grade and full bill. Reuse baseline; do not rerun it. One pass proves integration only, not cohort quality.
+
+The restored frozen cohort's Requests cell officially resolved with complete
+Sol and Jev billing. Its source blocks match the accepted spike packet; the
+live file/lead decisions differ. This verifies installed integration, not a
+cost advantage. [Restoration evidence](../assets/parity-restoration.md) owns the
+artifact identity and measured costs.
 
 ## Delegated decisions
 
