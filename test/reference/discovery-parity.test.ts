@@ -1,10 +1,10 @@
 import { expect } from "bun:test";
-import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { testIfDocker } from "../helpers/docker";
 import { retrieve } from "../../packages/core/src/retrieve";
-import { createEvaluator } from "../../packages/core/src/gateway";
+import { createEvaluator, EvaluationFailure } from "../../packages/core/src/gateway";
 
 type Body = {
   state: {
@@ -28,16 +28,40 @@ function equalTrajectory(actual: unknown, expected: unknown, path = "requests"):
   );
 }
 const query = "Find Anchor implementations and related backends";
-async function trajectory(root: string, reference: boolean, reverseRelationCompletion = false) {
+async function trajectory(
+  root: string,
+  reference: boolean,
+  reverseRelationCompletion = false,
+  fault?: "split-once" | "split-exhausted" | "rate-limit",
+) {
   const held: Array<{ path: string; response: Response; release: (response: Response) => void }> =
     [];
   const requests: Body[] = [];
+  let failedGroup = false;
   const server = Bun.serve({
     port: 0,
     async fetch(request) {
+      expect(new URL(request.url).pathname).toBe("/v4/ai/evaluation-model");
       expect(request.headers.get("ai-model-id")).toBe("typesafe-ai/jev");
       const body = (await request.json()) as Body;
       if (body.state.items || body.state.preview) requests.push(body);
+      if (body.state.items && fault) {
+        if (fault === "rate-limit")
+          return Response.json(
+            { error: { message: "fixture cooldown" } },
+            { status: 429, headers: { "retry-after": "0" } },
+          );
+        if (
+          (!failedGroup && body.state.items.length > 1) ||
+          (fault === "split-exhausted" && body.state.items[0]?.path === "other.txt")
+        ) {
+          failedGroup = true;
+          return Response.json(
+            { error: { message: "fixture transient failure" } },
+            { status: 503 },
+          );
+        }
+      }
       const response = Response.json({
         answers: Object.fromEntries(
           Object.keys(body.questions).map((id, i) => {
@@ -89,19 +113,25 @@ async function trajectory(root: string, reference: boolean, reverseRelationCompl
           stderr: "pipe",
         },
       );
-      const [code, , stderr] = await Promise.all([
+      const [code, stdout, stderr] = await Promise.all([
         child.exited,
         new Response(child.stdout).text(),
         new Response(child.stderr).text(),
       ]);
       expect(stderr).toBe("");
       expect(code).toBe(0);
+      if (fault) expect(stdout.includes("discovery incomplete")).toBe(fault !== "split-once");
     } else {
       const signal = new AbortController().signal;
-      await retrieve(
+      const result = await retrieve(
         { root, query, signal },
-        createEvaluator({ apiKey: "fixture", baseURL: `http://127.0.0.1:${server.port}`, signal }),
+        createEvaluator({
+          apiKey: "fixture",
+          baseURL: `http://127.0.0.1:${server.port}/v4/ai`,
+          signal,
+        }),
       );
+      if (fault) expect(result.status).toBe(fault === "split-once" ? "complete" : "incomplete");
     }
     return requests;
   } finally {
@@ -234,6 +264,112 @@ testIfDocker(
       );
       expect(firstDescendant?.state.items?.[0]?.path.startsWith("src/relatedZ/")).toBe(true);
     } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+  120_000,
+);
+
+for (const fault of ["split-once", "split-exhausted", "rate-limit"] as const) {
+  testIfDocker(
+    `navigation ${fault} recovery matches frozen HTTP trajectory`,
+    async () => {
+      const root = await mkdtemp(join(tmpdir(), "jg-navigation-fault-"));
+      try {
+        await writeFile(
+          join(root, "Anchor.py"),
+          "class Anchor:\n    def event(self):\n        return True\n",
+        );
+        await writeFile(join(root, "other.txt"), "ordinary source\n");
+        equalTrajectory(
+          await trajectory(root, false, false, fault),
+          await trajectory(root, true, false, fault),
+        );
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+    120_000,
+  );
+}
+
+testIfDocker(
+  "split halves append to the same queue and recovered parents do not mark incomplete",
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "jg-split-queue-"));
+    try {
+      for (const name of ["a", "b", "c", "d", "e"])
+        await writeFile(join(root, `${name}.txt`), `${name} source\n`);
+      for (const exhaustedLeaf of [false, true]) {
+        const groups: string[][] = [];
+        let requests = 0;
+        const result = await retrieve(
+          { root, query, signal: new AbortController().signal },
+          {
+            get requests() {
+              return requests;
+            },
+            async evaluate(request, options) {
+              requests++;
+              const items = (request as unknown as Body).state.items;
+              if (items) {
+                expect(options?.navigation).toBe(true);
+                groups.push(items.map((item) => item.path));
+                if (items.length > 1) throw new EvaluationFailure("provider", true);
+                if (exhaustedLeaf && items[0]!.path === "c.txt")
+                  throw new EvaluationFailure("provider");
+              }
+              return Object.fromEntries(
+                Object.keys(request.questions).map((id) => [id, items ? 0.9 : 0.25]),
+              );
+            },
+          },
+        );
+        expect(groups).toEqual([
+          ["a.txt", "b.txt", "c.txt", "d.txt", "e.txt"],
+          ["a.txt", "b.txt", "c.txt"],
+          ["d.txt", "e.txt"],
+          ["a.txt", "b.txt"],
+          ["c.txt"],
+          ["d.txt"],
+          ["e.txt"],
+          ["a.txt"],
+          ["b.txt"],
+        ]);
+        expect(result.status).toBe(exhaustedLeaf ? "incomplete" : "complete");
+        expect(result.issues).toEqual(exhaustedLeaf ? [{ kind: "provider", count: 1 }] : []);
+        expect(result.files.map((file) => file.path)).toEqual(
+          exhaustedLeaf
+            ? ["a.txt", "b.txt", "d.txt", "e.txt"]
+            : ["a.txt", "b.txt", "c.txt", "d.txt", "e.txt"],
+        );
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+  120_000,
+);
+
+testIfDocker(
+  "unavailable directory previews are skipped rather than classified as empty metadata",
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "jg-preview-unavailable-"));
+    const blocked = join(root, "src/blocked");
+    try {
+      await writeFile(
+        join(root, "Anchor.py"),
+        "class Anchor:\n    def event(self):\n        return True\n",
+      );
+      await mkdir(blocked, { recursive: true });
+      await writeFile(join(blocked, "implementation.py"), "def event(): return True\n");
+      await chmod(blocked, 0);
+      const expected = await trajectory(root, true);
+      const actual = await trajectory(root, false);
+      equalTrajectory(actual, expected);
+      expect(JSON.stringify(actual)).not.toContain("src/blocked");
+    } finally {
+      await chmod(blocked, 0o700);
       await rm(root, { recursive: true, force: true });
     }
   },

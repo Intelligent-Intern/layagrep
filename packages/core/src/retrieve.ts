@@ -68,17 +68,52 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       batch.push(item);
     }
     if (batch.length) batches.push(batch);
-    await parallel(batches, async (group) => {
+    async function scoreGroup(group: NavigationItem[]) {
       try {
-        const scores = await evaluator.evaluate(navigationRequest(input.query, group, anchor));
+        const scores = await evaluator.evaluate(navigationRequest(input.query, group, anchor), {
+          navigation: true,
+        });
         group.forEach((item, index) => results.push({ item, score: scores[`q${index}`]! }));
       } catch (error) {
-        issue(error instanceof EvaluationFailure ? error.kind : "provider");
+        if (
+          error instanceof EvaluationFailure &&
+          error.kind === "provider" &&
+          error.splitEligible &&
+          group.length > 1
+        ) {
+          const middle = Math.ceil(group.length / 2);
+          batches.push(group.slice(0, middle), group.slice(middle));
+        } else issue(error instanceof EvaluationFailure ? error.kind : "provider");
       }
+    }
+    // Failed groups append their halves to the same queue. A recovered parent is
+    // not incomplete; only an exhausted leaf or a terminal failure records an issue.
+    await new Promise<void>((resolve, reject) => {
+      let active = 0;
+      let rejected = false;
+      function pump() {
+        if (rejected) return;
+        while (active < 8 && batches.length && !stop && !input.signal.aborted) {
+          const group = batches.shift()!;
+          active++;
+          scoreGroup(group).then(
+            () => {
+              active--;
+              pump();
+            },
+            (error) => {
+              rejected = true;
+              reject(error);
+            },
+          );
+        }
+        if (active === 0) resolve();
+      }
+      pump();
     });
     return results;
   }
-  async function previewDirectory(path: string): Promise<DirectoryPreview> {
+  async function previewDirectory(path: string): Promise<DirectoryPreview | undefined> {
     const preview: DirectoryPreview = {
       entries: [],
       truncated: false,
@@ -93,6 +128,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
         const page = await reader.listPage(path, cursor);
         cursor = page.nextCursor;
         for (const entry of page.issues) issue(entry.kind);
+        if (page.issues.length) return;
         for (const entry of page.entries) {
           const child = { name: basename(entry.path), kind: entry.kind };
           const size = Buffer.byteLength(JSON.stringify(child));
@@ -255,11 +291,9 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           if (entry.kind === "directory") {
             if (current.depth === 0) level.push({ path: entry.path, depth: 1 });
             else {
-              const item: NavigationItem = {
-                path: entry.path,
-                kind: "directory",
-                childPreview: await previewDirectory(entry.path),
-              };
+              const childPreview = await previewDirectory(entry.path);
+              if (!childPreview) continue;
+              const item: NavigationItem = { path: entry.path, kind: "directory", childPreview };
               items.push(anchor ? await withDirectoryContent(item) : item);
             }
           } else {
