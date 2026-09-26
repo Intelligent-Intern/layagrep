@@ -6,7 +6,9 @@ The production Node-only CLI is implemented and its installed package is verifie
 on macOS and Linux. The [implementation record](specs/done/jevgrep/README.md)
 owns the rationale, invariants and evidence limits. The user accepted the documented
 quality tradeoff after the corrected candidate failed its original benchmark gate;
-one separately authorized identical-cohort variance check remains pending.
+the separately authorized identical-runtime repeat also failed that gate. It solved
+7/10 tasks versus the saved baseline’s 8/10 while reducing total Sol cost by 40.70%.
+Both complete cohorts remain separately reported in the implementation record.
 
 ## Development
 
@@ -44,5 +46,5 @@ The npm package is `@dzhng/jevgrep`; its executable is `jg`. The project uses th
 [MIT license](LICENSE). [Release guidance](scripts/RELEASING.md) describes the
 verified tarball and GitHub tag workflow. Publication requires the repository's
 `NPM_TOKEN` secret and a deliberate release tag. The user authorized `0.1.0`
-publication after the pending repeat and closeout; the frozen benchmark archive
+publication after the completed repeat and final release checks; the frozen benchmark archive
 remains `0.0.0` and is not a publication candidate.

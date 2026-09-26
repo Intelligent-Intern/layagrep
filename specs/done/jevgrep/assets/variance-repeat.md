@@ -1,6 +1,6 @@
 # Identical-runtime variance repeat
 
-Status: running. After accepting the first corrected cohort's documented
+Status: complete; all ten tasks are officially graded and fully billed for Sol. After accepting the first corrected cohort's documented
 tradeoff, the user authorized exactly one additional full cohort to examine
 variation. The original outcomes remain intact and no baseline is rerun.
 
@@ -21,10 +21,34 @@ uses the unchanged archived runner. Its `preparation-method.json` and
 `/tmp/jg-freshness-repeat-v1b-freeze-proof.json` retain the method and file hashes.
 No product or evaluation policy changed to repair the setup.
 
-Live execution and sequential grading/accounting belong to sessions `67618` and
-`27936`; logs use `/tmp/jg-freshness-repeat-v1b-{run,observer}.log`. Revalidate
-their handles before any resume. Final results must be shown alongside the first
-cohort, without pooling selected cells or replacing its failed verdict.
+Both execution and sequential grading/accounting exited successfully. Logs use
+`/tmp/jg-freshness-repeat-v1b-{run,observer}.log`. The immutable
+[repeat aggregate](variance-repeat-aggregate.json) retains all ten results.
+
+| Measurement | Saved baseline | First corrected cohort | Identical-runtime repeat |
+| --- | ---: | ---: | ---: |
+| Official solves | 8/10 | 6/10 | 7/10 |
+| Baseline solves preserved | — | 6/8 | 7/8 |
+| Solved tasks cheaper than baseline | — | 4 | 4 |
+| Full Sol cost, including failures | $7.6220690 | $5.5410776 | $4.5195532 |
+| Sol savings | — | 27.30% | 40.70% |
+| Original gate accepted | — | false | false |
+
+The repeat's known Jev subtotal is $1.021334412; its full total is unknown and
+excluded from scored Sol cost. These are provider metadata observations, not
+invoice reconciliation. No baseline was rerun and no outcomes were pooled.
+Requests recovered its solve; Django still lost a baseline solve. This single
+repeat demonstrates variation, not a reliability estimate or causal explanation.
+The user's separate acceptance of the documented tradeoff remains explicit.
+
+An independent read-only audit reconciled all ten receipts, grading reports,
+158 distinct Sol generation charges, frozen runtime artifacts and saved baseline
+hashes: 273 checks with no discrepancies. The two cohorts' generation IDs are
+disjoint. Aggregate SHA-256:
+`2c0a7c78b000e14197fa12364b70d2d258f31eb1a85d416599e0ce2945a6ac90`.
+Audit detail: `/tmp/jg-final-repeat-audit.md`. A separate claim audit checked this
+record, the closure docs and all ten paired trace comparisons without findings.
+
 
 ## Completed observations
 
@@ -112,3 +136,26 @@ passed immediately in one 35-pass domain-suite run, versus three test-authoring
 repairs and broader verification in the first run. Omitted broader coverage
 does not show that the known environment warning was fixed. Evidence:
 `/tmp/jg-repeat-sphinx-comparison.md`.
+
+Matplotlib remains unresolved at $0.2444352 versus first-run $0.4256784 and
+baseline $0.3957160. Its packet grew from 3,846 bytes without excerpts to 9,865
+bytes with eight blocks. It delivered the Annotation constructor and an OffsetFrom
+header, but not the missing OffsetFrom constructor logic. The agent fixed only
+Annotation, using the same tuple conversion as the saved baseline. Local tests
+passed 389 with 14 skips; they did not cover the missing OffsetFrom behavior.
+The official combined annotation/OffsetFrom test still failed. Jev's known subtotal
+is $0.208445538, full total unknown. Evidence:
+`/tmp/jg-repeat-matplotlib-comparison.md`.
+
+Pylint remains officially unresolved at $0.2599172 versus first-run $0.3656432
+and baseline $0.2836264. Official test collection failed with a missing `IS_PYPY`
+import before any tests executed. This is not proof of a patch assertion failure.
+Its complete observed Jev total is $0.056059794, excluded from scored Sol cost.
+
+The repeat's production patch matches the saved baseline and accepted spike;
+the first corrected patch used an equivalent shared traversal for the inspected
+path. Its packet contained 34 files without excerpts versus 32 files with two
+fixture excerpts. Local checks passed one, twenty and six tests; the repeat
+used fewer pre-patch reads and no standalone AST probe. Neither those differences
+nor the lower cost establish a causal effect of retrieval. Evidence:
+`/tmp/jg-repeat-pylint-comparison.md`.

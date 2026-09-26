@@ -229,4 +229,4 @@ not prerequisites hidden inside this release. Keep all traces and official grade
 The corrected candidate did not pass that numerical gate. The user explicitly
 accepted implementation closure with the documented tradeoff; this does not
 change the retained aggregate verdict. [Closure and evidence bounds](README.md)
-own that decision and the separately authorized pending variance repeat.
+own that decision and the separately authorized completed variance repeat.

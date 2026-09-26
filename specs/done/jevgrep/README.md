@@ -18,14 +18,15 @@ trace comparisons and immutable aggregate; its `accepted: false` verdict remains
 The earlier [passing confirmation](assets/work-clock-confirmation.md) belongs to
 its own frozen package and cannot replace the corrected candidate's result.
 
-The user separately authorized one [identical cohort repeat](assets/variance-repeat.md)
-to double-check variance. **That measurement is pending at this documentation checkpoint.** It
-is not permission to replace failures, pool outcomes, change the strategy or keep
-rerunning until the gate passes. Its terminal evidence and the final independent
-claim audit remain closeout work for the coordinating agent. The user authorized publication of `0.1.0` once the repeat and closeout finish.
-The [0.1.0 release candidate](assets/release-0.1.0.md) passed local validation and
-installed checks; CI publication and registry verification remain pending. The repeated benchmark retains the frozen `0.0.0` archive;
-release preparation does not replace its measured artifact.
+The separately authorized [identical-runtime repeat](assets/variance-repeat.md)
+finished with seven solves, seven of eight baseline solves preserved, four
+successful cost wins and 40.70% lower full Sol cost. Its original gate also remains
+failed. Both cohorts retain every attempt; neither best-cell pooling nor baseline
+reruns contribute to either result. No further repeat was authorized or run.
+The user authorized publication of `0.1.0` after closeout. The
+[release evidence](assets/release-0.1.0.md) distinguishes local validation from
+CI publication and registry verification. Both measured cohorts retain the frozen
+`0.0.0` archive; release preparation changes version identity, not their evidence.
 
 ## Why this shape
 
