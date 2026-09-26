@@ -1,6 +1,8 @@
 # Corrected-package confirmation
 
-Status: running. This is a separate prospective ten-task cohort for the
+Status: running; acceptance already contradicted by a lost Django baseline solve.
+Finish and retain the registered cohort rather than replacing that attempt.
+This is a separate prospective ten-task cohort for the
 [source-freshness correction](source-freshness.md), not a replacement of individual
 cells from the preceding accepted study. The frozen plan, archived runner and
 attempt evidence live at `evals/runs/swebench/installed-jg-freshness-v1/`.
@@ -13,6 +15,7 @@ separately and excluded; incomplete observations are subtotals, not totals.
 | Task | Official result | Sol | Baseline Sol | Jev observed API cost |
 | --- | --- | ---: | ---: | --- |
 | scikit-learn__scikit-learn-13124 | solved; not a cost win | $0.3434830 | $0.2944360 | known $0.046611348; total unknown |
+| django__django-15629 | unresolved | $1.0695890 | $1.5055472 | known $0.158282796; total unknown |
 
 Scikit-learn returned five relevant files in 5,038 bytes, implementation reading
 leads and two test source blocks. The agent then read the splitter and tests, searched documentation,
