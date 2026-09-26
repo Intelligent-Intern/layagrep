@@ -14,8 +14,8 @@
   "dependencies": {
     "ai": "7.0.107",
     "ignore": "7.0.5",
-    "typescript": "5.9.3",
-    "pyodide": "0.25.1"
+    "pyodide": "0.25.1",
+    "typescript": "5.9.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

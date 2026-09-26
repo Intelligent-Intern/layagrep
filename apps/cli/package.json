@@ -29,8 +29,8 @@
     "test": "bun test test"
   },
   "dependencies": {
-    "typescript": "5.9.3",
-    "pyodide": "0.25.1"
+    "pyodide": "0.25.1",
+    "typescript": "5.9.3"
   },
   "devDependencies": {
     "@clack/prompts": "1.8.1",
