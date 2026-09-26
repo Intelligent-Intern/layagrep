@@ -7,10 +7,11 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: finish the frozen `installed-jg-cpython-parity-v1` cohort. Requests is the
-first completed checkpoint: officially solved, fully billed, and 14.0% below
-baseline Sol cost. Its paired trace review is underway; the same plan's remaining
-cells are running. Never rerun an existing baseline or replace a retained
+Next: finish the frozen `installed-jg-cpython-parity-v1` cohort. Requests and
+scikit-learn are officially solved and fully billed cost wins.
+Requests paired trace review is complete; the same plan's remaining cells are
+running. [Cohort confirmation](assets/cpython-confirmation.md) owns the results.
+Never rerun an existing baseline or replace a retained
 attempt. The merged `bun run verify` gate passed and whole-product review's sole
 finding is fixed with a clean follow-up review. Exact archive checks pass on
 macOS arm64 and Linux arm64/amd64; all ten no-call validations passed.
@@ -19,7 +20,8 @@ and interpreter-version limits. Quality acceptance remains unproven.
 
 `installed-jg-reference-parity-v1` is stopped and superseded. Requests and
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted
-with its patch and traces retained; seven cells never started. These superseded studies remain stopped; only the new bundled-CPython study is
+with its patch and traces retained; seven cells never started. These superseded
+studies remain stopped; only the new bundled-CPython study is
 active.
 
 The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
@@ -52,7 +54,7 @@ not claims about the current scaffold.
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
 - [x] [02 — Bundled parser parity](slices/02-parser.md)
 - [x] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
-- [ ] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
+- [x] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
 - [x] [05 — Faults, cancellation and partial results](slices/05-failures.md)
 - [x] [06 — Default-on fresh cache](slices/06-cache.md)
 - [x] [07 — Preserved output policy](slices/07-output-policy.md)

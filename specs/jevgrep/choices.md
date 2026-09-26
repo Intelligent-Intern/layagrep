@@ -1,5 +1,82 @@
 # Implementation choices
 
+Current decisions, ordered by confidence. Superseded experiments belong in the
+[restoration evidence](assets/parity-restoration.md). Final closeout must re-audit
+this ledger against the shipped state; benchmark acceptance is still open.
+
+## Sound — medium confidence
+
+### Pin request contents without pretending network arrival order is meaningful
+
+When: reference harness pass. Two file reads can finish in either order in the
+accepted spike. The fixture now supplies one initial source excerpt and a separate
+reading lead so its follow-up request has stable evidence ordering. The harness
+sorts whole independent HTTP requests for comparison, while preserving every field
+and every ordered item inside them. The alternative—sorting evidence inside each
+request—would hide an input change that could change Jev's answer.
+
+Gap: the spec did not define how to control historical concurrency in the fixture.
+Reach: this fixture proves exact request construction, not determinism on every
+repository. Production deliberately preserves selection-completion order inside
+cross-file evidence: whichever file finishes first contributes its evidence first.
+A warm cache can change that order and therefore produce a genuinely new request.
+Verdict: sound. Confidence: medium; preserving the measured behavior takes priority
+over making requests deterministic.
+
+### Stream directory entries in native order
+
+When: filesystem component integration. A directory can contain more entries than
+fit in one page. Its open cursor retains the unread entries instead of loading the
+whole directory just to alphabetize it. The caller must keep reading even when a
+page contains only excluded names, and must close a cursor when pruning a branch.
+
+Gap: the plan required bounded pages but did not prescribe reader ordering.
+Reach: this streaming behavior belongs to the filesystem reader. Retrieval gathers
+the pages and alphabetizes entries before constructing requests, preserving the
+frozen strategy. It may not treat a page boundary as the end of a directory.
+Verdict: sound. Confidence: medium; this does not claim bounded total retrieval
+memory for an arbitrarily wide directory.
+
+### Preserve the winner while deferring throughput changes
+
+When: reference restoration. Earlier unverified source-budget changes are
+[superseded experiments](assets/parity-restoration.md), not active product choices. A minified file can contain several declarations on
+one line; the winning strategy may ask about that line repeatedly under different
+declaration names. Combining those questions could change Jev's answers, so this
+port keeps them. Separately, saving a cache answer scans existing entries to
+enforce the disk limit. A large cache therefore has repeated scanning overhead.
+
+Gap: review found performance costs that are outside the user's current solve-rate
+and task-cost acceptance priorities. Reach: the confirmation does not establish
+whole-computer throughput or optimal cache maintenance. Verdict: sound for this
+confirmation, with medium confidence: retain measured retrieval behavior and
+report the cache limitation; test any later optimization as a separately identified
+artifact rather than silently changing the candidate being confirmed.
+
+### Isolate bundled CPython in one Node child process
+
+When: Python parity restoration. If query A is parsing source when its caller
+cancels, terminate the interpreter process. If query B also has a pending helper
+request, replay B's pure parsing request in a replacement process rather than
+failing B along with A. The helpers have no repository side effects, so repeating
+that parsing does not repeat a user action. An idle interpreter does not keep the
+CLI alive and exits when its parent disconnects.
+
+Gap: the spec requires no system Python and cancelable inspection but leaves the
+interpreter isolation mechanism open. One Node child process owns the bundled
+interpreter in production and Bun-hosted development, avoiding a dependency patch
+or separate parser for the development runner.
+
+A helper failure caused by source preserves the reference fallback; a missing
+runtime or failed child process remains fatal. Child diagnostics cannot escape the
+CLI's output handling. Python counts carriage-return-only line endings as lines, while the reference
+caller splits excerpts only at newline characters. Keep those two coordinate
+rules distinct on such files; normalizing them would change reference behavior.
+
+Reach: the package gains runtime assets and a child process, but still requires
+only Node. Verdict: sound. Confidence: medium. Interpreter version boundaries and footprint
+measurements live in [runtime rationale](assets/python-runtime.md).
+
 ## Sound — high confidence
 
 ### Keep deprecated tooling outside workspace discovery
@@ -13,32 +90,6 @@ commands are removed; historical local files remain available.
 Gap: the plan required a cutover but did not specify when workspace discovery
 changed. Reach: future packages must be added deliberately. Verdict: sound,
 because ordinary development should not invoke deprecated workflows.
-
-### Pin request contents without pretending network arrival order is meaningful
-
-When: reference harness pass. Two file reads can finish in either order in the
-accepted spike. The fixture now supplies one initial source excerpt and a separate
-reading lead so its follow-up request has stable evidence ordering. The harness
-sorts whole independent HTTP requests for comparison, while preserving every field
-and every ordered item inside them. The alternative—sorting evidence inside each
-request—would hide an input change that could change Jev's answer.
-
-Gap: the spec did not define how to control historical concurrency in the fixture.
-Reach: this fixture proves exact request construction, not determinism on every
-repository. Verdict: sound. Confidence: high. The ordering race remains documented
-for the production port to resolve deliberately.
-
-### Stream directory entries in native order
-
-When: filesystem component integration. A directory can contain more entries than
-fit in one page. Its open cursor retains the unread entries instead of loading the
-whole directory just to alphabetize it. The caller must keep reading even when a
-page contains only excluded names, and must close a cursor when pruning a branch.
-
-Gap: the plan required bounded pages but did not prescribe order. Reach: traversal
-must sort candidate output separately and may not treat a page boundary as the end
-of a directory. Verdict: sound. Confidence: medium; the quality effect of request
-ordering remains part of the installed benchmark confirmation.
 
 ### Fix eligibility policy for one reader
 
@@ -72,16 +123,6 @@ Gap: the result schema did not distinguish cache warnings from evidence failures
 Reach: callers can trust a complete search even if it ran without persistence.
 Verdict: sound. Confidence: high.
 
-### Bound pending source batches without limiting admitted file counts
-
-When: traversal integration. Flush accumulated source fragments by bytes before
-many large files can pile up in memory. Keep candidate metadata for every file
-passing the threshold, and revisit snapshots when selecting source.
-
-Gap: the plan delegated batching details. Reach: request grouping differs from the
-reference under large inputs and therefore needs the production quality gate.
-Verdict: provisional until the frozen task comparison. Confidence: medium.
-
 ### Rebuild the CLI whenever build is requested
 
 When: packaging integration. The bundled CLI includes core source and the canonical
@@ -109,7 +150,10 @@ Confidence: high. Actual publication still requires a later user-triggered tag.
 When: release packaging. Use Bun's emitted-input metadata to collect installed
 license notices. Retain a version-specific upstream license for the SDK package
 whose npm archive omits it; an unknown missing license fails the build. The user
-selected MIT for Jevgrep itself.
+selected MIT for Jevgrep itself. The externally installed Pyodide distribution
+uses separately pinned component notices because emitted JavaScript metadata
+cannot discover licenses for its compiled runtime. An upgrade requires reviewing
+those notices; it does not inherit the old notice set automatically.
 
 Gap: the spec required licenses but left collection mechanics open. Reach: a
 new dependency can require a verified notice update, while ordinary builds need
@@ -131,27 +175,13 @@ the same evaluator cancellation. Verdict: sound. Confidence: high.
 
 When: installed failure acceptance. A user can interrupt after some declaration
 groups have returned useful source. That interruption ends further work and marks
-the result incomplete; it does not itself mean the source changed. Actual changed
+the result `interrupted`; it does not itself mean the source changed. Actual changed
 or newly excluded snapshots still discard their evidence.
 
 Gap: the filesystem interruption and invalidation paths shared a preparation
 boundary, so the implementation had to distinguish their effect on retained data.
 Reach: partial output remains useful without claiming complete discovery or a
 filesystem lock. Verdict: sound. Confidence: high.
-
-### Superseded source-budget tuning before port parity
-
-When: source-budget trial. I ranked limited source by contained declaration scores
-and selected a 1,500-byte default after one task improved against the already
-changed production port. The winning spike itself was uncapped and expanded
-context differently; the experiment did not establish parity with that winner.
-
-Gap: the spec delegated a measured budget but did not authorize treating an
-unverified port as equivalent to the accepted reference. Reach: the capped study
-and stopped cohort remain historical evidence only. Verdict: unsound sequencing.
-Corrected decision: restore exact reference retrieval/output/skill behavior and
-prove computed-request and output parity before introducing architecture changes.
-Confidence: high. The default is restored to uncapped.
 
 ### Freeze one installed package across the official cohort
 
@@ -175,33 +205,3 @@ Gap: the native smoke mechanism was delegated. Reach: portable assertions stay
 shared while Linux tool-absence assertions retain their own Docker scope; a Mac
 with Python installed cannot accidentally satisfy a runtime dependency through
 PATH. Verdict: sound. Confidence: high.
-
-### Preserve the winner while deferring throughput changes
-
-When: reference restoration. A minified file can contain several declarations on
-one line; the winning strategy may ask about that line repeatedly under different
-declaration names. Combining those questions could change Jev's answers, so this
-port keeps them. Separately, saving a cache answer scans existing entries to
-enforce the disk limit. A large cache therefore has repeated scanning overhead.
-
-Gap: review found performance costs that are outside the user's current solve-rate
-and task-cost acceptance priorities. Reach: the confirmation does not establish
-whole-computer throughput or optimal cache maintenance. Verdict: sound for this
-confirmation, with medium confidence: retain measured retrieval behavior and
-report the cache limitation; test any later optimization as a separately identified
-artifact rather than silently changing the candidate being confirmed.
-
-### Isolate bundled CPython in one Node child process
-
-Gap: the spec requires no system Python and cancelable inspection but leaves the
-interpreter isolation mechanism open. Use the spike's unchanged helpers inside
-bundled CPython, with one Node child process owning interpreter state. A worker
-thread passed Node checks but its Pyodide loader failed under the existing Bun
-development runner; attempting to normalize its environment did not solve it.
-A single Node process path avoids patching the dependency or retaining two parsers.
-
-Reach: the package gains runtime assets and a child process; pure pending helper
-jobs may need replay when cancellation terminates that process. The product still
-requires only Node. Verdict: sound; merged lifecycle, parity and installed checks passed, with a
-clean review follow-up. Confidence: medium. Version coverage and footprint rationale live
-in [runtime evidence](assets/python-runtime.md).

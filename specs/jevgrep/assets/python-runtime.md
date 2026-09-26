@@ -74,12 +74,9 @@ whole runtime as Apache-only. Packaging owns those notices and their verificatio
 on the archive above and the existing Sol model/harness/baselines. Its exact
 archive passed four offline installed checks on each of Linux amd64 and arm64,
 and the native macOS smoke identified the same SHA-256. Release content validation
-and all ten dry-run validations passed before paid execution. The Requests cell
-started first and officially resolved with zero evaluator errors. Its nine Sol
-generations are fully accounted at $0.23078 versus baseline $0.2685004 (14.0%
-lower). Jev observed cost is separately $0.011333322 across 72 client calls
-and 81 provider attempts; it is excluded from scored task cost. This is one
-verified cost win, not cohort acceptance. Remaining cells continue unchanged. Superseded studies remain
+and all ten dry-run validations passed before paid execution. Current official
+results and paired trace findings belong in the
+[cohort confirmation](cpython-confirmation.md). Superseded studies remain
 historical and contribute no outcomes to this cohort. Platform transcripts are
 `/tmp/jg-cpython-frozen-amd64.log` and `/tmp/jg-cpython-frozen-arm64.log`;
 preparation and dry-run transcripts use the `/tmp/jg-cpython-cohort-` prefix.
