@@ -91,3 +91,14 @@ autowrap and 55 codegen tests. A compiled check failed while importing NumPy,
 before compilation, so local verification does not establish compiled execution.
 Official grading resolved the task. Evidence:
 `/tmp/jg-freshness-v1-sympy-comparison/findings.md`.
+
+Pytest returned 25 files in 16,695 bytes with four source blocks, mainly Session
+context; the agent then read Package directly. Its final production fix matches
+the first faithful treatment apart from a loop variable name. Its new regression
+is a flat package case; prior independent testing of the equivalent earlier patch
+passed the nested case, so lack of a new nested test is not proof of a defect.
+Before a final streaming refinement, the broad suite passed 220 with two
+`pkg_resources` dependency failures and one expected failure. Final focused
+verification passed nine with one such dependency failure after correcting test
+selectors. Official evaluation separately resolved the task. Evidence:
+`/tmp/jg-freshness-v1-pytest-comparison/findings.md`.
