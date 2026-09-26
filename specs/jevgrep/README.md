@@ -16,7 +16,9 @@ attempt. The merged `bun run verify` gate passed and whole-product review's sole
 finding is fixed with a clean follow-up review. Exact archive checks pass on
 macOS arm64 and Linux arm64/amd64; all ten no-call validations passed.
 See [runtime evidence](assets/python-runtime.md) for coverage, artifact identity
-and interpreter-version limits. Quality acceptance remains unproven.
+and interpreter-version limits. Django failed a required test despite a solved baseline, so solve-preservation
+acceptance currently fails. Continue the remaining frozen cells and paired failure
+analysis before proposing a correction.
 
 `installed-jg-reference-parity-v1` is stopped and superseded. Requests and
 scikit-learn officially solved but exceeded baseline cost; Django was interrupted
