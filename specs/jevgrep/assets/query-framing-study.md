@@ -9,9 +9,15 @@ not a replacement parser, traversal strategy, threshold or source representation
 
 Candidate branch commit: `99b6afefd0dfe33311a2c1139c67551a2d7e4478`.
 Candidate package SHA-256:
-`2b2b4712fcff4780d747063390bb31a460b7f368c260aefcce5dc5af9e254dcb`.
-Only the packaged skill differs from the parent archive. Every other member's
-payload and metadata is identical; proof lives in `/tmp/jg-mechanism-query-v1/`.
+`bb3c8e0d5c5011d1a97eae397812f7b830f9a1c119f40aac4afb68b3be419c51`.
+The normal build changes only the skill asset and its embedded JavaScript string.
+All nine other package payloads match the parent; bundle bytes outside that one
+string are identical. The executable's `jg skill` output matches the candidate
+canonical skill. Proof lives in `/tmp/jg-mechanism-query-v1/rebuilt/`.
+The initial archive changed only the asset and failed preparation because the
+embedded copy was stale. That failed preparation remains in
+`installed-jg-mechanism-query-v1`, with zero model calls and no frozen plan.
+The rebuilt archive uses a fresh output directory; it does not replace an attempt.
 The production worktree's canonical skill is unchanged. Both archives remain
 unpublishable development version `0.0.0`; release validation intentionally rejects
 that version. No validation-only version shadow is substituted for the candidate.
@@ -26,7 +32,7 @@ names, implementation paths, missing conditions, or evaluator answer hints.
 The original issue remains unchanged in the agent prompt, and every later skill
 instruction remains byte-identical.
 
-Prepare one new ten-task frozen plan, `installed-jg-mechanism-query-v1`, using the
+Prepare one new ten-task frozen plan, `installed-jg-mechanism-query-v1b`, using the
 same package installation process, registry, task snapshots, baseline prompts,
 Sol model/effort, 900-second agent limit and official grading/accounting. Baselines
 run zero times. Execute Django first, once. All internal repairs, tool calls and
