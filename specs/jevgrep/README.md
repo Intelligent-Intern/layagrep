@@ -7,16 +7,17 @@ Jev classification through Vercel AI Gateway. This is the build plan; production
 ## Next Agent Prompt
 
 You are implementing this spec. Status: **implementing**, updated **2026-09-26**.
-Next: finish and grade the frozen `installed-jg-reference-parity-v1` cohort,
-account for every attempt, and compare its traces with the fixed baselines.
-The user explicitly rejected architecture changes disguised as implementation
-cleanup. The deterministic parity and supported-runtime gates now pass.
-Selection, discovery, parser fallback, output, skill and guidance repairs are
-integrated. Matched HTTP comparisons exercise the production entry point against
-the frozen winner; the preservation matrix records their scope and limits.
-The exact archive passed macOS arm64 and Linux amd64/arm64 checks. Requests
-officially solved but exceeded baseline cost. The other nine cells are running
-sequentially, with no policy changes or baseline reruns.
+Next: close the whole-product review's two reproduced preservation defects:
+second-pass evidence must follow selection-completion order, and invalid TS/JS
+must retain the reference's comment ranges. Fixes are delegated in isolated
+worktrees. Then run the merged parity gate and finish whole-product review before
+freezing another package or starting paid confirmation. Passing the exercised
+fixtures was insufficient; the earlier paid start was premature.
+
+`installed-jg-reference-parity-v1` is stopped and superseded. Requests and
+scikit-learn officially solved but exceeded baseline cost; Django was interrupted
+with its patch and traces retained; seven cells never started. No paid run is
+active. The goal remains active and independent deterministic work can continue.
 
 The changed-policy cohort `installed-jg-final-cohort-v1` was stopped and marked
 superseded, retaining completed outcomes and interrupted traces. It is not a
@@ -46,12 +47,12 @@ verification before ending each pass. These commands are targets to implement,
 not claims about the current scaffold.
 
 - [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
-- [x] [02 — Bundled parser parity](slices/02-parser.md)
+- [ ] [02 — Bundled parser parity](slices/02-parser.md)
 - [x] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
-- [x] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
+- [ ] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)
 - [x] [05 — Faults, cancellation and partial results](slices/05-failures.md)
 - [x] [06 — Default-on fresh cache](slices/06-cache.md)
-- [x] [07 — Preserved output policy](slices/07-output-policy.md)
+- [ ] [07 — Preserved output policy](slices/07-output-policy.md)
 - [ ] [08 — Frozen quality and release verification](slices/08-release.md)
 
 ## Product and scope

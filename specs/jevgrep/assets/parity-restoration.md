@@ -92,13 +92,15 @@ policy. Treating the selection ceiling as permission to classify text fragments
 instead was another unvalidated behavioral change; it can multiply requests and
 remove the class anchor that reconsiders skipped directories.
 
-## Restored live confirmation
+## Superseded restored confirmation
 
-The new frozen study is
-`evals/runs/swebench/installed-jg-reference-parity-v1/plan.json`. All ten no-call
-validations passed before paid execution. Requests ran first; the remaining
-cells run sequentially under the same package and prompt. Completed attempts are
-retained, never rerun by continuation.
+The study at `evals/runs/swebench/installed-jg-reference-parity-v1/plan.json` is
+stopped and marked superseded. All ten no-call validations passed, but the later
+whole-product review reproduced two mismatches missed by the exercised parity
+fixtures. Starting paid confirmation before that review finished was premature.
+Requests and scikit-learn completed; Django was interrupted with its patch,
+native sessions and Jev traces retained; seven cells never started. None of these
+results establishes release acceptance or authorizes continuing this study.
 
 Requests officially resolved. Full Sol cost was **$0.3331174** across 11 billed
 generations versus **$0.2685004** baseline: a solve, but not a cost win. Observed
@@ -123,6 +125,24 @@ strictly contains the other. These observations identify downstream work; they
 do not establish that file-list differences caused it. The saved generation
 receipts fully account for the $0.064617 increase over baseline.
 
-The quality gate remains every baseline solve preserved and at least seven
-solved strict Sol-cost wins in this single frozen ten-task cohort. One restored
-solve and deterministic parity do not satisfy it.
+Scikit-learn officially solved at Sol **$0.3426444** versus **$0.2944360** baseline,
+also not a cost win. Jev observed cost was **$0.071465982**, separately reported.
+The accepted spike already lost this pair on cost ($0.3188932). The restored
+agent recovered from a patch-context failure and a rejected test command before
+running its full module once; those steps were downstream of retrieval. A
+passing official grade does not establish all behavioral edge cases equivalent.
+
+## Remaining review gate
+
+The whole-product review reproduced two ordinary preservation defects. The
+reference builds second-pass `selectedEvidence` in source-selection completion
+order; the port used admission order. Delaying one file reverses meaningful
+array order despite identical model scores. Separately, TS/JS syntax fallback
+returned before collecting comments, so a selected fragment inside a block
+comment ended inside it instead of expanding to the reference's full comment.
+Both require whole-CLI regressions and fixes before another frozen candidate.
+
+Finish whole-product review before paid confirmation, in addition to matched
+HTTP tests and supported-runtime gates. The quality target remains every fixed
+baseline solve preserved and at least seven solved strict Sol-cost wins in one
+prospective ten-task cohort. Historical or interrupted attempts cannot be pooled.

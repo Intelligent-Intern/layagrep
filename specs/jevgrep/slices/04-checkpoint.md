@@ -1,6 +1,7 @@
 # Deliver the installed CLI and agent workflow
 
-Status: verified on the restored package (2026-09-26). Depends on: 01, 02, 03.
+Status: installed workflow verified; full-pipeline preservation reopened for
+selection-completion order (2026-09-26). Depends on: 01, 02, 03.
 Read [contracts](../contracts.md) first.
 
 ## Contract and owner

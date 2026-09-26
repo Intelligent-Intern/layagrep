@@ -1,6 +1,7 @@
 # Preserve the accepted retrieval packet
 
-Status: deterministic parity verified (2026-09-26); live quality belongs to 08.
+Status: reopened after whole-product review reproduced preservation defects
+(2026-09-26); live quality belongs to 08.
 Depends on: 04–06.
 
 The default is the accepted spike's uncapped source packet: ranked file locations,

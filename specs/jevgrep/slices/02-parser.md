@@ -1,6 +1,7 @@
 # Bundle source inspection without Python
 
-Status: verified against the frozen conformance cases (2026-09-26). Depends on: 01.
+Status: reopened for TS/JS syntax-fallback comment preservation (2026-09-26).
+Depends on: 01.
 Read [contracts](../contracts.md) first. Recognized syntax outside the reference's
 Python 3.11 boundary shares one fallback across inspection, previews and
 neighboring-method selection. TypeScript uses the reference comment traversal.
