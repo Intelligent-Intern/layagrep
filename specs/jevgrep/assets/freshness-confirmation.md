@@ -14,13 +14,16 @@ separately and excluded; incomplete observations are subtotals, not totals.
 | --- | --- | ---: | ---: | --- |
 | scikit-learn__scikit-learn-13124 | solved; not a cost win | $0.3434830 | $0.2944360 | known $0.046611348; total unknown |
 
-Scikit-learn returned five relevant files, implementation reading leads and test
-source. The agent then read the splitter and tests, searched documentation,
+Scikit-learn returned five relevant files in 5,038 bytes, implementation reading
+leads and two test source blocks. The agent then read the splitter and tests, searched documentation,
 reproduced the paired-fold problem and changed the shared random-state handling.
-It ran broader tests as well as focused regressions. Its unconditional
+It passed two focused tests, 61 module tests and 172 broader tests. Its unconditional
 `check_random_state` call retains the known invalid-seed compatibility caveat
 when shuffling is disabled. Official success does not establish that broader
 behavior unchanged, and the graded patch is not repaired after the fact.
+The production patch matches the preceding cohort exactly. Paired trace evidence:
+`/tmp/jg-freshness-v1-sklearn-comparison/findings.md`. The additional exploration
+and test work does not isolate a causal cost effect from the freshness correction.
 
 Root execution log: `/tmp/jg-freshness-v1-run.log`. Per-task grade and accounting
 receipts, complete event streams, patches and request/response evidence remain
