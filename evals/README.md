@@ -5,11 +5,10 @@ model and harness with and without Jevgrep. [Accepted architecture](../docs/arch
 records the spike decision and its evidence limits. The production implementation
 must earn its own results; historical wins do not transfer automatically.
 
-The maintained [installed-package checkpoint](implementation/swebench/installed.md)
-drives the actual `jg` executable with Sol and reuses the retained Requests
-baseline. It preserves raw Jev requests/responses, coding-agent actions, patches,
-official grades and complete generation bills. This single-task checkpoint is
-not the final ten-task confirmation.
+The maintained [installed-package harness](implementation/swebench/installed.md)
+drives the actual `jg` executable with Sol and reuses the fixed baselines.
+It supports a single-task checkpoint or a complete ten-task cohort, preserving raw
+Jev requests/responses, coding-agent actions, patches, official grades and bills.
 
 A baseline is immutable per task/model/harness and is never rerun to improve a
 comparison. The benchmark requires initial Jevgrep use to isolate retrieval's
@@ -26,3 +25,6 @@ Raw traces, repository snapshots and generated study artifacts stay in ignored
 run storage. Commit reproducible official tooling and concise evidence reports.
 Personal-repository fixtures and custom-rubric evaluations are deprecated and
 stay outside Git; they are not product acceptance evidence.
+
+The [research archive](implementation/swebench/research-archive.md) preserves the
+superseded official experiments in Git without adding obsolete runners to `main`.

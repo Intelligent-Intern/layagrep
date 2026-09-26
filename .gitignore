@@ -5,7 +5,7 @@ dist/
 !.env.example
 .DS_Store
 # Only the official benchmark workflow belongs in version control.
-# Historical experiments remain local and are fully deprecated.
+# Raw runs stay local; superseded official experiments live on the research archive branch.
 /evals/*
 !/evals/README.md
 !/evals/accounting.md
