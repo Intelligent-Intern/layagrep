@@ -60,3 +60,11 @@ transformation even when no axis is dropped, unlike the guarded comparator
 patches; this adds work but no functional defect was established. Own regression
 is a scalar linear case, with a manual high-level roundtrip rather than a committed
 high-level test. Evidence: `/tmp/jg-freshness-v1-astropy-comparison/findings.md`.
+
+Xarray returned 17 files in 2,787 bytes without excerpts; the preceding cohort
+returned the same file count with five source blocks. The agent filled the gap by
+reading Variable and Dataset. Its production changes match the preceding cohort,
+but its added assertion covers explicit attribute retention only. Three local
+tests passed with 119 warnings; no test failure or rerun occurred. More separate
+exploration calls accompanied essentially the same full Sol bill. Evidence:
+`/tmp/jg-freshness-v1-xarray-comparison/findings.md`.
