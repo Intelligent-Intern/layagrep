@@ -6,12 +6,11 @@ ordinary searches keep the same interface and retrieval behavior.
 
 ## Next Agent Prompt
 
-You are implementing this plan, last updated 2026-09-26. **Status: specification
-only; no provider implementation or live verification has happened.** Start at
-[slice 1](slices/01-protocol.md): reproduce the pinned adapter against controlled
-HTTP before changing production. Read [the evidence](research.md) and
-[the preservation gates](parity.md). The completed [decision map](map.md) supplies
-user rationale; this README and its slices now own implementation order.
+You are implementing this plan, last updated 2026-09-26. Slice 1 is complete:
+18 Node protocol tests pass locally and in Docker, and all 5 frozen replay tests
+remain green. Start [slice 2](slices/02-evaluator.md): replace the evaluator while
+preserving production parity. Read [protocol evidence](assets/protocol-verification.md)
+and [preservation gates](parity.md). No live provider calls have occurred.
 
 You have no unresolved product question. Published-package behavior and live
 provider access need verification, not invented compatibility code. Missing
@@ -19,7 +18,7 @@ credentials must not block offline implementation; report the missing live check
 honestly. Do not collect secrets in chat or overwrite the user's own saved setup
 for tests. Use isolated HOME/config/cache locations.
 
-- [ ] [1. Protocol reproduction and controlled routing](slices/01-protocol.md)
+- [x] [1. Protocol reproduction and controlled routing](slices/01-protocol.md)
 - [ ] [2. Shared evaluator and production parity](slices/02-evaluator.md)
 - [ ] [3. Saved-provider auth, installed journeys, and onboarding](slices/03-auth.md)
 - [ ] [4. Maintained eval routing and final verification](slices/04-tooling.md)

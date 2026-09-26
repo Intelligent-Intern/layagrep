@@ -1,7 +1,7 @@
 # 1. Reproduce the provider protocol
 
 **Unlock:** prove the chosen SDK and controlled routing before touching retrieval.
-No dependency on another slice. Status: not started.
+No dependency on another slice. Status: complete; see [verification](../assets/protocol-verification.md).
 
 ## Seam and artifact
 

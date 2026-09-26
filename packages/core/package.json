@@ -12,6 +12,7 @@
     "lint": "oxlint src"
   },
   "dependencies": {
+    "@ai-sdk/typesafe-ai": "3.0.8",
     "ai": "7.0.107",
     "ignore": "7.0.5",
     "pyodide": "0.25.1",
