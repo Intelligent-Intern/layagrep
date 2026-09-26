@@ -73,3 +73,15 @@ Requests solved on the repeat after failing the first corrected run. Its complet
 Sol cost is $0.2721328 versus first-run $0.2388080 and baseline $0.2685004, so the
 recovered solve is not a strict cost win. Jev's complete observed total is
 $0.010286388, excluded from scored cost.
+The repeat's entire seven-block source section is byte-identical to the first
+run. This time the patch handles HEAD as well as GET from its first edit, and
+its tests cover GET, HEAD, POST, bodies and explicit headers. Two then six local
+tests passed, compared with one then four in the first run. The query and file
+roles differ, so the recovered case coverage does not isolate a single cause.
+The agent also left a generated test log in its retained patch; that is solver
+artifact hygiene, not a Jevgrep-created report. Evidence:
+`/tmp/jg-repeat-requests-comparison.md`.
+
+SymPy solved again at $0.5426052 versus first-run $0.3320948 and baseline
+$0.5479750, retaining a narrow successful cost win. Its complete observed Jev
+total is $0.112039242 and is excluded from scored cost.
