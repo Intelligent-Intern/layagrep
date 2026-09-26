@@ -80,5 +80,13 @@ the original faithful patch handles the nested edge; do not claim this refinemen
 repairs a proven earlier failure. Evidence:
 `/tmp/jg-work-clock-v2-pytest-comparison/`.
 
+Sphinx's production fix is identical to baseline, accepted spike and the original
+faithful treatment. Its regression preserves type and explicit links while
+removing implicit variable links. Domain tests pass 35; combined coverage passes
+115 with one warning failure. The same warning reproduces in a pristine checkout
+whose imports were verified, supporting the environmental explanation; this is
+a test control, not another baseline agent run. Evidence:
+`/tmp/jg-work-clock-v2-sphinx-comparison/`.
+
 These tasks fit the old wall-clock allowance too. Their improvements do not
 establish a clock effect or determinism across independent live model trajectories.
