@@ -81,3 +81,12 @@ failures involve legacy environment behavior, but they do not explain this
 explicit HEAD assertion failure. The relevant implementation was available;
 the patch and test scope were too narrow. Evidence:
 `/tmp/jg-freshness-v1-requests-comparison/findings.md`.
+
+SymPy returned 29 files in 4,899 bytes without excerpts. Three reads led to the
+established unused-matrix-dimension fix, using lists where comparator patches use
+tuples. The new regression checks generated Cython source. An initial pytest
+command failed because pytest was absent; the repository runner then passed 13
+autowrap and 55 codegen tests. A compiled check failed while importing NumPy,
+before compilation, so local verification does not establish compiled execution.
+Official grading resolved the task. Evidence:
+`/tmp/jg-freshness-v1-sympy-comparison/findings.md`.
