@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 import re
 import shutil
+import shlex
+import selectors
 import subprocess
 import time
 import urllib.parse
@@ -19,6 +21,11 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 REGISTRY = json.loads((HERE / 'fixed-baselines.json').read_text())
 HARNESS_COMMIT = '02e7a74ffd0b707aab73d203fe87bdc7c76afc8e'
+TIMING_POLICY = {'clock': 'work_excluding_standalone_jg_search_wait', 'work_seconds': 900,
+                 'hard_wall_seconds': 86400, 'overlapping_other_commands': 'count_as_work',
+                 'event_clock': 'host_monotonic_observation'}
+TREATMENT_TIMING = ('The task, including verification, has a 900-second work budget, excluding time waiting for standalone jg search commands when no other command is running. '
+                    'Other commands, compound commands, and concurrent work count toward that budget; a 24-hour wall-clock guard stops runaway attempts. ')
 SAFE_FIELDS = {'instance_id', 'repo', 'base_commit', 'image', 'problem_statement'}
 VERSIONS = {'node': 'v24.14.0', 'codex': 'codex-cli 0.153.4', 'claude': '2.1.278 (Claude Code)'}
 VERIFICATION = (
@@ -44,7 +51,8 @@ def baseline_prompt(row):
 
 
 def treatment_prompt(row):
-    return '$jevgrep\n\n' + baseline_prompt(row)
+    return '$jevgrep\n\n' + baseline_prompt(row).replace(
+        'The entire task, including verification, has a 900-second deadline. ', TREATMENT_TIMING, 1)
 
 
 def digest(path):
@@ -165,7 +173,7 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
         for source in [Path(__file__).resolve(), HERE / 'gateway_broker.py', HERE / 'fixed-baselines.json']:
             shutil.copyfile(source, frozen / source.name)
         artifacts = [*frozen.iterdir(), package, out / 'installed-prefix.tar', out / 'skill.md', out / 'agent-inputs.json', root / REGISTRY['dataset']]
-        plan = {'schema': 2, 'status': 'frozen', 'cells': cells,
+        plan = {'schema': 3, 'timing_policy': dict(TIMING_POLICY), 'status': 'frozen', 'cells': cells,
                 'purpose': 'One prospective package cohort; reuse fixed baselines without execution.',
                 'inputs': str(out / 'agent-inputs.json'), 'skill': str(out / 'skill.md'), 'package': str(package),
                 'runner': str(frozen / 'installed.py'), 'broker': str(frozen / 'gateway_broker.py'),
@@ -180,8 +188,10 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
 
 def load_cohort(path):
     plan = json.loads(path.read_text())
-    if plan.get('schema') != 2 or plan.get('status') != 'frozen':
-        raise ValueError('Expected a frozen prospective cohort plan')
+    if plan.get('schema') != 3 or plan.get('status') != 'frozen':
+        raise ValueError('Expected a frozen schema-3 cohort; use the archived runner for older studies')
+    if plan.get('timing_policy') != TIMING_POLICY:
+        raise ValueError('Frozen treatment timing policy changed')
     for artifact, expected in plan['artifacts'].items():
         if digest(artifact) != expected:
             raise ValueError('Frozen artifact changed: ' + artifact)
@@ -243,6 +253,142 @@ def existing_attempt(plan):
     receipt.update(status='interrupted', interruption='Runner and labeled containers are no longer active')
     write_json(path, receipt)
     return True
+
+
+def direct_jg_search(command):
+    """Recognize a standalone invocation, never a shell program that also runs jg."""
+    try:
+        argv = shlex.split(command)
+        if len(argv) == 3 and argv[0] in ('/bin/sh', '/bin/bash', 'sh', 'bash') and argv[1] in ('-c', '-lc'):
+            command = argv[2]
+        # Expansions and shell operators can execute additional work. Quoted query
+        # punctuation is data; shlex keeps it within its argument.
+        if any(character in command for character in '$`\n\r'):
+            return False
+        raw = shlex.shlex(command, posix=False, punctuation_chars=';&|<>()')
+        raw.whitespace_split, raw.commenters = True, ''
+        if any(not token.startswith(('\"', "'")) and any(char in token for char in '*?[{~') for token in raw):
+            return False
+        lexer = shlex.shlex(command, posix=True, punctuation_chars=';&|<>()')
+        lexer.whitespace_split = True
+        lexer.commenters = ''
+        argv = list(lexer)
+        if not argv or argv[0] not in ('jg', '/opt/jg-install/bin/jg'):
+            return False
+        if any(re.fullmatch(r'[;&|<>()]+', token) for token in argv):
+            return False
+        positionals, options = [], True
+        index = 1
+        while index < len(argv):
+            arg = argv[index]
+            if options and arg == '--':
+                options = False
+            elif options and arg in ('--no-cache', '--hidden', '--no-ignore', '--include-dependencies', '--include-sensitive'):
+                pass
+            elif options and arg == '--max-source-bytes':
+                index += 1
+                if index >= len(argv) or not argv[index].isdigit():
+                    return False
+            elif options and arg.startswith('--max-source-bytes='):
+                if not arg.split('=', 1)[1].isdigit():
+                    return False
+            elif options and arg.startswith('-'):
+                return False
+            else:
+                positionals.append(arg)
+            index += 1
+        return (1 <= len(positionals) <= 2 and bool(positionals[0].strip()) and
+                positionals[0] not in ('auth', 'doctor', 'cache', 'skill'))
+    except ValueError:
+        return False
+
+
+def monitor_native(invocation, stdout, stderr, policy):
+    """Charge wall time except observed standalone retrieval with no other command active."""
+    started = time.monotonic()
+    active, intervals = {}, []
+    credit_start, credited, errors = None, 0.0, 0
+    timed_out, timeout_kind = False, None
+
+    def close_credit(now):
+        nonlocal credit_start, credited
+        if credit_start is not None:
+            intervals.append({'start_seconds': credit_start - started, 'end_seconds': now - started,
+                              'command_ids': sorted(active)})
+            credited += now - credit_start
+            credit_start = None
+
+    def event(line, now):
+        nonlocal credit_start, errors
+        try:
+            value = json.loads(line)
+            item = value.get('item', {})
+            kind = value.get('type')
+            if kind in ('turn.completed', 'turn.failed', 'error'):
+                close_credit(now)
+                active.clear()
+            elif kind in ('item.started', 'item.completed') and item.get('type') == 'command_execution':
+                identifier = item.get('id')
+                if not isinstance(identifier, str):
+                    raise ValueError('Missing command identity')
+                close_credit(now)
+                if kind == 'item.started':
+                    if identifier in active:
+                        errors += 1
+                    active[identifier] = direct_jg_search(item.get('command', ''))
+                else:
+                    if identifier not in active:
+                        errors += 1
+                    active.pop(identifier, None)
+                if active and all(active.values()):
+                    credit_start = now
+        except (ValueError, TypeError, AttributeError):
+            errors += 1
+            close_credit(now)
+            active.clear()
+
+    process = subprocess.Popen(invocation, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=stderr)
+    pending = b''
+    try:
+        with selectors.DefaultSelector() as selector:
+            selector.register(process.stdout, selectors.EVENT_READ)
+            while selector.get_map() or process.poll() is None:
+                now = time.monotonic()
+                retrieval = credited + (now - credit_start if credit_start is not None else 0)
+                work = now - started - retrieval
+                if work >= policy['work_seconds'] or now - started >= policy['hard_wall_seconds']:
+                    timed_out = True
+                    timeout_kind = 'work' if work >= policy['work_seconds'] else 'hard_wall'
+                    break
+                if not selector.get_map():
+                    time.sleep(0.05)
+                    continue
+                for key, _ in selector.select(0.05):
+                    chunk = os.read(key.fd, 65536)
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        close_credit(time.monotonic())
+                        active.clear()
+                        continue
+                    stdout.write(chunk)
+                    stdout.flush()
+                    pending += chunk
+                    while b'\n' in pending:
+                        line, pending = pending.split(b'\n', 1)
+                        event(line, time.monotonic())
+    finally:
+        close_credit(time.monotonic())
+        if process.poll() is None:
+            process.kill()
+        process.wait()
+        process.stdout.close()
+    elapsed = time.monotonic() - started
+    if pending.strip():
+        errors += 1
+    return {'exit_code': process.returncode, 'timed_out': timed_out, 'timeout_kind': timeout_kind,
+            'wall_seconds': elapsed, 'work_seconds': elapsed - credited,
+            'retrieval_wait_seconds': credited, 'credit_intervals': intervals,
+            'timing_event_errors': errors}
 
 
 def run(args):
@@ -324,15 +470,15 @@ def run(args):
         write_json(out / 'receipt.json', receipt)
         start = time.monotonic()
         with (out / 'events.jsonl').open('wb') as stdout, (out / 'stderr.txt').open('wb') as stderr:
-            try:
-                result = subprocess.run(invocation, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr, timeout=900)
-                receipt['exit_code'] = result.returncode
-            except subprocess.TimeoutExpired:
-                receipt['timed_out'] = True
+            receipt['timing_policy'] = plan['timing_policy']
+            receipt['timing'] = monitor_native(invocation, stdout, stderr, plan['timing_policy'])
+            receipt['exit_code'] = receipt['timing']['exit_code']
+            receipt['timed_out'] = receipt['timing']['timed_out']
+            if receipt['timed_out']:
                 subprocess.run(['docker', 'exec', tag, 'pkill', '-KILL', '-u', '1001'], capture_output=True)
         receipt['agent_elapsed_seconds'] = time.monotonic() - start
         receipt['agent_finished_at'] = time.time()
-        receipt['timing_valid'] = abs(receipt['agent_finished_at'] - receipt['agent_started_at'] - receipt['agent_elapsed_seconds']) <= 5
+        receipt['timing_valid'] = receipt['timing']['timing_event_errors'] == 0 and abs(receipt['agent_finished_at'] - receipt['agent_started_at'] - receipt['agent_elapsed_seconds']) <= 5
         events = []
         for line in (out / 'events.jsonl').read_text().splitlines():
             try: events.append(json.loads(line))

@@ -73,3 +73,28 @@ benchmark source and remain local with the ignored study evidence.
 [Focused tests](test_installed.py) run in an isolated Docker container. They cover
 prompt identity, drift rejection, no-call validation, retained attempts, incomplete
 billing, cohort acceptance and exact body capture through a synthetic provider.
+
+## Treatment work clock
+
+New schema-3 plans freeze a 900-second treatment **work** budget. The monitor uses
+host monotonic observation of native `command_execution` started/completed events.
+It excludes the union of standalone `jg` search waits only while no other command
+is active. Overlapping retrieval calls earn no double credit; unrelated concurrent
+commands count as work. Completion, cancellation, terminal turns and process EOF
+end credit. A separate 24-hour wall limit protects against a runaway retrieval.
+Receipts retain work, credited retrieval and wall durations plus the disjoint
+credit intervals and native command IDs, so timing remains auditable.
+
+The recognizer accepts a direct installed `jg` search, including the native shell
+wrapper. It gives no credit to auth, doctor, cache, skill, help/version, compound
+commands, redirections or shell expansions. Ambiguous invocations count as work.
+Event-observation timestamps measure what the harness sees, not provider execution
+time; malformed timing events invalidate the timing evidence rather than inventing
+credit. Process startup and time outside qualifying waits count toward work.
+
+The treatment prompt states this clock explicitly; its timing sentence therefore
+differs from the retained baseline prompt. Baseline prompt bytes, receipts, model,
+grading and the solve/Sol-cost acceptance rule are unchanged. This correction does
+not rescore old attempts or explain away earlier task failures. Schema-2 studies
+remain usable with their archived runner and wall-clock policy; the current runner
+requires a fresh schema-3 plan and rejects timing-policy drift.

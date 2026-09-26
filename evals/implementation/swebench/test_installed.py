@@ -8,6 +8,7 @@ import importlib.util
 import io
 import json
 import os
+import sys
 from pathlib import Path
 import tempfile
 import threading
@@ -31,8 +32,108 @@ class InstalledTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(runner.baseline_prompt(row).encode()).hexdigest(), '41c7e3cf7acbc19d0b24ab55e6ea29fe3cdbc2b777549d158488c6c55baaa643')
         prompt = runner.treatment_prompt(row)
         self.assertTrue(prompt.startswith('$jevgrep\n\n'))
-        self.assertEqual(prompt, '$jevgrep\n\n' + runner.baseline_prompt(row))
-        self.assertTrue(prompt.endswith(runner.baseline_prompt(row)))
+        self.assertEqual(prompt, '$jevgrep\n\n' + runner.baseline_prompt(row).replace(
+            'The entire task, including verification, has a 900-second deadline. ', runner.TREATMENT_TIMING, 1))
+        self.assertTrue(prompt.endswith(runner.VERIFICATION + '\n\nFix behavior.'))
+
+    def monitor(self, steps, work_seconds=2, hard_wall_seconds=10):
+        script = "import json,time\n" + "\n".join(
+            "time.sleep(%r)" % step if isinstance(step, (int, float)) else
+            "print(%r, flush=True)" % json.dumps(step) for step in steps)
+        with tempfile.TemporaryDirectory() as temporary:
+            with open(Path(temporary)/'events.jsonl', 'wb') as stdout, open(Path(temporary)/'stderr', 'wb') as stderr:
+                result = runner.monitor_native([sys.executable, '-u', '-c', script], stdout, stderr,
+                                               {**runner.TIMING_POLICY, 'work_seconds':work_seconds,
+                                                'hard_wall_seconds':hard_wall_seconds})
+            events = (Path(temporary)/'events.jsonl').read_text()
+        return result, events
+
+    def event(self, identifier, command, completed=False, **extra):
+        return {'type':'item.completed' if completed else 'item.started',
+                'item':{'id':identifier,'type':'command_execution','command':command,**extra}}
+
+    def test_direct_jg_wait_does_not_consume_work_budget(self):
+        command = "/bin/sh -lc 'jg \"research the mechanism\"'"
+        result, events = self.monitor([self.event('search', command), 3.2,
+                                       self.event('search', command, True), {'type':'turn.completed'}])
+        self.assertEqual(result['exit_code'], 0)
+        self.assertFalse(result['timed_out'])
+        self.assertGreater(result['retrieval_wait_seconds'], 3)
+        self.assertLess(result['work_seconds'], 2)
+        self.assertEqual(result['credit_intervals'][0]['command_ids'], ['search'])
+        self.assertIn('turn.completed', events)
+
+    def test_unrelated_command_reaches_work_deadline(self):
+        result, events = self.monitor([self.event('test', "python -m unittest"), 3,
+                                       {'type':'turn.completed'}])
+        self.assertTrue(result['timed_out'])
+        self.assertEqual(result['timeout_kind'], 'work')
+        self.assertEqual(result['retrieval_wait_seconds'], 0)
+        self.assertGreaterEqual(result['work_seconds'], 2)
+        self.assertNotIn('turn.completed', events)
+
+    def test_cancelled_jg_stops_credit_and_remaining_work_times_out(self):
+        command = 'jg "research"'
+        result, events = self.monitor([self.event('search', command), 0.6,
+                                       self.event('search', command, True, exit_code=130, status='failed'),
+                                       3, {'type':'turn.completed'}])
+        self.assertTrue(result['timed_out'])
+        self.assertEqual(result['timeout_kind'], 'work')
+        self.assertGreater(result['retrieval_wait_seconds'], 0.4)
+        self.assertGreaterEqual(result['work_seconds'], 2)
+        self.assertEqual(len(result['credit_intervals']), 1)
+        self.assertIn('"exit_code": 130', events)
+
+    def test_other_command_overlap_counts_as_work(self):
+        command = 'jg "research"'
+        result, events = self.monitor([self.event('search', command), 0.6,
+                                       self.event('test', 'python -m unittest'), 3,
+                                       {'type':'turn.completed'}])
+        self.assertTrue(result['timed_out'])
+        self.assertEqual(result['timeout_kind'], 'work')
+        self.assertGreater(result['retrieval_wait_seconds'], 0.4)
+        self.assertGreaterEqual(result['work_seconds'], 2)
+        self.assertEqual(result['credit_intervals'][0]['command_ids'], ['search'])
+        self.assertNotIn('turn.completed', events)
+
+    def test_overlapping_retrieval_is_union_not_double_credit(self):
+        result, _ = self.monitor([self.event('a', 'jg "first"'), 0.3,
+                                  self.event('b', 'jg "second"'), 0.6,
+                                  self.event('a', 'jg "first"', True), 0.3,
+                                  self.event('b', 'jg "second"', True), {'type':'turn.completed'}])
+        self.assertEqual(result['exit_code'], 0)
+        self.assertFalse(result['timed_out'])
+        self.assertEqual([span['command_ids'] for span in result['credit_intervals']], [['a'], ['a', 'b'], ['b']])
+        self.assertAlmostEqual(result['work_seconds'] + result['retrieval_wait_seconds'], result['wall_seconds'])
+        self.assertLessEqual(result['retrieval_wait_seconds'], result['wall_seconds'])
+
+    def test_hard_wall_stops_unfinished_retrieval(self):
+        result, _ = self.monitor([self.event('search', 'jg "research"'), 5], work_seconds=4, hard_wall_seconds=1.5)
+        self.assertTrue(result['timed_out'])
+        self.assertEqual(result['timeout_kind'], 'hard_wall')
+        self.assertTrue(result['credit_intervals'])
+
+    def test_only_unambiguous_standalone_search_gets_credit(self):
+        for command in ['jg "query with ; punctuation"', "/bin/sh -lc 'jg query'",
+                        'jg --no-cache "query" /testbed', '/opt/jg-install/bin/jg "query" --max-source-bytes=0']:
+            with self.subTest(command=command): self.assertTrue(runner.direct_jg_search(command))
+        for command in ['jg', 'jg doctor', 'jg auth --stdin', 'jg cache clear', 'jg skill', 'jg --help',
+                        'jg -h', 'jg --version', 'jg "query" --version', 'jg "query"; sleep 5',
+                        'jg "query" && sleep 5', 'sleep 5 | jg "query"', 'jg "query" > out',
+                        'jg "$(sleep 5)"', 'env KEY=value jg "query"', 'echo jg "query"', 'jg "query" &', 'jg doc*', 'jg auth?', 'jg {auth,doctor}',
+                        'jg "query"\nsleep 5']:
+            with self.subTest(command=command): self.assertFalse(runner.direct_jg_search(command))
+
+    def test_timing_policy_drift_and_legacy_schema_require_their_archived_runner(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path, _ = self.fixture(Path(temporary))
+            plan = json.loads(path.read_text())
+            plan['timing_policy']['work_seconds'] = 901
+            runner.write_json(path, plan)
+            with self.assertRaisesRegex(ValueError, 'timing policy changed'): runner.load_cohort(path)
+            plan['schema'] = 2
+            runner.write_json(path, plan)
+            with self.assertRaisesRegex(ValueError, 'archived runner'): runner.load_cohort(path)
 
     def fixture(self, root, all_tasks=False):
         registry = json.loads(json.dumps(runner.REGISTRY))
@@ -57,7 +158,7 @@ class InstalledTests(unittest.TestCase):
         inputs = root / 'agent-inputs.json'; runner.write_json(inputs,rows)
         dataset=root/'dataset.json';dataset.write_text('fixture dataset')
         paths = [dataset,Path(runner.__file__),HERE/'gateway_broker.py',registry_path,inputs,skill,package,prefix]
-        plan = {'schema':2,'status':'frozen','cells':cells,'runner':str(Path(runner.__file__)),'broker':str(HERE/'gateway_broker.py'),
+        plan = {'schema':3,'timing_policy':dict(runner.TIMING_POLICY),'status':'frozen','cells':cells,'runner':str(Path(runner.__file__)),'broker':str(HERE/'gateway_broker.py'),
                 'registry':str(registry_path),'tooling':str(root/'tooling'),'dataset':str(root/'dataset.json'),
                 'inputs':str(inputs),'skill':str(skill),'package':str(package),'artifacts':{str(p):runner.digest(p) for p in paths}}
         plan_path=root/'plan.json';runner.write_json(plan_path,plan)
