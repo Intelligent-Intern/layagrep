@@ -85,3 +85,9 @@ artifact hygiene, not a Jevgrep-created report. Evidence:
 SymPy solved again at $0.5426052 versus first-run $0.3320948 and baseline
 $0.5479750, retaining a narrow successful cost win. Its complete observed Jev
 total is $0.112039242 and is excluded from scored cost.
+The repeat adds direct dimension-metadata and generated-C coverage beyond the
+first run's generated-Cython check. After an absent-pytest invocation and an
+incorrect authored return-type expectation, it corrected the test and finished
+with 69 repository-runner tests passing. It used 25 generations versus fourteen
+and made no compiled-execution attempt. Evidence:
+`/tmp/jg-repeat-sympy-comparison.md`.
