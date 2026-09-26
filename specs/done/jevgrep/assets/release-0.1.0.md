@@ -1,9 +1,20 @@
 # 0.1.0 release evidence
 
-The user explicitly authorized publishing `0.1.0` after the variance repeat and
-closeout finish. Publication is pending; preparing an archive is not publication.
+Published `@dzhng/jevgrep@0.1.0` to npm as `latest`, with provenance, on
+2026-09-26 under the user's explicit authorization. Both jobs in the
+[release workflow](https://github.com/dzhng/jevgrep/actions/runs/36253715874)
+passed: publication and independent registry verification. The
+[GitHub release](https://github.com/dzhng/jevgrep/releases/tag/v0.1.0)
+links the tag at commit `c6842af31d4442791c0769b5b65899693e114a6c`.
 
-The final local release candidate is
+Published tarball SHA-256:
+`0909f05dbabf74feaa6358e182b6e7743e8f5f16a791ebfd53367b3974d01f6d`.
+Registry and candidate integrity:
+`sha512-ISmf+ujNstQ5spvxkwJ43Dk3ZTjAfEvEPsY67IUoWpR/t06Fuqn/W+xHTYKKny8xok5jVLjEtVZ0BvkkjdCXNw==`.
+The workflow artifact `jevgrep-0.1.0` retains the archive and manifest. Registry
+metadata confirms version `0.1.0`, `latest`, and an SLSA provenance attestation.
+
+The locally verified release candidate is
 `/tmp/jg-010-final-release/dzhng-jevgrep-0.1.0.tgz`, SHA-256
 `447cdeb88695b6851efb7fbe4bfd628a69e1c83b2f1651e7ed3f3453fe747523`.
 It passed the release identity/content/license validator. Compared with the
@@ -22,7 +33,20 @@ Logs: `/tmp/jg-010-{native,installed}.log` and
 Full deterministic verification of the unchanged
 implementation is retained in [freshness verification](source-freshness.md).
 
-The tag workflow still has to run its own full verification, pack and validate
-its candidate, test those exact bytes, publish them, and verify the registry
-archive's integrity and installed behavior. The local hash above is local proof;
-the workflow's retained manifest owns the published artifact identity.
+A final documentation-only commit removes stale pre-publication wording from
+the packaged README. It does not change executable or runtime assets. The first
+workflow was canceled before packing or publication (publish step skipped), then
+the unpublished tag was moved to that documentation commit. The canceled run
+is retained at https://github.com/dzhng/jevgrep/actions/runs/36253611769.
+
+The successful workflow ran full deterministic verification, release validation,
+exact-tarball Docker journeys, dry-run publication, and provenance publication.
+Its separate registry job fetched `@dzhng/jevgrep@0.1.0`, verified identical
+integrity and passed all 24 installed journeys from those public bytes. Full log:
+`/tmp/jg-010-ci.log` and the linked workflow.
+
+The downloaded CI archive also passed both native macOS arm64 smoke journeys on
+Node 24.14.0 (`/tmp/jg-010-ci-native.log`). A member-by-member comparison with the
+locally verified candidate found only the expected README wording difference;
+all executable and runtime assets are byte-identical (`/tmp/jg-010-ci-parity.json`).
+No further paid model evaluations or baseline executions accompanied publication.

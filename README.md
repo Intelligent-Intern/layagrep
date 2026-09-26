@@ -44,7 +44,8 @@ configuration changes only when the user explicitly installs or exports it.
 
 The npm package is `@dzhng/jevgrep`; its executable is `jg`. The project uses the
 [MIT license](LICENSE). [Release guidance](scripts/RELEASING.md) describes the
-verified tarball and GitHub tag workflow. Publication requires the repository's
-`NPM_TOKEN` secret and a deliberate release tag. The user authorized `0.1.0`
-publication after the completed repeat and final release checks; the frozen benchmark archive
-remains `0.0.0` and is not a publication candidate.
+verified tarball and GitHub tag workflow. Version [0.1.0](https://www.npmjs.com/package/@dzhng/jevgrep/v/0.1.0) is published:
+`npm install --global @dzhng/jevgrep`. The
+[release record](specs/done/jevgrep/assets/release-0.1.0.md) owns artifact identity
+and verification. The frozen benchmark archive remains `0.0.0`; publication does
+not replace either measured cohort.

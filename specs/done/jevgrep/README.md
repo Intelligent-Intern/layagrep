@@ -23,8 +23,8 @@ finished with seven solves, seven of eight baseline solves preserved, four
 successful cost wins and 40.70% lower full Sol cost. Its original gate also remains
 failed. Both cohorts retain every attempt; neither best-cell pooling nor baseline
 reruns contribute to either result. No further repeat was authorized or run.
-The user authorized publication of `0.1.0` after closeout. The
-[release evidence](assets/release-0.1.0.md) distinguishes local validation from
+The user explicitly authorized publication, and `0.1.0` is published on npm.
+The [release evidence](assets/release-0.1.0.md) records local validation,
 CI publication and registry verification. Both measured cohorts retain the frozen
 `0.0.0` archive; release preparation changes version identity, not their evidence.
 
