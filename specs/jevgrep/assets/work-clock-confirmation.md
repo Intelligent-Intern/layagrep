@@ -59,5 +59,16 @@ solve: unconditional random-state validation rejects invalid seeds previously
 ignored when shuffling is disabled. Official benchmark success does not establish
 all behavior equivalent. No benchmark patch is silently repaired after grading.
 
+Requests retains the six decisive source blocks and adds an explicit-header
+preservation guard. Two regression tests pass, then pass again after an assertion
+compatibility edit. No initial test failure occurred. Evidence:
+`/tmp/jg-work-clock-v2-requests-comparison/`.
+
+SymPy's production fix matches baseline and the first faithful cohort. It passes
+69 unit tests including generated-source coverage. A compiled-check attempt fails
+while importing NumPy, so no Cython execution was verified. Fewer exploration and
+repair steps accompany the lower bill, but this does not isolate retrieval as
+the cause. Evidence: `/tmp/jg-work-clock-v2-sympy-comparison/`.
+
 These tasks fit the old wall-clock allowance too. Their improvements do not
 establish a clock effect or determinism across independent live model trajectories.
