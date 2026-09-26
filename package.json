@@ -20,7 +20,8 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "format": "oxfmt --write .",
-    "format:check": "oxfmt --check ."
+    "format:check": "oxfmt --check .",
+    "test:reference": "bash scripts/test-reference.sh"
   },
   "devDependencies": {
     "oxfmt": "0.57.0",

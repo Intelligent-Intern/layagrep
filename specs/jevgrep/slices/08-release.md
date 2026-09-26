@@ -7,8 +7,8 @@ Status: planned. Depends on: 07. Read [contracts](../contracts.md) first.
 Freeze code, packed tarball, skill, runtime, prompt/policy hashes and Sol harness before the official ten-task confirmation. Retain grades, trace queries, stdout, reads, patches and complete bills. Run saved baselines zero times. No per-task strategy changes or selective result exclusion. Preserve baseline solves and reach seven successful cost wins; report missing billing/infrastructure errors as unknown/non-passes with original evidence.
 
 Verify packed runtime on supported Linux architectures and macOS Apple Silicon, with isolated config/cache and no development resolution. Reuse installed process journeys. Docker is Linux evidence, not macOS evidence. Run the full closeout gate once after focused iteration. Include a release workflow that publishes the verified package to npm: explicit
-version/tag selection, package-content validation, a dry run, npm authentication
-through CI secrets or trusted publishing, then install that exact registry version
+version/tag selection, package-content validation, a dry run, GitHub Actions triggered by `v*` tag pushes, with `NODE_AUTH_TOKEN` supplied
+from `${{ secrets.NPM_TOKEN }}` (the user will add this secret), then install that exact registry version
 in a fresh environment and run help/version/skill plus a fixture-backed search.
 Release credentials must never enter the repository. Check package-name ownership
 before choosing an unscoped name; record the final registry name in the docs.
@@ -34,7 +34,7 @@ Check all eight baseline solves preserved and >=7 lower-cost solves under one po
 
 ## Delegated decisions
 
-Release workflow platform and artifact layout, not acceptance accounting; actual publication requires a later release request.
+Artifact layout, not the user-selected GitHub Actions tag/NPM_TOKEN workflow or acceptance accounting; actual publication requires a later release request.
 
 ## Keep green
 

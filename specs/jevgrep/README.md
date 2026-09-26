@@ -7,8 +7,11 @@ search is not implemented yet.
 
 ## Next Agent Prompt
 
-You are implementing this spec. Status: **planned**, updated **2026-09-25**.
-Start with [01: reference and HTTP seam](slices/01-reference.md), after reading
+You are implementing this spec. Status: **implementing**, updated **2026-09-25**.
+Next: integrate [02: bundled parser](slices/02-parser.md) and
+[03: filesystem](slices/03-filesystem.md) from their isolated branches, then compose
+the installed workflow. Reference replay is green; see
+[verification evidence](assets/reference-verification.md). Begin by reading
 [contracts](contracts.md) and the [decision map](map.md). Preserve the accepted
 spike as evidence; do not import experimental runtime modules into the product.
 
@@ -24,7 +27,7 @@ implementation pass. Update this section, slice status, decisions and unresolved
 verification before ending each pass. These commands are targets to implement,
 not claims about the current scaffold.
 
-- [ ] [01 — Reference and real HTTP fixture](slices/01-reference.md)
+- [x] [01 — Reference and real HTTP fixture](slices/01-reference.md)
 - [ ] [02 — Bundled parser parity](slices/02-parser.md)
 - [ ] [03 — Filesystem eligibility and snapshots](slices/03-filesystem.md)
 - [ ] [04 — Installed CLI + skill + first real task](slices/04-checkpoint.md)

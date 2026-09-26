@@ -7,7 +7,10 @@ unless explicitly delegated. No backward compatibility or migration layer.
 ## CLI and installation
 
 Publish one npm package installing `jevgrep`. Node >=22 is the runtime floor;
-Bun/Turbo are development tools only. Support macOS and Linux; validate Apple
+Bun/Turbo are development tools only. Publish from GitHub Actions on `v*` tags,
+using the user-supplied `NPM_TOKEN` secret as `NODE_AUTH_TOKEN`, following duet-agent.
+Validate tag/version agreement and publish the exact verified tarball, then smoke-test
+the registry installation. Support macOS and Linux; validate Apple
 Silicon macOS and Linux x64/arm64 before claiming those combinations. Windows is
 out of scope. No runtime Python, Git, ripgrep, compiler, or Bun prerequisite.
 

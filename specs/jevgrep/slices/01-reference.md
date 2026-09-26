@@ -1,6 +1,6 @@
 # Freeze the reference and HTTP seam
 
-Status: planned. Depends on: None. Read [contracts](../contracts.md) first.
+Status: verified; see [reference evidence](../assets/reference-verification.md). Depends on: None. Read [contracts](../contracts.md) first.
 
 ## Contract and owner
 
