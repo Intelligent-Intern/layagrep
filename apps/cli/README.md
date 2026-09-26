@@ -4,8 +4,7 @@ Ask a repository question and get relevant file locations plus verbatim source
 excerpts. Jevgrep helps a coding agent begin unfamiliar multi-file work with
 useful context; the agent still owns implementation and verification.
 
-Requires Node.js 22 or newer on macOS or Linux. The development version is not
-published yet. After a release is available:
+Requires Node.js 22 or newer on macOS or Linux. Install and authenticate:
 
 ```sh
 npm install --global @dzhng/jevgrep
