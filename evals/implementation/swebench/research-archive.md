@@ -34,7 +34,7 @@ large artifacts are not included in Git; losing that local storage would lose
 evidence that cannot be recovered from the source snapshot alone.
 
 Deprecated personal-repository evaluations are excluded from the public archive.
-Their tooling and fixtures were moved intact to
-`~/.local/share/jevgrep/retired-personal-evals/`, outside the checkout. Its local
-`moved-paths.json` records original paths. Redundant `.claude` skill links were
-removed; canonical development skills remain in `.agents/skills/`.
+Their tooling, fixtures, and local archive were deleted at the user’s explicit
+request. Official SWE-bench research and raw evidence remain preserved as described
+above. Redundant `.claude` skill links were removed; canonical development skills
+remain in `.agents/skills/`.
