@@ -5,6 +5,21 @@ import { join, resolve } from "node:path";
 import { testIfDocker } from "../helpers/docker";
 
 for (const [name, source] of [
+  [
+    "parenthesized decorator",
+    "@(\n    decorator\n)\ndef target():\n    return 1\n" + "# padding\n".repeat(2100),
+  ],
+  [
+    "backslash decorator",
+    "@\\\n    decorator\ndef target():\n    return 1\n" + "# padding\n".repeat(2100),
+  ],
+  ["CR preview helper failure", "x=1\rdef target(): return 1\r#" + "x".repeat(17_000)],
+  ["mixed CR/LF source", "class Target:\r    def target(self):\r        return 1\n# tail\n"],
+  ["CR-only method selected", "class Target:\r    def target(self):\r        return 1\r"],
+  ["CR-only source", "class Target:\r    def target(self):\r        return 1\r"],
+  ["invalid deletion", "def target():\n    del 1\n" + "# padding\n".repeat(2100)],
+  ["invalid comprehension", "value = [x for x in y, z]\n" + "# padding\n".repeat(2100)],
+  ["invalid mixed strings", 'value = u"a" b"b"\n' + "# padding\n".repeat(2100)],
   ["Python 2 fallback", 'def target():\n    print "old"\n' + "# padding\n".repeat(2100)],
   ["Python 3.12 type alias fallback", "type Alias = int\n" + "# padding\n".repeat(2100)],
   [
@@ -28,11 +43,24 @@ for (const [name, source] of [
       const server = Bun.serve({
         port: 0,
         async fetch(request) {
-          const body = (await request.json()) as { questions: Record<string, unknown> };
+          const body = (await request.json()) as {
+            questions: Record<string, unknown>;
+            state?: { declarations?: { name: string }[] };
+          };
           requests[arm]!.push(JSON.stringify(body));
           return Response.json({
             answers: Object.fromEntries(
-              Object.keys(body.questions).map((id) => [id, { type: "boolean", probability: 0.9 }]),
+              Object.keys(body.questions).map((id, index) => [
+                id,
+                {
+                  type: "boolean",
+                  probability:
+                    name === "CR-only method selected" &&
+                    body.state?.declarations?.[index]?.name.endsWith(".context")
+                      ? 0.1
+                      : 0.9,
+                },
+              ]),
             ),
           });
         },

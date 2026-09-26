@@ -39,6 +39,7 @@ export async function selectFile(
   evaluator: Evaluator,
   prepare?: () => Promise<{ evidence?: Evidence[] } | null>,
   previous?: FileEvidence,
+  signal?: AbortSignal,
 ): Promise<SelectionResult> {
   const issues = new Map<string, number>();
   const warn = (kind: string) => issues.set(kind, (issues.get(kind) ?? 0) + 1);
@@ -83,12 +84,13 @@ export async function selectFile(
   }
   function partialLine(unit: SourceUnit) {
     return (
-      unit.sourceByteStart !== offsets[unit.range.startLine - 1] ||
-      unit.sourceByteEnd !== offsets[unit.range.endLine]
+      unit.sourceByteStart !== (offsets[unit.range.startLine - 1] ?? bytes.length) ||
+      unit.sourceByteEnd !== (offsets[unit.range.endLine] ?? bytes.length)
     );
   }
   const giantLine = lines.some((line) => Buffer.byteLength(line) > sourceUnitBytes);
   const syntax = await inspect(snapshot, {
+    signal,
     maxUnitBytes: giantLine ? sourceUnitBytes : Math.max(sourceUnitBytes, bytes.length),
   });
   // Giant lines retain byte coordinates; ordinary fallback uses complete-source line fragments.
@@ -123,6 +125,7 @@ export async function selectFile(
       }
       return blocks;
     });
+  const selectedCoordinates: Range[] = [];
   const selected: Span[] = (previous?.selected ?? []).map(spanForRange);
   const contextSpans: Span[] = (previous?.rendered ?? []).map(spanForRange);
   const leads = new Map<string, ReadingLead>();
@@ -154,6 +157,7 @@ export async function selectFile(
       if (prepared === null) {
         invalidated = true;
         selected.length = 0;
+        selectedCoordinates.length = 0;
         contextSpans.length = 0;
         leads.clear();
         break;
@@ -194,11 +198,14 @@ export async function selectFile(
           const span = { start: unit.sourceByteStart, end: unit.sourceByteEnd };
           selected.push(span);
           contextSpans.push(span);
+          if (!partialLine(unit)) selectedCoordinates.push(unit.range);
         }
         if (value > 0.25 && !unit.name.endsWith(".context"))
           addLead({
             name: unit.name,
-            range: rangeForSpan({ start: unit.sourceByteStart, end: unit.sourceByteEnd }),
+            range: partialLine(unit)
+              ? rangeForSpan({ start: unit.sourceByteStart, end: unit.sourceByteEnd })
+              : unit.range,
             score: value,
           });
       }
@@ -209,14 +216,24 @@ export async function selectFile(
     }
   }
   const chosen = mergeSpans(selected),
-    wholeRanges: Range[] = [],
+    wholeRanges: Range[] = [...selectedCoordinates],
     rendered: Span[] = [];
   for (const span of mergeSpans(contextSpans)) {
     const range = rangeForSpan(span);
     if (range.sourceByteStart !== undefined) rendered.push(span);
     else wholeRanges.push(range);
   }
-  const neighborhood = wholeRanges.length ? await pythonNeighborhood(snapshot, wholeRanges) : [];
+  let neighborhood: Range[] = [];
+  try {
+    if (wholeRanges.length) neighborhood = await pythonNeighborhood(snapshot, wholeRanges, signal);
+  } catch (error) {
+    if (
+      !signal?.aborted ||
+      (error !== signal.reason && !(error instanceof Error && error.name === "AbortError"))
+    )
+      throw error;
+    warn("cancelled");
+  }
   const windows = [...wholeRanges, ...neighborhood].map((range) => ({
     startLine: Math.max(1, range.startLine - 3),
     endLine: Math.min(lines.length, range.endLine + 3),

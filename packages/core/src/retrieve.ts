@@ -223,9 +223,9 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       declarationIndexTruncated: false,
     };
     if (truncated && /\.pyi?$/.test(source.path) && bytes.length <= 1_000_000) {
-      const sampled = await pythonPreview(source, input.query, 16384);
+      const sampled = await pythonPreview(source, input.query, 16384, input.signal);
       if (
-        sampled.truncated &&
+        sampled?.truncated &&
         sampled.text &&
         Buffer.byteLength(sampled.text) <= 16384 &&
         Buffer.byteLength(JSON.stringify(sampled.text)) <= 24000
@@ -240,7 +240,10 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       /\.(?:pyi?|[cm]?[jt]s|[jt]sx)$/.test(source.path) &&
       bytes.length <= 1_000_000
     ) {
-      const syntax = await inspect(source, { maxUnitBytes: Math.max(4, bytes.length) });
+      const syntax = await inspect(source, {
+        signal: input.signal,
+        maxUnitBytes: Math.max(4, bytes.length),
+      });
       preview.declarations = syntax.units
         .filter((unit) => !unit.partial)
         .map((unit) => ({ name: unit.name, ...unit.range }));
@@ -387,123 +390,149 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     if (failed?.status === "rejected") throw failed.reason;
   }
   try {
-    await discover(["."]);
-    let anchor: { path: string; classes: string[] } | undefined;
-    for (const candidate of sortedCandidates()) {
-      if (candidate.score <= 0.5 || stop) break;
-      const source = await unchanged(candidate);
-      if (!source) continue;
-      const size = Buffer.byteLength(source.source);
-      const units = (
-        await inspect(source, {
-          maxParseBytes: Math.max(1, size),
-          maxUnitBytes: Math.max(4, size),
-        })
-      ).units;
-      const classes = [
-        ...new Set(
-          units
-            .filter((unit) => unit.name.endsWith(".context"))
-            .map((unit) => unit.name.split(".")[0]!),
-        ),
-      ];
-      if (classes.length && Buffer.byteLength(JSON.stringify(classes)) < 4000) {
-        anchor = { path: candidate.path, classes };
-        break;
+    try {
+      await discover(["."]);
+      let anchor: { path: string; classes: string[] } | undefined;
+      for (const candidate of sortedCandidates()) {
+        if (candidate.score <= 0.5 || stop) break;
+        const source = await unchanged(candidate);
+        if (!source) continue;
+        const size = Buffer.byteLength(source.source);
+        const units = (
+          await inspect(source, {
+            signal: input.signal,
+            maxParseBytes: Math.max(1, size),
+            maxUnitBytes: Math.max(4, size),
+          })
+        ).units;
+        const classes = [
+          ...new Set(
+            units
+              .filter((unit) => unit.name.endsWith(".context"))
+              .map((unit) => unit.name.split(".")[0]!),
+          ),
+        ];
+        if (classes.length && Buffer.byteLength(JSON.stringify(classes)) < 4000) {
+          anchor = { path: candidate.path, classes };
+          break;
+        }
       }
-    }
-    if (anchor && !stop) {
-      // Only one relationship reconsideration, anchored before new candidates are admitted.
-      const items: NavigationItem[] = [];
-      for (const item of pruned.values()) {
-        if (stop) break;
-        items.push(await withDirectoryContent(item));
+      if (anchor && !stop) {
+        // Only one relationship reconsideration, anchored before new candidates are admitted.
+        const items: NavigationItem[] = [];
+        for (const item of pruned.values()) {
+          if (stop) break;
+          items.push(await withDirectoryContent(item));
+        }
+        const seeds = (await score(items, anchor))
+          .filter((decision) => decision.score > 0.5)
+          .map((decision) => decision.item.path);
+        await discover(seeds, anchor);
       }
-      const seeds = (await score(items, anchor))
-        .filter((decision) => decision.score > 0.5)
-        .map((decision) => decision.item.path);
-      await discover(seeds, anchor);
-    }
-    const ordered = [...candidates.values()];
-    // All admitted paths survive even if subsequent source inspection is unavailable.
-    for (const candidate of ordered)
-      files.set(candidate.path, {
-        ...candidate,
-        roles: [],
-        leads: [],
-        selected: [],
-        rendered: [],
-        excerpts: [],
-        sourceOmitted: false,
-      });
-    const select = async (evidence?: () => Promise<Evidence[] | undefined>) =>
-      parallel(ordered, async (candidate) => {
+      const ordered = [...candidates.values()];
+      // All admitted paths survive even if subsequent source inspection is unavailable.
+      for (const candidate of ordered)
+        files.set(candidate.path, {
+          ...candidate,
+          roles: [],
+          leads: [],
+          selected: [],
+          rendered: [],
+          excerpts: [],
+          sourceOmitted: false,
+        });
+      const select = async (evidence?: () => Promise<Evidence[] | undefined>) =>
+        parallel(ordered, async (candidate) => {
+          const source = await unchanged(candidate);
+          if (!source) return;
+          if (Buffer.byteLength(source.source) > 1_000_000) {
+            issue("source_inspection_limit");
+            return;
+          }
+          const selection = await selectFile(
+            source,
+            input.query,
+            candidate.score,
+            evaluator,
+            async () => {
+              if (input.signal.aborted) throw new EvaluationFailure("cancelled");
+              const current = await unchanged(candidate);
+              if (input.signal.aborted) throw new EvaluationFailure("cancelled");
+              if (!current) return null;
+              return { evidence: await evidence?.() };
+            },
+            files.get(candidate.path),
+            input.signal,
+          );
+          files.set(candidate.path, selection.file);
+          declarations.set(candidate.path, selection.declarations);
+          for (const entry of selection.issues) issue(entry.kind, entry.count);
+        });
+      await select();
+      const evidence: Evidence[] = [];
+      // Declaration entries are inserted when selection completes, as in the frozen locations map.
+      for (const path of declarations.keys()) {
+        const candidate = candidates.get(path)!;
+        if (stop || input.signal.aborted) break;
+        if (!files.get(candidate.path)!.excerpts.length) continue;
+        // Context donors obey the same current eligibility/hash check as target files.
+        if (!(await unchanged(candidate))) continue;
+        evidence.push(
+          ...files.get(candidate.path)!.excerpts.map((excerpt) => ({
+            path: candidate.path,
+            ...excerpt.range,
+            source: excerpt.source,
+          })),
+        );
+      }
+
+      if (evidence.length && Buffer.byteLength(JSON.stringify(evidence)) <= 64_000 && !stop)
+        await select(async () => {
+          const current = new Set<string>();
+          for (const path of new Set(evidence.map((entry) => entry.path))) {
+            const candidate = candidates.get(path)!;
+            if (await unchanged(candidate)) current.add(path);
+          }
+          const fresh = evidence.filter((entry) => current.has(entry.path));
+          return fresh.length ? fresh : undefined;
+        });
+      await parallel(ordered, async (candidate) => {
         const source = await unchanged(candidate);
         if (!source) return;
-        if (Buffer.byteLength(source.source) > 1_000_000) {
-          issue("source_inspection_limit");
-          return;
+        const preview = previews.get(candidate.path)!;
+        try {
+          const scores = await evaluator.evaluate(
+            roleRequest(input.query, candidate.path, preview),
+          );
+          files.get(candidate.path)!.roles = Object.keys(scores).filter(
+            (role) => scores[role]! > 0.5,
+          );
+        } catch (error) {
+          issue(error instanceof EvaluationFailure ? error.kind : "provider");
         }
-        const selection = await selectFile(
-          source,
-          input.query,
-          candidate.score,
-          evaluator,
-          async () => {
-            if (input.signal.aborted) throw new EvaluationFailure("cancelled");
-            const current = await unchanged(candidate);
-            if (input.signal.aborted) throw new EvaluationFailure("cancelled");
-            if (!current) return null;
-            return { evidence: await evidence?.() };
-          },
-          files.get(candidate.path),
-        );
-        files.set(candidate.path, selection.file);
-        declarations.set(candidate.path, selection.declarations);
-        for (const entry of selection.issues) issue(entry.kind, entry.count);
       });
-    await select();
-    const evidence: Evidence[] = [];
-    // Declaration entries are inserted when selection completes, as in the frozen locations map.
-    for (const path of declarations.keys()) {
-      const candidate = candidates.get(path)!;
-      if (stop || input.signal.aborted) break;
-      if (!files.get(candidate.path)!.excerpts.length) continue;
-      // Context donors obey the same current eligibility/hash check as target files.
-      if (!(await unchanged(candidate))) continue;
-      evidence.push(
-        ...files.get(candidate.path)!.excerpts.map((excerpt) => ({
-          path: candidate.path,
-          ...excerpt.range,
-          source: excerpt.source,
-        })),
-      );
+      if (issues.has("authentication") && !files.size)
+        throw new EvaluationFailure("authentication");
+    } catch (error) {
+      if (
+        !input.signal.aborted ||
+        (error !== input.signal.reason && !(error instanceof Error && error.name === "AbortError"))
+      )
+        throw error;
+      issue("cancelled");
     }
-
-    if (evidence.length && Buffer.byteLength(JSON.stringify(evidence)) <= 64_000 && !stop)
-      await select(async () => {
-        const current = new Set<string>();
-        for (const path of new Set(evidence.map((entry) => entry.path))) {
-          const candidate = candidates.get(path)!;
-          if (await unchanged(candidate)) current.add(path);
-        }
-        const fresh = evidence.filter((entry) => current.has(entry.path));
-        return fresh.length ? fresh : undefined;
-      });
-    await parallel(ordered, async (candidate) => {
-      const source = await unchanged(candidate);
-      if (!source) return;
-      const preview = previews.get(candidate.path)!;
-      try {
-        const scores = await evaluator.evaluate(roleRequest(input.query, candidate.path, preview));
-        files.get(candidate.path)!.roles = Object.keys(scores).filter(
-          (role) => scores[role]! > 0.5,
-        );
-      } catch (error) {
-        issue(error instanceof EvaluationFailure ? error.kind : "provider");
-      }
-    });
-    if (issues.has("authentication") && !files.size) throw new EvaluationFailure("authentication");
+    // Cancellation can occur before the selection phase creates admitted-file records.
+    for (const candidate of candidates.values())
+      if (!files.has(candidate.path))
+        files.set(candidate.path, {
+          ...candidate,
+          roles: [],
+          leads: [],
+          selected: [],
+          rendered: [],
+          excerpts: [],
+          sourceOmitted: false,
+        });
     const context = await repositoryContext(
       reader,
       sortedCandidates().map((candidate) => files.get(candidate.path)!),
