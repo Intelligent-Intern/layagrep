@@ -16,6 +16,7 @@ separately and excluded; incomplete observations are subtotals, not totals.
 | --- | --- | ---: | ---: | --- |
 | scikit-learn__scikit-learn-13124 | solved; not a cost win | $0.3434830 | $0.2944360 | known $0.046611348; total unknown |
 | django__django-15629 | unresolved | $1.0695890 | $1.5055472 | known $0.158282796; total unknown |
+| astropy__astropy-13579 | solved; cost win | $0.3914126 | $0.4286310 | known $0.077806470; total unknown |
 
 Scikit-learn returned five relevant files in 5,038 bytes, implementation reading
 leads and two test source blocks. The agent then read the splitter and tests, searched documentation,
@@ -48,3 +49,13 @@ pre-patch SQLite read are retained in
 `/tmp/jg-freshness-v1-django-comparison/`. The needed code was delivered and read;
 this does not prove model variance alone caused the outcome, nor that adding
 initial excerpts would prevent it.
+
+Astropy returned 39 files in 6,381 bytes without excerpts. Two source reads and a
+linear-coordinate reproduction led to the established dropped-axis fix. Focused
+tests passed 41 twice; a broader local directory passed 64, skipped seven and
+failed on the same expired leap-second data seen in the saved comparisons.
+Official grading independently resolved the task. The patch computes a forward
+transformation even when no axis is dropped, unlike the guarded comparator
+patches; this adds work but no functional defect was established. Own regression
+is a scalar linear case, with a manual high-level roundtrip rather than a committed
+high-level test. Evidence: `/tmp/jg-freshness-v1-astropy-comparison/findings.md`.
