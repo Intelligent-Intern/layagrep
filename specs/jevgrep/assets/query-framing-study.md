@@ -87,19 +87,23 @@ parent. This is not a cost win because the task is unresolved. Separately, 1,937
 Jev calls have a known observed cost subtotal of **$0.282719220**; transport
 coverage is incomplete, so the full Jev total remains unknown and excluded.
 
-The CLI returned 212 files and selected SQLite implementation source. Its full
-stdout is 350,468 bytes; the file list alone is 61,230 bytes. The coding agent's
+The CLI returned 212 files and 96 source blocks, including SQLite implementation.
+Its full stdout is 350,468 bytes; the file list alone is 61,230 bytes. The coding agent's
 20,000-token tool limit truncated the packet, omitting the SQLite source block
 while retaining its first-place path and reading leads. Later, after a failing
 schema regression, an explicit file read delivered the critical type-change-only
-condition. Sol still replaced that regression with an AutoField-to-CharField
+condition and explicitly identified the collation-only rebuilding issue. Sol
+still replaced that regression with an AutoField-to-CharField
 migration scenario and left the SQLite condition unchanged. The replacement
 passes because it changes the type as well as collation; it does not establish
 collation-only propagation. More selected context did not produce a correct fix.
 
-Raw rollout ordinal 29 records the truncated initial tool result. The later read
-at ordinal 116 and output at 121 establish that the condition did eventually
-reach the agent. Detailed paired evidence lives in
+Raw rollout ordinal 28 (file line 29) records the truncated initial tool result.
+The later read at ordinal 115 and output at 120 establish that the condition did
+eventually reach the agent. The replacement also corrected a real fixture issue
+by separating old/new migration states; that correction did not require changing
+the SQL type. Baseline and spike retained proper states and the same-type case.
+Detailed paired evidence lives in
 `/tmp/jg-mechanism-query-django-comparison/`; authoritative traces, patch, grade
 receipt and generation accounting remain in the study's Django attempt folder.
 Do not attribute the failure solely to missing context or solely to truncation.
