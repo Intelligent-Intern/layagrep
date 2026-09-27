@@ -19,7 +19,8 @@ Run `jg --help` for the supported provider names. Searches use that provider unt
 When the provider rejects the request, doctor reports the HTTP status and its
 error message, when available. A working key can still lack model access or paid
 credits; follow the provider’s explanation before replacing the key. Saved keys
-and raw response bodies are excluded from diagnostic output.
+and raw response bodies are excluded from diagnostic output. If a provider echoes
+a key with inserted separators, its message is omitted.
 For unattended setup, pipe the key from your secret manager to:
 
 ```sh

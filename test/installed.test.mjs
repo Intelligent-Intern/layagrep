@@ -602,6 +602,28 @@ test("doctor explains provider access restrictions without exposing credentials 
   assert.equal(fixture.requests.length, 1);
 });
 
+test("doctor omits messages containing keys split by separators", async (t) => {
+  const fixture = await context(t);
+  const first = fixtureKey.slice(0, 12);
+  const second = fixtureKey.slice(12);
+  for (const separator of ["\n", "\t", "\u200b", " ", "\u2028"]) {
+    fixture.mode = ({ response }) => {
+      response.writeHead(403, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({ error: { message: `Rejected token ${first}${separator}${second}` } }),
+      );
+      return true;
+    };
+    const result = await fixture.run(["doctor"]);
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, /HTTP 403/);
+    assert.match(result.stdout, /Check your saved key, model access, and provider billing/);
+    assert.ok(!result.stdout.includes(first));
+    assert.ok(!result.stdout.includes(second));
+    assert.ok(!result.stdout.includes("Rejected token"));
+  }
+});
+
 test("doctor reports HTTP failures without printing raw response bodies", async (t) => {
   const fixture = await context(t);
   for (const body of [

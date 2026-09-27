@@ -213,5 +213,8 @@ function providerDiagnostic(error: unknown, apiKey: string): EvaluationFailure["
     .replace(/[\p{Cc}\p{Cf}]+/gu, " ")
     .trim();
   const redacted = apiKey ? safe.replaceAll(apiKey, "[redacted]") : safe;
+  // A provider may split a credential with whitespace or invisible separators.
+  if (apiKey && redacted.replace(/\s/gu, "").includes(apiKey))
+    return { statusCode: error.statusCode };
   return { statusCode: error.statusCode, message: redacted.slice(0, 500) || undefined };
 }
