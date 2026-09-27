@@ -7,9 +7,8 @@ description: Produce a professional, beat-locked motion-graphics launch video (s
 
 Build a ~30s showreel entirely in code: Remotion scenes plus a soundtrack
 synthesized from the same **cue sheet**, so every hit on screen lands on a hit in
-the mix. The bar is a real production, not a demo or prototype. Read
-[references/brief.md](references/brief.md) first: the quality bar and the
-feedback that shaped this workflow.
+the mix. The bar is a designer's showreel, not a demo or prototype: dense,
+juicy motion that a technical audience can also learn the mechanism from.
 
 ## Workflow
 
@@ -23,16 +22,17 @@ feedback that shaped this workflow.
    every scene change on a bar line. Write one module holding every event time
    (scene starts, word reveals, stamps, typing, impacts, risers); scenes and the
    music both import it. Arc that works: problem cold open → drop + product
-   reveal with a real command (the README's first example) → behind-the-scenes mechanism → the engine/model →
-   proof number (breakdown, riser, slam) → lockup with install command. Done when
-   every visual event has a cue and every cue has a sound.
+   reveal with a real command (the README's first example) → behind-the-scenes
+   mechanism → the engine/model → proof number (breakdown, riser, slam) → lockup
+   with install command. Done when every visual event has a cue and every cue
+   has a sound.
 3. **Synthesize the soundtrack from the cue sheet.** Kick, clap, hats, sidechained
    bass/pad/arp on a chord progression; builds into drops; a sound for each UI
    event (pop, tick, key click, ✓ blip, ✗ thud, whoosh, impact, ding). Master to
    roughly −11 to −14 LUFS. You cannot listen: verify with ffmpeg `ebur128` and a
    `showspectrumpic` spectrogram that risers and impacts sit at cue times, and
    say in the handoff that the audio was checked by measurement, not by ear.
-   Default style unless the brief says otherwise: bright electronic (synth-pop /
+   Default style unless the user asks otherwise: bright electronic (synth-pop /
    future bass).
 4. **Build the scenes** under the motion rules below. Drive them from absolute
    time in seconds, not frames, so cue values stay literal.
