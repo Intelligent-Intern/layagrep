@@ -13,13 +13,13 @@ jg doctor
 jg "How are telemetry events recorded and sent?" ./my-project
 ```
 
-`auth` asks for Vercel AI Gateway, TypeSafe, or OpenRouter, then saves its key in
-an owner-only config file. Searches use that provider until you run auth again.
+`auth` asks you to choose a provider, then saves its key in an owner-only config file.
+Run `jg --help` for the supported provider names. Searches use that provider until you run auth again.
 `doctor` verifies access with synthetic input and names the selected provider.
 For unattended setup, pipe the key from your secret manager to:
 
 ```sh
-jg auth --provider openrouter --stdin
+jg auth --provider opencode --stdin
 ```
 
 Both options are required for piped setup. Credentials are saved under
