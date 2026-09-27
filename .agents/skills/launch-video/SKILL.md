@@ -8,7 +8,7 @@ description: Produce a professional, beat-locked motion-graphics launch video (s
 Build a ~30s showreel entirely in code: Remotion scenes plus a soundtrack
 synthesized from the same **cue sheet**, so every hit on screen lands on a hit in
 the mix. The bar is a real production, not a demo or prototype. Read
-[references/brief.md](references/brief.md) first: the original brief and the
+[references/brief.md](references/brief.md) first: the quality bar and the
 feedback that shaped this workflow.
 
 ## Workflow
