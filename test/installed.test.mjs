@@ -574,6 +574,78 @@ test("doctor uses the installed SDK while missing credentials fail cleanly", asy
   assert.equal(fixture.requests.length, before);
 });
 
+test("doctor explains provider access restrictions without exposing credentials or metadata", async (t) => {
+  const fixture = await context(t, ({ response }) => {
+    response.writeHead(403, { "content-type": "application/json" });
+    response.end(
+      JSON.stringify({
+        error: {
+          message: `Free tier users do not have access to this model. Upgrade to paid credits. Token: ${fixtureKey} ${fixtureKey.slice(0, 10)}\u001b[31m${fixtureKey.slice(10)}\n\u001b[0m`,
+          type: "no_providers_available",
+          param: { secret: fixtureKey },
+        },
+        providerMetadata: { private: "DO_NOT_PRINT_PROVIDER_METADATA" },
+      }),
+    );
+    return true;
+  });
+  const result = await fixture.run(["doctor"]);
+  assert.equal(result.code, 1);
+  assert.match(result.stdout, /Vercel AI Gateway.*HTTP 403/);
+  assert.match(
+    result.stdout,
+    /Free tier users do not have access to this model\. Upgrade to paid credits\./,
+  );
+  assert.ok(!result.stdout.includes("DO_NOT_PRINT_PROVIDER_METADATA"));
+  assert.ok(!result.stdout.includes("\u001b"));
+  assert.equal(result.stdout.trim().split("\n").length, 2);
+  assert.equal(fixture.requests.length, 1);
+});
+
+test("doctor omits messages containing keys split by separators", async (t) => {
+  const fixture = await context(t);
+  const first = fixtureKey.slice(0, 12);
+  const second = fixtureKey.slice(12);
+  for (const separator of ["\n", "\t", "\u200b", " ", "\u2028"]) {
+    fixture.mode = ({ response }) => {
+      response.writeHead(403, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify({ error: { message: `Rejected token ${first}${separator}${second}` } }),
+      );
+      return true;
+    };
+    const result = await fixture.run(["doctor"]);
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, /HTTP 403/);
+    assert.match(result.stdout, /Check your saved key, model access, and provider billing/);
+    assert.ok(!result.stdout.includes(first));
+    assert.ok(!result.stdout.includes(second));
+    assert.ok(!result.stdout.includes("Rejected token"));
+  }
+});
+
+test("doctor reports HTTP failures without printing raw response bodies", async (t) => {
+  const fixture = await context(t);
+  for (const body of [
+    `<html>${fixtureKey} PRIVATE_RESPONSE_BODY</html>`,
+    JSON.stringify({ detail: { secret: fixtureKey, private: "PRIVATE_RESPONSE_BODY" } }),
+    "",
+  ]) {
+    fixture.mode = ({ response }) => {
+      response.writeHead(502, { "content-type": "application/json" });
+      response.end(body);
+      return true;
+    };
+    const before = fixture.requests.length;
+    const result = await fixture.run(["doctor"]);
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, /Vercel AI Gateway.*HTTP 502/);
+    assert.match(result.stdout, /Check your saved key, model access, and provider billing/);
+    assert.ok(!result.stdout.includes("PRIVATE_RESPONSE_BODY"));
+    assert.equal(fixture.requests.length - before, 2);
+  }
+});
+
 test("provider authentication failure stops immediately with fatal exit 1", async (t) => {
   const fixture = await context(t, "unauthorized");
   const result = await fixture.run([query]);

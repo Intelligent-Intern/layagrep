@@ -58,7 +58,7 @@ async function main() {
     }
     case "doctor": {
       const credentials = await loadCredentials();
-      const { createEvaluator } = await import("@repo/core");
+      const { createEvaluator, EvaluationFailure } = await import("@repo/core");
       const evaluator = createEvaluator({
         ...credentials,
         signal: controller.signal,
@@ -80,6 +80,15 @@ async function main() {
         await write(`Jev connection verified through ${providers[credentials.provider].label}.\n`);
       } catch (error) {
         if (error instanceof CliError) throw error;
+        if (error instanceof EvaluationFailure && error.diagnostic) {
+          const { statusCode, message } = error.diagnostic;
+          throw new CliError(
+            `Jev connection check failed through ${providers[credentials.provider].label} (HTTP ${statusCode}).\n` +
+              (message
+                ? `Provider: ${message}`
+                : "Check your saved key, model access, and provider billing."),
+          );
+        }
         throw new CliError(
           `Jev connection check failed through ${providers[credentials.provider].label}. Check your saved key, model access, and network.`,
         );
