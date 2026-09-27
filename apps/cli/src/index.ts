@@ -104,6 +104,7 @@ async function main() {
       });
       const evaluator = createEvaluator({
         cache,
+        concurrency: command.concurrency,
         policyVersion: JSON.stringify(command.policy),
         ...credentials,
         signal: controller.signal,

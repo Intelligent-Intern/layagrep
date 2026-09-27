@@ -40,6 +40,7 @@ export function renderResult(
     ...(omittedCount ? [`Source omitted: ${omittedCount} file(s).`] : []),
     ...(result.warnings ?? []).map(({ kind, count }) => `Warning: ${quote(kind)}: ${count}`),
     ...result.issues.map(({ kind, count }) => `Issue: ${quote(kind)}: ${count}`),
+    ...(result.providerFailure ? [`Provider error: ${quote(result.providerFailure)}`] : []),
     ...context.pytestFiles.map((path) =>
       [...path].some((character) => character.charCodeAt(0) < 32) ||
       /[\u007f-\u009f\u2028-\u202e\u2066-\u2069]/.test(path)

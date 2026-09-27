@@ -20,8 +20,9 @@ export class EvaluationFailure extends Error {
       | "source-invalid",
     public readonly splitEligible = false,
     public readonly diagnostic?: { statusCode: number; message?: string },
+    message?: string,
   ) {
-    super(`Jev evaluation failed: ${kind}`);
+    super(message ?? `Jev evaluation failed: ${kind}`);
     this.name = "EvaluationFailure";
   }
 }
@@ -35,8 +36,12 @@ export function createEvaluator(options: {
   signal: AbortSignal;
   requestLimit?: number;
   timeoutMs?: number;
+  concurrency?: number;
 }) {
   const preset = providers[options.provider];
+  const concurrency = options.concurrency ?? 32;
+  if (!Number.isSafeInteger(concurrency) || concurrency < 1)
+    throw new Error("Concurrency must be a positive integer");
   let requests = 0;
   let cacheHits = 0;
   let cooldownUntil = 0;
@@ -44,6 +49,27 @@ export function createEvaluator(options: {
   function assertActive() {
     if (options.signal.aborted) throw new EvaluationFailure("cancelled");
     if (authenticationFailure.signal.aborted) throw new EvaluationFailure("authentication");
+  }
+  let active = 0;
+  const waiting: Array<{ resolve: () => void; reject: (error: Error) => void }> = [];
+  const stopped = AbortSignal.any([options.signal, authenticationFailure.signal]);
+  stopped.addEventListener(
+    "abort",
+    () => {
+      const kind = options.signal.aborted ? "cancelled" : "authentication";
+      for (const request of waiting.splice(0)) request.reject(new EvaluationFailure(kind));
+    },
+    { once: true },
+  );
+  async function acquire() {
+    assertActive();
+    if (active < concurrency) active++;
+    else await new Promise<void>((resolve, reject) => waiting.push({ resolve, reject }));
+    return () => {
+      const next = waiting.shift();
+      if (next) next.resolve();
+      else active--;
+    };
   }
   const provider = createTypeSafeAi({
     apiKey: options.apiKey,
@@ -115,75 +141,93 @@ export function createEvaluator(options: {
         assertActive();
         if (requests >= (options.requestLimit ?? 50_000))
           throw new EvaluationFailure("request-limit");
-        while (cooldownUntil > Date.now()) {
-          try {
-            await delay(Math.min(60_000, cooldownUntil - Date.now()), undefined, {
-              signal: AbortSignal.any([options.signal, authenticationFailure.signal]),
-            });
-          } catch {
-            assertActive();
-            throw new EvaluationFailure("cancelled");
-          }
-        }
-        await policy?.beforeAttempt?.();
-        assertActive();
+        const release = await acquire();
         try {
-          const result = await evaluate({
-            model: provider.evaluationModel(preset.model),
-            ...request,
-            maxRetries: 0,
-            abortSignal: AbortSignal.any([
-              options.signal,
-              authenticationFailure.signal,
-              AbortSignal.timeout(options.timeoutMs ?? 15_000),
-            ]),
-          });
-          const scores = Object.fromEntries(
-            Object.keys(request.questions).map((id) => {
-              const answer = result.answers[id];
-              if (
-                !answer ||
-                answer.type !== "boolean" ||
-                !Number.isFinite(answer.probability) ||
-                answer.probability < 0 ||
-                answer.probability > 1
-              )
-                throw new Error("Invalid answer");
-              return [id, answer.probability];
-            }),
-          );
-          await options.cache?.put(cacheInput, scores);
-          return scores;
-        } catch (error) {
           assertActive();
-          const status =
-            error && typeof error === "object" && "statusCode" in error
-              ? error.statusCode
-              : undefined;
-          if (status === 401 || status === 403) {
-            authenticationFailure.abort();
-            throw new EvaluationFailure(
-              "authentication",
-              false,
-              providerDiagnostic(error, options.apiKey),
-            );
+          while (cooldownUntil > Date.now()) {
+            try {
+              await delay(Math.min(60_000, cooldownUntil - Date.now()), undefined, {
+                signal: AbortSignal.any([options.signal, authenticationFailure.signal]),
+              });
+            } catch {
+              assertActive();
+              throw new EvaluationFailure("cancelled");
+            }
           }
-          if (requests >= (options.requestLimit ?? 50_000))
-            throw new EvaluationFailure("request-limit");
-          const name = error instanceof Error ? error.name : "unknown";
-          const transient =
-            status === 408 ||
-            status === 429 ||
-            (typeof status === "number" && status >= 500 && status <= 599) ||
-            name === "TimeoutError" ||
-            (APICallError.isInstance(error) && error.statusCode === undefined && error.isRetryable);
-          if (navigation && status === 429) attemptLimit = Math.max(attemptLimit, 2);
-          if ((navigation && !transient) || attempt + 1 === attemptLimit)
-            throw new EvaluationFailure(
-              "provider",
-              navigation && multiple && transient && status !== 429,
-              providerDiagnostic(error, options.apiKey),
+          await policy?.beforeAttempt?.();
+          assertActive();
+          try {
+            const result = await evaluate({
+              model: provider.evaluationModel(preset.model),
+              ...request,
+              maxRetries: 0,
+              abortSignal: AbortSignal.any([
+                options.signal,
+                authenticationFailure.signal,
+                AbortSignal.timeout(options.timeoutMs ?? 15_000),
+              ]),
+            });
+            const scores = Object.fromEntries(
+              Object.keys(request.questions).map((id) => {
+                const answer = result.answers[id];
+                if (
+                  !answer ||
+                  answer.type !== "boolean" ||
+                  !Number.isFinite(answer.probability) ||
+                  answer.probability < 0 ||
+                  answer.probability > 1
+                )
+                  throw new Error("Invalid answer");
+                return [id, answer.probability];
+              }),
             );
+            await options.cache?.put(cacheInput, scores);
+            return scores;
+          } catch (error) {
+            assertActive();
+            const status =
+              error && typeof error === "object" && "statusCode" in error
+                ? error.statusCode
+                : undefined;
+            if (status === 401 || status === 403) {
+              authenticationFailure.abort();
+              throw new EvaluationFailure(
+                "authentication",
+                false,
+                providerDiagnostic(error, options.apiKey),
+              );
+            }
+            if (requests >= (options.requestLimit ?? 50_000))
+              throw new EvaluationFailure("request-limit");
+            const name = error instanceof Error ? error.name : "unknown";
+            const transient =
+              status === 408 ||
+              status === 429 ||
+              (typeof status === "number" && status >= 500 && status <= 599) ||
+              name === "TimeoutError" ||
+              (APICallError.isInstance(error) &&
+                error.statusCode === undefined &&
+                error.isRetryable);
+            if (navigation && status === 429) attemptLimit = Math.max(attemptLimit, 2);
+            if ((navigation && !transient) || attempt + 1 === attemptLimit) {
+              const diagnostic = providerDiagnostic(error, options.apiKey);
+              const description = diagnostic
+                ? `HTTP ${diagnostic.statusCode}${diagnostic.message ? `: ${diagnostic.message}` : ""}`
+                : name === "TimeoutError"
+                  ? `Request timed out after ${options.timeoutMs ?? 15_000} ms`
+                  : APICallError.isInstance(error) && error.statusCode === undefined
+                    ? "Network request failed (connection unavailable or reset)"
+                    : "Invalid or incomplete provider response";
+              throw new EvaluationFailure(
+                "provider",
+                navigation && multiple && transient && status !== 429,
+                diagnostic,
+                `${description} (max concurrent requests: ${concurrency})`,
+              );
+            }
+          }
+        } finally {
+          release();
         }
       }
       throw new EvaluationFailure("provider");
@@ -191,7 +235,7 @@ export function createEvaluator(options: {
   };
 }
 
-// Only explicit text fields from a parsed provider error are suitable for doctor output.
+// Only explicit text fields from a parsed provider error are suitable for user-facing diagnostics.
 // SDK messages can instead serialize arbitrary detail objects, requests, or response bodies.
 function providerDiagnostic(error: unknown, apiKey: string): EvaluationFailure["diagnostic"] {
   if (!APICallError.isInstance(error) || error.statusCode === undefined) return undefined;

@@ -17,6 +17,7 @@ export type SelectionResult = {
   file: FileEvidence;
   declarations: Array<Pick<SourceUnit, "name" | "range">>;
   issues: Array<{ kind: string; count: number }>;
+  providerFailure?: string;
 };
 
 function mergeSpans(spans: Span[]): Span[] {
@@ -42,6 +43,7 @@ export async function selectFile(
   signal?: AbortSignal,
 ): Promise<SelectionResult> {
   const issues = new Map<string, number>();
+  let providerFailure: string | undefined;
   const warn = (kind: string) => issues.set(kind, (issues.get(kind) ?? 0) + 1);
   if (
     previous &&
@@ -212,6 +214,7 @@ export async function selectFile(
     } catch (error) {
       if (!(error instanceof EvaluationFailure)) throw error;
       warn(error.kind);
+      if (error.kind === "provider") providerFailure ??= error.message;
       if (error.kind !== "provider") break;
     }
   }
@@ -316,5 +319,6 @@ export async function selectFile(
     file,
     declarations: units.map(({ name, range }) => ({ name, range })),
     issues: [...issues].map(([kind, count]) => ({ kind, count })),
+    providerFailure,
   };
 }

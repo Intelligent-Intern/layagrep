@@ -14,8 +14,8 @@ import { selectFile, type SelectionResult } from "./selection";
 import { repositoryContext } from "./repository-context";
 import type { Evaluator, FileEvidence, RetrievalResult, SearchInput } from "./types";
 
-// Provider calls dominate wall time; each stage keeps this many in flight.
-const concurrency = 32;
+// Bound per-stage source work; the evaluator separately caps shared provider attempts.
+const stageWorkers = 32;
 /** Traversal owns admission; every stage reads through the same eligibility policy. */
 export async function retrieve(input: SearchInput, evaluator: Evaluator): Promise<RetrievalResult> {
   const reader = await createFilesystem({
@@ -25,6 +25,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     protectedPaths: input.protectedPaths,
   });
   const issues = new Map<string, number>();
+  let providerFailure: string | undefined;
   const inspected = new Set<string>();
   const candidates = new Map<string, { path: string; contentHash: string; score: number }>();
   const files = new Map<string, FileEvidence>();
@@ -60,7 +61,8 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   }
   let entriesSeen = 0;
   let stop = false;
-  function issue(kind: string, count = 1) {
+  function issue(kind: string, count = 1, message?: string) {
+    if (kind === "provider") providerFailure ??= message;
     issues.set(kind, (issues.get(kind) ?? 0) + count);
     if (["authentication", "request-limit", "cancelled", "interrupted"].includes(kind)) stop = true;
   }
@@ -117,7 +119,11 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           const middle = Math.ceil(group.length / 2);
           batches.push(group.slice(0, middle), group.slice(middle));
         } else if (!(error instanceof EvaluationFailure && error.kind === "source-invalid"))
-          issue(error instanceof EvaluationFailure ? error.kind : "provider");
+          issue(
+            error instanceof EvaluationFailure ? error.kind : "provider",
+            1,
+            error instanceof EvaluationFailure ? error.message : undefined,
+          );
       }
     }
     // Failed groups append their halves to the same queue. A recovered parent is
@@ -127,7 +133,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       let rejected = false;
       function pump() {
         if (rejected) return;
-        while (active < concurrency && batches.length && !stop && !input.signal.aborted) {
+        while (active < stageWorkers && batches.length && !stop && !input.signal.aborted) {
           const group = batches.shift()!;
           active++;
           scoreGroup(group).then(
@@ -416,7 +422,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   async function parallel<T>(items: T[], work: (item: T) => Promise<void>) {
     let next = 0;
     const results = await Promise.allSettled(
-      Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+      Array.from({ length: Math.min(stageWorkers, items.length) }, async () => {
         try {
           while (next < items.length && !stop && !input.signal.aborted) await work(items[next++]!);
         } catch (error) {
@@ -518,7 +524,8 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           files.set(candidate.path, selection.file);
           declarations.set(candidate.path, selection.declarations);
           for (const entry of selection.issues)
-            if (entry.kind !== "source-invalid") issue(entry.kind, entry.count);
+            if (entry.kind !== "source-invalid")
+              issue(entry.kind, entry.count, selection.providerFailure);
         });
       const selectEvidence = async () => {
         await select();
@@ -568,7 +575,11 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
             );
           } catch (error) {
             if (!(error instanceof EvaluationFailure && error.kind === "source-invalid"))
-              issue(error instanceof EvaluationFailure ? error.kind : "provider");
+              issue(
+                error instanceof EvaluationFailure ? error.kind : "provider",
+                1,
+                error instanceof EvaluationFailure ? error.message : undefined,
+              );
           }
         });
       await Promise.all([selectEvidence(), classifyRoles()]);
@@ -615,6 +626,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       repositoryContext: context,
       issues: [...issues].map(([kind, count]) => ({ kind, count })),
       warnings: evaluator.cacheIssues,
+      providerFailure,
       counts: {
         requests: evaluator.requests,
         cacheHits: evaluator.cacheHits ?? 0,

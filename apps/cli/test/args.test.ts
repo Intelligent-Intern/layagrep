@@ -70,3 +70,12 @@ test("auth requires explicit provider for stdin and keeps provider selection out
   ])
     expect(() => parseCommand(args)).toThrow();
 });
+
+test("concurrency is a positive search-only limit and does not change cache policy", () => {
+  const command = parseCommand(["question", "--concurrency", "2"]);
+  expect(command).toMatchObject({ kind: "search", concurrency: 2, policy: {} });
+  for (const value of ["0", "-1", "1.5", "NaN", "1e2", "9007199254740992"])
+    expect(() => parseCommand(["question", `--concurrency=${value}`])).toThrow("positive integer");
+  for (const args of [["doctor"], ["auth"], ["skill"], ["cache", "clear"]])
+    expect(() => parseCommand([...args, "--concurrency", "2"])).toThrow();
+});

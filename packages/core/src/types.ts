@@ -32,6 +32,7 @@ export type RetrievalResult = {
   status: "complete" | "incomplete" | "interrupted";
   files: FileEvidence[];
   issues: Array<{ kind: string; count: number }>;
+  providerFailure?: string;
   warnings?: Array<{ kind: string; count: number }>;
   repositoryContext: {
     instructionFiles: string[];
