@@ -14,8 +14,8 @@ import { selectFile, type SelectionResult } from "./selection";
 import { repositoryContext } from "./repository-context";
 import type { Evaluator, FileEvidence, RetrievalResult, SearchInput } from "./types";
 
-// Provider calls dominate wall time; each stage keeps this many in flight.
-const concurrency = 32;
+// Bound per-stage source work; the evaluator separately caps shared provider attempts.
+const stageWorkers = 32;
 /** Traversal owns admission; every stage reads through the same eligibility policy. */
 export async function retrieve(input: SearchInput, evaluator: Evaluator): Promise<RetrievalResult> {
   const reader = await createFilesystem({
@@ -127,7 +127,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       let rejected = false;
       function pump() {
         if (rejected) return;
-        while (active < concurrency && batches.length && !stop && !input.signal.aborted) {
+        while (active < stageWorkers && batches.length && !stop && !input.signal.aborted) {
           const group = batches.shift()!;
           active++;
           scoreGroup(group).then(
@@ -416,7 +416,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   async function parallel<T>(items: T[], work: (item: T) => Promise<void>) {
     let next = 0;
     const results = await Promise.allSettled(
-      Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+      Array.from({ length: Math.min(stageWorkers, items.length) }, async () => {
         try {
           while (next < items.length && !stop && !input.signal.aborted) await work(items[next++]!);
         } catch (error) {
@@ -615,6 +615,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       repositoryContext: context,
       issues: [...issues].map(([kind, count]) => ({ kind, count })),
       warnings: evaluator.cacheIssues,
+      providerFailure: issues.has("provider") ? evaluator.firstProviderFailure : undefined,
       counts: {
         requests: evaluator.requests,
         cacheHits: evaluator.cacheHits ?? 0,

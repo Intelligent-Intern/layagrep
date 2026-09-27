@@ -495,6 +495,75 @@ test("actual installed search parses Python and returns every relevant hierarchy
   );
 });
 
+test("search concurrency limits all stages against a busy provider", async (t) => {
+  let active = 0;
+  let peak = 0;
+  const fixture = await context(t, async ({ response }) => {
+    active++;
+    peak = Math.max(peak, active);
+    response.once("finish", () => active--);
+    if (active > 2) {
+      response.writeHead(503, { "content-type": "application/json" });
+      response.end(JSON.stringify({ error: "Too many concurrent calls" }));
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    return false;
+  });
+  complete(await fixture.run([query, fixture.tree, "--concurrency", "2", "--no-cache"]));
+  assert.equal(peak, 2);
+});
+
+test("incomplete searches explain the provider error and recover with the same cache", async (t) => {
+  const failedRequests = new Set();
+  const fixture = await context(t, ({ body, raw, response }) => {
+    if (body.state.path !== "beta/nested/second.py") return false;
+    if (!body.state.selectedEvidence) failedRequests.add(raw);
+    response.writeHead(503, { "content-type": "application/json" });
+    response.end(JSON.stringify({ error: `Provider temporarily unavailable ${fixtureKey}` }));
+    return true;
+  });
+  const first = await fixture.run([query, fixture.tree, "--concurrency", "2"]);
+  assert.equal(first.code, 2, first.stdout);
+  assert.ok(failedRequests.size > 0);
+  const before = fixture.requests.length;
+  fixture.mode = "healthy";
+  const recovered = await fixture.run([query, fixture.tree, "--concurrency", "1"]);
+  complete(recovered);
+  assert.ok(!recovered.stdout.includes("Provider error:"));
+  for (const raw of failedRequests)
+    assert.ok(
+      fixture.requests.slice(before).some((request) => request.raw === raw),
+      "Failed requests must reach the provider again with caching enabled",
+    );
+  t.diagnostic("Recovery succeeded with the same cache and no --no-cache override.");
+  assert.match(first.stdout, /Provider error:.*HTTP 503.*Provider temporarily unavailable/);
+  assert.match(first.stdout, /max concurrent requests: 2/);
+  assert.equal(first.stdout.split("Provider error:").length - 1, 1);
+});
+
+test("incomplete searches distinguish rate limits from broken connections", async (t) => {
+  for (const mode of ["rate-limit", "disconnect"]) {
+    const fixture = await context(t, ({ response }) => {
+      if (mode === "disconnect") response.destroy();
+      else {
+        response.writeHead(429, { "content-type": "application/json", "retry-after": "0" });
+        response.end(JSON.stringify({ error: "Please slow down" }));
+      }
+      return true;
+    });
+    const result = await fixture.run([query, fixture.tree, "--concurrency", "1"]);
+    assert.equal(result.code, 2, result.stdout);
+    assert.match(
+      result.stdout,
+      mode === "disconnect"
+        ? /Provider error:.*Network request failed/
+        : /Provider error:.*HTTP 429.*Please slow down/,
+    );
+    assert.equal(result.stdout.split("Provider error:").length - 1, 1);
+  }
+});
+
 test("healthy negative evaluations produce a complete empty result", async (t) => {
   const fixture = await context(t, "negative");
   const result = await fixture.run([query, fixture.tree, "--no-cache"]);

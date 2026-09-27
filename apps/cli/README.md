@@ -35,6 +35,19 @@ configured an environment key must run auth. There is no automatic fallback or
 per-search provider override. Searches send eligible source to the saved service.
 Evaluation answers are cached locally; `jg --help` describes cache controls.
 
+For a slow or unstable connection, try `jg "question" ./project --concurrency 4`
+(or `1` to serialize requests). The default limit is 32 across all search stages,
+including retries. Waiting for a slot does not consume the request timeout, and
+queued source is revalidated before upload. This controls transport pressure,
+not relevance thresholds or cache identity.
+
+An incomplete search reports one sanitized provider error alongside its issue
+counts, distinguishing HTTP failures, timeouts, and connection failures. The
+reported concurrency limit helps tune the next run. Only validated evaluation
+answers are cached: provider errors and the final search result are never stored.
+Rerunning after the connection recovers retries failed work while reusing valid
+answers; `--no-cache` additionally bypasses those valid cached answers.
+
 The summary comes first, followed by file and declaration locations and selected
 source. Locations are reading leads, not a checklist. Omitted excerpts are marked;
 `--max-source-bytes 0` includes all selected source. An incomplete result can still

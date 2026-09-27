@@ -1,6 +1,6 @@
 import { routeProviderFetch } from "./fixtures/provider-route.mjs";
 import { expect, test } from "bun:test";
-import { createEvaluator } from "../packages/core/src/evaluator";
+import { createEvaluator, EvaluationFailure } from "../packages/core/src/evaluator";
 
 test("Jev uses native state and validated boolean probabilities through real HTTP", async () => {
   const state = {
@@ -168,6 +168,7 @@ test("stalled HTTP attempts time out without exceeding the evaluator attempt lim
     ).rejects.toMatchObject({ kind: "provider" });
     expect(calls).toBe(2);
     expect(evaluator.requests).toBe(2);
+    expect(evaluator.firstProviderFailure).toContain("timed out after 100 ms");
   } finally {
     server.stop(true);
   }
@@ -325,3 +326,109 @@ test("native HTTP-date Retry-After is honored before another attempt", async () 
     server.stop(true);
   }
 }, 5000);
+
+test("queued requests validate fresh source only after a provider slot is available", async () => {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let seen!: () => void;
+  const received = new Promise<void>((resolve) => {
+    seen = resolve;
+  });
+  let calls = 0;
+  let stale = false;
+  const server = Bun.serve({
+    port: 0,
+    async fetch() {
+      calls++;
+      seen();
+      await gate;
+      return Response.json({ answers: { q: { type: "noul", noul: 0.8 } } });
+    },
+  });
+  try {
+    const evaluator = createEvaluator({
+      apiKey: "fixture",
+      provider: "vercel",
+      concurrency: 1,
+      signal: new AbortController().signal,
+      fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
+    });
+    const request = {
+      state: "test",
+      questions: { q: { type: "boolean" as const, instructions: "Relevant?" } },
+    };
+    const first = evaluator.evaluate(request);
+    await received;
+    const queued = evaluator
+      .evaluate(request, {
+        beforeAttempt: async () => {
+          if (stale) throw new EvaluationFailure("source-invalid");
+        },
+      })
+      .catch((error) => error);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    stale = true;
+    release();
+    expect(await first).toEqual({ q: 0.8 });
+    expect(await queued).toMatchObject({ kind: "source-invalid" });
+    expect(calls).toBe(1);
+  } finally {
+    release();
+    server.stop(true);
+  }
+});
+
+for (const kind of ["cancelled", "authentication"] as const)
+  test(`${kind} rejects every queued request without sending it`, async () => {
+    const controller = new AbortController();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let seen!: () => void;
+    const received = new Promise<void>((resolve) => {
+      seen = resolve;
+    });
+    let calls = 0;
+    const server = Bun.serve({
+      port: 0,
+      async fetch() {
+        calls++;
+        seen();
+        await gate;
+        return kind === "authentication"
+          ? Response.json({ error: "invalid key" }, { status: 401 })
+          : Response.json({ answers: { q: { type: "noul", noul: 0.8 } } });
+      },
+    });
+    try {
+      const evaluator = createEvaluator({
+        apiKey: "fixture",
+        provider: "vercel",
+        concurrency: 1,
+        signal: controller.signal,
+        fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
+      });
+      const results = Promise.allSettled(
+        Array.from({ length: 20 }, (_, i) =>
+          evaluator.evaluate({
+            state: String(i),
+            questions: { q: { type: "boolean", instructions: "Relevant?" } },
+          }),
+        ),
+      );
+      await received;
+      if (kind === "authentication") release();
+      else controller.abort();
+      const settled = await results;
+      for (const result of settled)
+        expect(result).toMatchObject({ status: "rejected", reason: { kind } });
+      expect(calls).toBe(1);
+      expect(evaluator.requests).toBe(1);
+    } finally {
+      release();
+      server.stop(true);
+    }
+  });
