@@ -25,6 +25,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     protectedPaths: input.protectedPaths,
   });
   const issues = new Map<string, number>();
+  let providerFailure: string | undefined;
   const inspected = new Set<string>();
   const candidates = new Map<string, { path: string; contentHash: string; score: number }>();
   const files = new Map<string, FileEvidence>();
@@ -60,7 +61,8 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   }
   let entriesSeen = 0;
   let stop = false;
-  function issue(kind: string, count = 1) {
+  function issue(kind: string, count = 1, message?: string) {
+    if (kind === "provider") providerFailure ??= message;
     issues.set(kind, (issues.get(kind) ?? 0) + count);
     if (["authentication", "request-limit", "cancelled", "interrupted"].includes(kind)) stop = true;
   }
@@ -117,7 +119,11 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           const middle = Math.ceil(group.length / 2);
           batches.push(group.slice(0, middle), group.slice(middle));
         } else if (!(error instanceof EvaluationFailure && error.kind === "source-invalid"))
-          issue(error instanceof EvaluationFailure ? error.kind : "provider");
+          issue(
+            error instanceof EvaluationFailure ? error.kind : "provider",
+            1,
+            error instanceof EvaluationFailure ? error.message : undefined,
+          );
       }
     }
     // Failed groups append their halves to the same queue. A recovered parent is
@@ -518,7 +524,8 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           files.set(candidate.path, selection.file);
           declarations.set(candidate.path, selection.declarations);
           for (const entry of selection.issues)
-            if (entry.kind !== "source-invalid") issue(entry.kind, entry.count);
+            if (entry.kind !== "source-invalid")
+              issue(entry.kind, entry.count, selection.providerFailure);
         });
       const selectEvidence = async () => {
         await select();
@@ -568,7 +575,11 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
             );
           } catch (error) {
             if (!(error instanceof EvaluationFailure && error.kind === "source-invalid"))
-              issue(error instanceof EvaluationFailure ? error.kind : "provider");
+              issue(
+                error instanceof EvaluationFailure ? error.kind : "provider",
+                1,
+                error instanceof EvaluationFailure ? error.message : undefined,
+              );
           }
         });
       await Promise.all([selectEvidence(), classifyRoles()]);
@@ -615,7 +626,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       repositoryContext: context,
       issues: [...issues].map(([kind, count]) => ({ kind, count })),
       warnings: evaluator.cacheIssues,
-      providerFailure: issues.has("provider") ? evaluator.firstProviderFailure : undefined,
+      providerFailure,
       counts: {
         requests: evaluator.requests,
         cacheHits: evaluator.cacheHits ?? 0,

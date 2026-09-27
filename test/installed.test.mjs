@@ -542,6 +542,39 @@ test("incomplete searches explain the provider error and recover with the same c
   assert.equal(first.stdout.split("Provider error:").length - 1, 1);
 });
 
+test("recovered navigation failures do not mask unrecovered diagnostics", async (t) => {
+  for (const stage of ["navigation", "selection", "role"]) {
+    let recovered = false;
+    let rejected = 0;
+    const fixture = await context(t, ({ body, response }) => {
+      if (!recovered && body.state.items?.length > 1) {
+        recovered = true;
+        response.writeHead(503, { "content-type": "application/json" });
+        response.end(JSON.stringify({ error: "RECOVERED_NAVIGATION_FAILURE" }));
+        return true;
+      }
+      const target = "beta/nested/second.py";
+      const fails =
+        stage === "navigation"
+          ? body.state.items?.some((item) => item.path === target)
+          : body.state.path === target &&
+            (stage === "selection"
+              ? Array.isArray(body.state.declarations)
+              : Object.hasOwn(body.questions, "implementation"));
+      if (!fails) return false;
+      rejected++;
+      response.writeHead(400, { "content-type": "application/json" });
+      response.end(JSON.stringify({ error: `UNRECOVERED_${stage}` }));
+      return true;
+    });
+    const result = await fixture.run([query, fixture.tree, "--no-cache"]);
+    assert.equal(result.code, 2, result.stdout);
+    assert.ok(recovered && rejected > 0);
+    assert.match(result.stdout, new RegExp(`Provider error:.*HTTP 400.*UNRECOVERED_${stage}`));
+    assert.ok(!result.stdout.includes("RECOVERED_NAVIGATION_FAILURE"));
+  }
+});
+
 test("incomplete searches distinguish rate limits from broken connections", async (t) => {
   for (const mode of ["rate-limit", "disconnect"]) {
     const fixture = await context(t, ({ response }) => {

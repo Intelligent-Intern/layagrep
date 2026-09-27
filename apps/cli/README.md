@@ -41,8 +41,9 @@ including retries. Waiting for a slot does not consume the request timeout, and
 queued source is revalidated before upload. This controls transport pressure,
 not relevance thresholds or cache identity.
 
-An incomplete search reports one sanitized provider error alongside its issue
-counts, distinguishing HTTP failures, timeouts, and connection failures. The
+An incomplete search reports one sanitized, unrecovered provider error alongside
+its issue counts, distinguishing HTTP failures, timeouts, and connection failures.
+A batch failure that recovers through splitting is not used as the diagnostic. The
 reported concurrency limit helps tune the next run. Only validated evaluation
 answers are cached: provider errors and the final search result are never stored.
 Rerunning after the connection recovers retries failed work while reusing valid

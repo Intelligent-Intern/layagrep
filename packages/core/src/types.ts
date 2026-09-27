@@ -51,7 +51,6 @@ export type SearchInput = {
 export type Evaluator = {
   readonly requests: number;
   readonly cacheHits?: number;
-  readonly firstProviderFailure?: string;
   readonly cacheIssues?: Array<{ kind: string; count: number }>;
   evaluate(
     request: EvaluationRequest,

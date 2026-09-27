@@ -165,10 +165,12 @@ test("stalled HTTP attempts time out without exceeding the evaluator attempt lim
         state: "test",
         questions: { q: { type: "boolean", instructions: "Relevant?" } },
       }),
-    ).rejects.toMatchObject({ kind: "provider" });
+    ).rejects.toMatchObject({
+      kind: "provider",
+      message: expect.stringContaining("timed out after 100 ms"),
+    });
     expect(calls).toBe(2);
     expect(evaluator.requests).toBe(2);
-    expect(evaluator.firstProviderFailure).toContain("timed out after 100 ms");
   } finally {
     server.stop(true);
   }

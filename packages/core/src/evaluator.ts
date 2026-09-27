@@ -20,8 +20,9 @@ export class EvaluationFailure extends Error {
       | "source-invalid",
     public readonly splitEligible = false,
     public readonly diagnostic?: { statusCode: number; message?: string },
+    message?: string,
   ) {
-    super(`Jev evaluation failed: ${kind}`);
+    super(message ?? `Jev evaluation failed: ${kind}`);
     this.name = "EvaluationFailure";
   }
 }
@@ -44,7 +45,6 @@ export function createEvaluator(options: {
   let requests = 0;
   let cacheHits = 0;
   let cooldownUntil = 0;
-  let firstProviderFailure: string | undefined;
   const authenticationFailure = new AbortController();
   function assertActive() {
     if (options.signal.aborted) throw new EvaluationFailure("cancelled");
@@ -96,9 +96,6 @@ export function createEvaluator(options: {
     },
   });
   return {
-    get firstProviderFailure() {
-      return firstProviderFailure;
-    },
     get cacheHits() {
       return cacheHits;
     },
@@ -221,11 +218,11 @@ export function createEvaluator(options: {
                   : APICallError.isInstance(error) && error.statusCode === undefined
                     ? "Network request failed (connection unavailable or reset)"
                     : "Invalid or incomplete provider response";
-              firstProviderFailure ??= `${description} (max concurrent requests: ${concurrency})`;
               throw new EvaluationFailure(
                 "provider",
                 navigation && multiple && transient && status !== 429,
                 diagnostic,
+                `${description} (max concurrent requests: ${concurrency})`,
               );
             }
           }
