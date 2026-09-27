@@ -16,6 +16,10 @@ jg "How are telemetry events recorded and sent?" ./my-project
 `auth` asks you to choose a provider, then saves its key in an owner-only config file.
 Run `jg --help` for the supported provider names. Searches use that provider until you run auth again.
 `doctor` verifies access with synthetic input and names the selected provider.
+When the provider rejects the request, doctor reports the HTTP status and its
+error message, when available. A working key can still lack model access or paid
+credits; follow the provider’s explanation before replacing the key. Saved keys
+and raw response bodies are excluded from diagnostic output.
 For unattended setup, pipe the key from your secret manager to:
 
 ```sh

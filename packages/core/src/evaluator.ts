@@ -3,6 +3,7 @@ import { createTypeSafeAi } from "@ai-sdk/typesafe-ai";
 import { providers, type ProviderId } from "./providers";
 import { type createEvaluationCache, type CacheInput } from "./cache";
 import { setTimeout as delay } from "node:timers/promises";
+import { stripVTControlCharacters } from "node:util";
 
 export type EvaluationRequest = {
   state: Parameters<typeof evaluate>[0]["state"];
@@ -18,6 +19,7 @@ export class EvaluationFailure extends Error {
       | "cancelled"
       | "source-invalid",
     public readonly splitEligible = false,
+    public readonly diagnostic?: { statusCode: number; message?: string },
   ) {
     super(`Jev evaluation failed: ${kind}`);
     this.name = "EvaluationFailure";
@@ -160,7 +162,11 @@ export function createEvaluator(options: {
               : undefined;
           if (status === 401 || status === 403) {
             authenticationFailure.abort();
-            throw new EvaluationFailure("authentication");
+            throw new EvaluationFailure(
+              "authentication",
+              false,
+              providerDiagnostic(error, options.apiKey),
+            );
           }
           if (requests >= (options.requestLimit ?? 50_000))
             throw new EvaluationFailure("request-limit");
@@ -176,10 +182,36 @@ export function createEvaluator(options: {
             throw new EvaluationFailure(
               "provider",
               navigation && multiple && transient && status !== 429,
+              providerDiagnostic(error, options.apiKey),
             );
         }
       }
       throw new EvaluationFailure("provider");
     },
   };
+}
+
+// Only explicit text fields from a parsed provider error are suitable for doctor output.
+// SDK messages can instead serialize arbitrary detail objects, requests, or response bodies.
+function providerDiagnostic(error: unknown, apiKey: string): EvaluationFailure["diagnostic"] {
+  if (!APICallError.isInstance(error) || error.statusCode === undefined) return undefined;
+  const data: unknown = error.data;
+  let message: unknown;
+  if (data && typeof data === "object") {
+    const nested = "error" in data ? data.error : undefined;
+    message =
+      ("message" in data && typeof data.message === "string" ? data.message : undefined) ??
+      (typeof nested === "string"
+        ? nested
+        : nested && typeof nested === "object" && "message" in nested
+          ? nested.message
+          : undefined) ??
+      ("detail" in data && typeof data.detail === "string" ? data.detail : undefined);
+  }
+  if (typeof message !== "string") return { statusCode: error.statusCode };
+  const safe = stripVTControlCharacters(message)
+    .replace(/[\p{Cc}\p{Cf}]+/gu, " ")
+    .trim();
+  const redacted = apiKey ? safe.replaceAll(apiKey, "[redacted]") : safe;
+  return { statusCode: error.statusCode, message: redacted.slice(0, 500) || undefined };
 }
