@@ -48,7 +48,7 @@ export async function validateRelease(tarball, tag, root = repository) {
   if (new Set(files).size !== files.length) throw new Error("Duplicate archive entries");
   for (const path of files)
     if (
-      !/^package\/(?:package\.json|README(?:\.md)?|LICENSE|dist\/(?:bin\/(?:index\.js|python-worker\.mjs)|assets\/(?:python\/(?:inspect|preview|neighborhood)\.py|README\.md)|skills\/jevgrep\/SKILL\.md|LICENSE|THIRD_PARTY_NOTICES\.txt))$/.test(
+      !/^package\/(?:package\.json|README(?:\.md)?|LICENSE|dist\/(?:bin\/(?:index\.js|python-worker\.mjs)|assets\/(?:python\/(?:inspect|preview|neighborhood|calls)\.py|README\.md)|skills\/jevgrep\/SKILL\.md|LICENSE|THIRD_PARTY_NOTICES\.txt))$/.test(
         path,
       )
     )
@@ -77,7 +77,7 @@ export async function validateRelease(tarball, tag, root = repository) {
     ["dist/LICENSE", "LICENSE"],
     ["dist/skills/jevgrep/SKILL.md", "skills/jevgrep/SKILL.md"],
     ["dist/bin/python-worker.mjs", "packages/core/src/python-worker.mjs"],
-    ...["inspect", "preview", "neighborhood"].map((name) => [
+    ...["inspect", "preview", "neighborhood", "calls"].map((name) => [
       `dist/assets/python/${name}.py`,
       `packages/core/assets/python/${name}.py`,
     ]),

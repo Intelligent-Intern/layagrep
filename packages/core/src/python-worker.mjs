@@ -11,7 +11,7 @@ const runtime = await loadPyodide({
 });
 const sources = Object.fromEntries(
   await Promise.all(
-    ["inspect", "preview", "neighborhood"].map(async (name) => [
+    ["inspect", "preview", "neighborhood", "calls"].map(async (name) => [
       name,
       await readFile(new URL(`../assets/python/${name}.py`, import.meta.url), "utf8"),
     ]),

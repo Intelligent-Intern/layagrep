@@ -4,13 +4,15 @@ import { type EvaluationRequest, EvaluationFailure } from "./evaluator";
 import { inspect, pythonPreview, sourceForUnit, splitSource } from "./source";
 import {
   navigationRequest,
-  roleRequest,
+  fileAssessmentRequest,
   type DirectoryPreview,
   type FilePreview,
   type NavigationItem,
   type Evidence,
 } from "./requests";
 import { selectFile, type SelectionResult } from "./selection";
+import { localCallContext } from "./call-context";
+import { selectTestBodies } from "./test-body-selection";
 import { repositoryContext } from "./repository-context";
 import type { Evaluator, FileEvidence, RetrievalResult, SearchInput } from "./types";
 
@@ -380,7 +382,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
         if (item.kind === "directory") {
           if (probability > 0.5) directories.push(item.path);
           else if (!anchor) pruned.set(item.path, item);
-        } else if (probability > 0.25) {
+        } else if (probability > 0.5) {
           const prior = candidates.get(item.path);
           if (!prior || probability > prior.score)
             candidates.set(item.path, {
@@ -411,6 +413,12 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       files.set(candidate.path, {
         ...prior,
         roles: [],
+        priority: undefined,
+        presentationExcerpts: [],
+        selectedPresentationExcerpts: [],
+        callLeads: [],
+        presentationSelected: [],
+        sourceDecisions: [],
         leads: [],
         selected: [],
         rendered: [],
@@ -530,7 +538,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       const selectEvidence = async () => {
         await select();
         const evidence: Evidence[] = [];
-        // Declaration entries are inserted when selection completes, as in the frozen locations map.
+        // Donors follow selection completion order; concurrent completion can affect request context.
         for (const path of declarations.keys()) {
           const candidate = candidates.get(path)!;
           if (stop || input.signal.aborted) break;
@@ -557,22 +565,24 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
             return fresh.length ? fresh : undefined;
           });
       };
-      // Roles read only the discovery preview, so they classify while evidence is selected.
-      const roles = new Map<string, string[]>();
-      const classifyRoles = () =>
+      // File assessment reads only the discovery preview, so it runs alongside evidence selection.
+      const assessments = new Map<string, { labels: string[]; priority: number }>();
+      const assessFiles = () =>
         parallel(ordered, async (candidate) => {
           const source = await unchanged(candidate);
           if (!source) return;
           const preview = previews.get(candidate.path)!;
           try {
             const scores = await freshEvaluation(
-              roleRequest(input.query, candidate.path, preview),
+              fileAssessmentRequest(input.query, candidate.path, preview),
               [candidate],
             );
-            roles.set(
-              candidate.path,
-              Object.keys(scores).filter((role) => scores[role]! > 0.5),
-            );
+            assessments.set(candidate.path, {
+              labels: Object.keys(scores).filter(
+                (role) => role !== "priority" && scores[role]! > 0.5,
+              ),
+              priority: scores.priority!,
+            });
           } catch (error) {
             if (!(error instanceof EvaluationFailure && error.kind === "source-invalid"))
               issue(
@@ -582,11 +592,79 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
               );
           }
         });
-      await Promise.all([selectEvidence(), classifyRoles()]);
-      // Selection replaces file records, so roles attach after it; invalidated files keep none.
-      for (const [path, fileRoles] of roles) {
+      await Promise.all([selectEvidence(), assessFiles()]);
+      await parallel(ordered, async (candidate) => {
+        const file = files.get(candidate.path);
+        if (!file || file.sourceOmitted) return;
+        const snapshot = await unchanged(candidate);
+        if (!snapshot) return;
+        if (assessments.get(candidate.path)?.labels.includes("test")) {
+          file.presentationExcerpts =
+            file.selectedPresentationExcerpts ?? file.presentationExcerpts;
+          file.presentationSelected = file.selected;
+        }
+        try {
+          const context = await localCallContext(snapshot, file, input.signal);
+          if (context && (await unchanged(candidate)) && files.get(candidate.path) === file)
+            Object.assign(file, context);
+        } catch (error) {
+          if (input.signal.aborted) throw error;
+          // Optional structural context cannot discard already selected evidence.
+          issue("local-call-context");
+        }
+      });
+      // Selection replaces file records, so assessments attach afterward; invalidated files keep none.
+      for (const [path, assessment] of assessments) {
         const file = files.get(path)!;
-        if (!file.sourceOmitted) file.roles = fileRoles;
+        if (!file.sourceOmitted) {
+          file.roles = assessment.labels;
+          file.priority = assessment.priority;
+        }
+      }
+      const testInputs = [];
+      for (const candidate of ordered) {
+        const file = files.get(candidate.path)!;
+        if (file.sourceOmitted || !file.roles.includes("test")) continue;
+        const snapshot = await unchanged(candidate);
+        if (snapshot) testInputs.push({ snapshot, file });
+      }
+      try {
+        const changes = await selectTestBodies(
+          input.query,
+          testInputs,
+          {
+            get requests() {
+              return evaluator.requests;
+            },
+            evaluate: (request) => {
+              const state = request.state as { candidates: Record<string, { path: string }> };
+              return freshEvaluation(
+                request,
+                [...new Set(Object.values(state.candidates).map((c) => c.path))].map(
+                  (path) => candidates.get(path)!,
+                ),
+              );
+            },
+          },
+          input.signal,
+        );
+        let current = true;
+        for (const item of testInputs) {
+          if (
+            !(await unchanged(candidates.get(item.snapshot.path)!)) ||
+            files.get(item.snapshot.path) !== item.file
+          )
+            current = false;
+        }
+        if (current)
+          for (const { file, ...presentation } of changes) Object.assign(file, presentation);
+      } catch (error) {
+        if (input.signal.aborted) throw input.signal.reason;
+        issue(
+          error instanceof EvaluationFailure ? error.kind : "test-body-selection",
+          1,
+          error instanceof EvaluationFailure ? error.message : undefined,
+        );
       }
       if (issues.has("authentication") && !files.size)
         throw new EvaluationFailure("authentication");
@@ -616,7 +694,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       declarations,
       (path) => unchanged(candidates.get(path)!),
     );
-    // Role evaluation may outlive the bytes it classified, for every language.
+    // File assessment may outlive the bytes it classified, for every language.
     for (const candidate of candidates.values()) await unchanged(candidate);
     return {
       root: reader.root,

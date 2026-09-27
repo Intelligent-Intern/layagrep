@@ -1,6 +1,6 @@
 # Packaged Python helpers
 
-The Python helpers in `python/` are the frozen reference scripts. The standalone
+The Python helpers in `python/` inspect source as data. The standalone
 worker executes them with the pinned Pyodide CPython runtime, supplied by the
 normal npm dependency. The installed package includes the worker and helpers;
 Pyodide includes its interpreter WASM and standard library. Parsing requires no

@@ -1,5 +1,9 @@
 # Provider contract evidence
 
+Historical provider-port evidence: the frozen-spike compatibility requirements
+below were retired in favor of [official task completion and cost](../../../evals/cost-quality-policy.md).
+They do not constrain current retrieval, skill wording or output formatting.
+
 Provider endpoints and model IDs live in the [preset registry](../../../packages/core/src/providers.ts).
 These sources explain the protocol choices behind those presets:
 
@@ -63,8 +67,8 @@ and the Vercel guide describe native errors; fixtures must use their shapes.
 Repository input: `ca7054ed4c50283030102d15cd73d816e85bc569`. This Git tree pins the
 pre-change production implementation, lockfile, policy, parser versions, source tree,
 skill, test harness, and previously recorded evidence. The additional historical
-source hashes are owned by [the reference manifest](../../../test/reference/manifest.json).
-Keep that manifest, its covered files, [the corpus](../../../test/reference/corpus.json),
+source hashes are owned by [the reference manifest](https://github.com/dzhng/jevgrep/blob/80a216bfa0bf04b2ec615ede81f7af32f1c14153/test/reference/manifest.json).
+Keep that manifest, its covered files, [the corpus](https://github.com/dzhng/jevgrep/blob/80a216bfa0bf04b2ec615ede81f7af32f1c14153/test/reference/corpus.json),
 and all historical benchmark results unchanged.
 
 The corpus compares a request multiset: independent network arrival order is not

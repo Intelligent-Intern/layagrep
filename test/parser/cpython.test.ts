@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { inspect } from "../../packages/core/src/source.ts";
 
-test("CPython decorator coordinates and invalid AST syntax match the frozen language boundary", async () => {
+test("CPython decorator coordinates and invalid AST syntax retain Python language semantics", async () => {
   const snapshot = (source: string) => ({ path: "sample.py", source, contentHash: "fixture" });
   const decorated = await inspect(snapshot("@(\n    decorator\n)\ndef target():\n    return 1\n"));
   assert.deepEqual(
@@ -25,7 +25,7 @@ test("cancelled Python startup and active work recover without losing the next r
   first.abort();
   await assert.rejects(pending, { name: "AbortError" });
   assert.deepEqual(await runPython("inspect", "def recovered():\n    pass\n"), [
-    { name: "recovered", startLine: 1, endLine: 2 },
+    { name: "recovered", startLine: 1, endLine: 2, ownerHeaders: [] },
   ]);
   const active = new AbortController();
   const parsing = runPython("inspect", "value = 1\n".repeat(500_000), active.signal);
@@ -37,7 +37,7 @@ test("cancelled Python startup and active work recover without losing the next r
   }
   assert.equal(await runPython("inspect", "def broken():\n    del 1\n"), null);
   assert.deepEqual(await runPython("inspect", "def healthy():\n    pass\n"), [
-    { name: "healthy", startLine: 1, endLine: 2 },
+    { name: "healthy", startLine: 1, endLine: 2, ownerHeaders: [] },
   ]);
 });
 
@@ -68,26 +68,12 @@ test("a completed Python helper does not keep the Node process alive", async () 
       child.on("exit", resolve);
     });
     assert.equal(code, 0, errors);
-    assert.deepEqual(JSON.parse(output), [{ name: "done", startLine: 1, endLine: 2 }]);
+    assert.deepEqual(JSON.parse(output), [
+      { name: "done", startLine: 1, endLine: 2, ownerHeaders: [] },
+    ]);
   } finally {
     clearTimeout(timer);
     child.kill();
-  }
-});
-
-test("bundled Python programs remain byte-identical to the frozen helpers", async () => {
-  const { readFile } = await import("node:fs/promises");
-  for (const [asset, reference] of [
-    ["inspect", "source-method-declarations"],
-    ["preview", "content-handoff-v47"],
-    ["neighborhood", "source-neighborhood"],
-  ]) {
-    assert.deepEqual(
-      await readFile(new URL(`../../packages/core/assets/python/${asset}.py`, import.meta.url)),
-      await readFile(
-        new URL(`../../evals/implementation/swebench/${reference}-spike.py`, import.meta.url),
-      ),
-    );
   }
 });
 
@@ -102,7 +88,9 @@ test("cancelling one query preserves unrelated concurrent Python work", async ()
   );
   controller.abort();
   await assert.rejects(cancelled, { name: "AbortError" });
-  assert.deepEqual(await independent, [{ name: "retained", startLine: 1, endLine: 2 }]);
+  assert.deepEqual(await independent, [
+    { name: "retained", startLine: 1, endLine: 2, ownerHeaders: [] },
+  ]);
 });
 
 test("oversized CR-only declarations retain every source byte in bounded units", async () => {
@@ -115,3 +103,33 @@ test("oversized CR-only declarations retain every source byte in bounded units",
     result.units.every((unit) => Buffer.byteLength(sourceForUnit(snapshot, unit)) <= 24_000),
   );
 });
+
+test(
+  "repeated diamond inheritance resolves the same helper without exponential traversal",
+  { timeout: 120_000 },
+  async () => {
+    const { runPython } = await import("../../packages/core/src/python.ts");
+    let source = "class Root:\n    def helper(self):\n        return 1\n";
+    let parent = "Root";
+    for (let i = 0; i < 24; i++) {
+      source += `class Left${i}(${parent}): pass\nclass Right${i}(${parent}): pass\nclass Join${i}(Left${i}, Right${i}): pass\n`;
+      parent = `Join${i}`;
+    }
+    source += `class Leaf(${parent}):\n    def target(self):\n        return self.helper()\n`;
+    const end = source.trimEnd().split("\n").length;
+    const actual = await runPython(
+      "calls",
+      JSON.stringify({ source, ranges: [{ startLine: end - 1, endLine: end }] }),
+    );
+    assert.deepEqual(actual, [
+      {
+        caller: "Leaf.target",
+        name: "Root.helper",
+        startLine: 2,
+        endLine: 3,
+        unknownEarlierBases: [],
+        ownerHeader: { startLine: 1, endLine: 1 },
+      },
+    ]);
+  },
+);

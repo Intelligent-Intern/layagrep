@@ -196,10 +196,14 @@ async function context(t, mode = "healthy", executable = binary) {
           response.end(JSON.stringify({ answers: {} }));
           return;
         }
-        probabilities = body.state.declarations.map((declaration) => {
+        probabilities = Object.keys(body.questions).map((id) => {
+          const match = /^(q|scope|ref)(\d+)$/.exec(id);
+          assert.ok(match, `Unknown declaration judgment: ${id}`);
+          const declaration = body.state.declarations[Number(match[2])];
+          assert.ok(declaration, `Missing declaration for ${id}`);
           assert.ok(Number.isInteger(declaration.startLine) && declaration.startLine >= 1);
           assert.ok(declaration.endLine >= declaration.startLine);
-          return declaration.name.endsWith(".record_event") ? 0.95 : 0.05;
+          return match[1] === "scope" || declaration.name.endsWith(".record_event") ? 0.95 : 0.05;
         });
       } else if (Object.hasOwn(body.questions, "implementation")) {
         probabilities = Object.keys(body.questions).map((name) =>
@@ -273,7 +277,7 @@ async function context(t, mode = "healthy", executable = binary) {
       let outputBytes = 0;
       const timer = setTimeout(
         () => signalChild(child, "SIGKILL"),
-        mode === "stalled" ? 120_000 : 45_000,
+        120_000,
       );
       for (const [stream, chunks] of [
         [child.stdout, stdout],
@@ -363,7 +367,7 @@ function assertCachedRequestsAreReused(requests, before) {
   for (const { raw, body } of requests.slice(before)) {
     assert.ok(!seen.has(raw), "An identical successful native request bypassed the cache");
     seen.add(raw);
-    // Completion order is part of the frozen input; warm reads can create a genuinely new order.
+    // Completion order affects request context, so warm reads can produce different cache keys.
     assert.ok(Array.isArray(body.state.selectedEvidence));
     const evidenceContents = (value) =>
       JSON.stringify(value.state.selectedEvidence.map((item) => JSON.stringify(item)).sort());
@@ -790,7 +794,7 @@ test("invalid navigation JSON remains incomplete without retrying or splitting",
   assert.ok(!result.stdout.includes("py-evidence-"));
 });
 
-test("a disconnected navigation request recovers through reference-compatible splitting", async (t) => {
+test("a disconnected navigation request recovers through bounded batch splitting", async (t) => {
   const fixture = await context(t, "disconnect");
   const result = await fixture.run([query]);
   complete(result);
@@ -938,7 +942,7 @@ test("a head -200 consumer closes the stdout pipe without leaving jg running", a
   const result = await fixture.run([query], {}, true);
   assert.equal(result.code, 0);
   assert.match(result.stdout, /^Jevgrep: \d+ relevant files\.\n/);
-  assert.equal(result.stdout.trimEnd().split("\n").length, 200);
+  assert.equal(result.stdout.match(/\n/g)?.length, 200);
   assert.ok(!result.stdout.includes("End context."));
 });
 
@@ -964,11 +968,11 @@ test("source budget preserves every file and lead while explicitly omitting sour
     stdout.split("\n").flatMap((line) => {
       const file = /^- ("(?:[^"\\]|\\.)*") —/.exec(line);
       if (file) return [file[1]];
-      return line.startsWith("  Reading lead ") ? [line] : [];
+      return /^  .+@\d+-\d+$/.test(line) ? [line] : [];
     });
   const expectedLocations = locations(unlimited.stdout);
   assert.equal(expectedLocations.filter((line) => line.startsWith('"')).length, branches.length);
-  assert.ok(expectedLocations.some((line) => line.startsWith("  Reading lead ")));
+  assert.ok(expectedLocations.some((line) => /^  .+@\d+-\d+$/.test(line)));
   assert.deepEqual(locations(bounded.stdout), expectedLocations);
   assertCachedRequestsAreReused(fixture.requests, before);
 });

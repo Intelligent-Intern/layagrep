@@ -90,7 +90,7 @@ test("archive validation rejects changed skill bytes and accidental source paylo
     "skills/jevgrep/SKILL.md": "Use jg for unfamiliar code.\n",
     "packages/core/src/python-worker.mjs": "// worker fixture",
     ...Object.fromEntries(
-      ["inspect", "preview", "neighborhood"].map((name) => [
+      ["inspect", "preview", "neighborhood", "calls"].map((name) => [
         `packages/core/assets/python/${name}.py`,
         `# ${name} helper fixture`,
       ]),
@@ -110,7 +110,7 @@ test("archive validation rejects changed skill bytes and accidental source paylo
     ["LICENSE", "dist/LICENSE"],
     ["skills/jevgrep/SKILL.md", "dist/skills/jevgrep/SKILL.md"],
     ["packages/core/src/python-worker.mjs", "dist/bin/python-worker.mjs"],
-    ...["inspect", "preview", "neighborhood"].map((name) => [
+    ...["inspect", "preview", "neighborhood", "calls"].map((name) => [
       `packages/core/assets/python/${name}.py`,
       `dist/assets/python/${name}.py`,
     ]),

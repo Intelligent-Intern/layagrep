@@ -129,6 +129,11 @@ export async function selectFile(
     });
   const selectedCoordinates: Range[] = [];
   const selected: Span[] = (previous?.selected ?? []).map(spanForRange);
+  const sourceDecisions = new Map<string, { range: EvidenceRange; score: number }>();
+  for (const decision of previous?.sourceDecisions ?? []) {
+    const span = spanForRange(decision.range);
+    sourceDecisions.set(`${span.start}:${span.end}`, decision);
+  }
   const contextSpans: Span[] = (previous?.rendered ?? []).map(spanForRange);
   const leads = new Map<string, ReadingLead>();
   function addLead(lead: ReadingLead) {
@@ -190,12 +195,40 @@ export async function selectFile(
       );
       const answers = await evaluator.evaluate(request);
       const values = group.map((unit, index) => {
-        const value = answers[`q${index}`];
-        if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1)
+        const values = [
+          answers[`q${index}`],
+          answers[`scope${index}`],
+          ...(prepared.evidence !== undefined ? [answers[`ref${index}`]] : []),
+        ];
+        if (
+          values.some(
+            (value) =>
+              typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1,
+          )
+        )
           throw new EvaluationFailure("provider");
-        return { unit, value };
+        return { unit, value: Math.max(Math.min(values[0]!, values[1]!), values[2] ?? 0) };
       });
       for (const { unit, value } of values) {
+        const decisionSpan = { start: unit.sourceByteStart, end: unit.sourceByteEnd };
+        sourceDecisions.set(`${decisionSpan.start}:${decisionSpan.end}`, {
+          range: rangeForSpan(decisionSpan),
+          score: value,
+        });
+        // Only a valid contextual rejection retracts an earlier selection.
+        // Failed or unprocessed groups retain their previous source spans.
+        if (prepared.evidence !== undefined && value <= 0.5) {
+          const start = unit.sourceByteStart,
+            end = unit.sourceByteEnd;
+          const retained = selected.flatMap((span) => {
+            if (span.end <= start || span.start >= end) return [span];
+            return [
+              ...(span.start < start ? [{ start: span.start, end: start }] : []),
+              ...(span.end > end ? [{ start: end, end: span.end }] : []),
+            ];
+          });
+          selected.splice(0, selected.length, ...retained);
+        }
         if (value > 0.5) {
           const span = { start: unit.sourceByteStart, end: unit.sourceByteEnd };
           selected.push(span);
@@ -237,63 +270,116 @@ export async function selectFile(
       throw error;
     warn("cancelled");
   }
-  const windows = [...wholeRanges, ...neighborhood].map((range) => ({
-    startLine: Math.max(1, range.startLine - 3),
-    endLine: Math.min(lines.length, range.endLine + 3),
-  }));
-  for (const window of windows) {
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const comment of syntax.comments) {
-        const before =
-          comment.endLine < window.startLine &&
-          lines.slice(comment.endLine, window.startLine - 1).every((line) => !line.trim());
-        const after =
-          comment.startLine > window.endLine &&
-          lines.slice(window.endLine, comment.startLine - 1).every((line) => !line.trim());
-        if (
-          (comment.startLine <= window.endLine && comment.endLine >= window.startLine) ||
-          before ||
-          after
-        ) {
-          const start = Math.min(window.startLine, comment.startLine),
-            end = Math.max(window.endLine, comment.endLine);
-          if (start !== window.startLine || end !== window.endLine) {
-            window.startLine = start;
-            window.endLine = end;
-            changed = true;
+  function excerptsFor(ranges: Range[], rendered: Span[]) {
+    const windows = ranges.map((range) => ({
+      startLine: Math.max(1, range.startLine - 3),
+      endLine: Math.min(lines.length, range.endLine + 3),
+    }));
+    for (const window of windows) {
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const comment of syntax.comments) {
+          const before =
+            comment.endLine < window.startLine &&
+            lines.slice(comment.endLine, window.startLine - 1).every((line) => !line.trim());
+          const after =
+            comment.startLine > window.endLine &&
+            lines.slice(window.endLine, comment.startLine - 1).every((line) => !line.trim());
+          if (
+            (comment.startLine <= window.endLine && comment.endLine >= window.startLine) ||
+            before ||
+            after
+          ) {
+            const start = Math.min(window.startLine, comment.startLine),
+              end = Math.max(window.endLine, comment.endLine);
+            if (start !== window.startLine || end !== window.endLine) {
+              window.startLine = start;
+              window.endLine = end;
+              changed = true;
+            }
           }
         }
       }
+      let segmentStart = offsets[window.startLine - 1]!;
+      for (let line = window.startLine; line <= window.endLine; line++) {
+        const start = offsets[line - 1]!,
+          end = offsets[line]!;
+        // An adjacent selected declaration must not accidentally include an unselected giant line.
+        if (end - start > sourceUnitBytes) {
+          rendered.push({ start: segmentStart, end: start });
+          for (const span of chosen)
+            if (span.start < end && span.end > start)
+              rendered.push({ start: Math.max(span.start, start), end: Math.min(span.end, end) });
+          segmentStart = end;
+        }
+      }
+      rendered.push({ start: segmentStart, end: offsets[window.endLine]! });
     }
-    let segmentStart = offsets[window.startLine - 1]!;
-    for (let line = window.startLine; line <= window.endLine; line++) {
-      const start = offsets[line - 1]!,
-        end = offsets[line]!;
-      // An adjacent selected declaration must not accidentally include an unselected giant line.
-      if (end - start > sourceUnitBytes) {
-        rendered.push({ start: segmentStart, end: start });
-        for (const span of chosen)
-          if (span.start < end && span.end > start)
-            rendered.push({ start: Math.max(span.start, start), end: Math.min(span.end, end) });
-        segmentStart = end;
+    const output = mergeSpans(rendered);
+    function renderedRange(span: Span): EvidenceRange {
+      const range = rangeForSpan(span);
+      // A trailing empty line has no byte interval, but remains part of a line-based window.
+      if (
+        range.sourceByteStart === undefined &&
+        span.end === bytes.length &&
+        windows.some((window) => window.endLine === lines.length)
+      )
+        range.endLine = lines.length;
+      return range;
+    }
+    return {
+      rendered: output.map(renderedRange),
+      excerpts: output.map((span) => {
+        const range = renderedRange(span),
+          partial = range.sourceByteStart !== undefined;
+        return {
+          range,
+          source: partial
+            ? bytes.subarray(span.start, span.end).toString("utf8")
+            : lines.slice(range.startLine - 1, range.endLine).join("\n"),
+          ...(partial
+            ? { sourceByteStart: span.start, sourceByteEnd: span.end, partial: true }
+            : {}),
+        };
+      }),
+    };
+  }
+  const expanded = excerptsFor([...wholeRanges, ...neighborhood], rendered);
+  // Presentation can be stricter without narrowing evidence sent to Jev.
+  const displayed = mergeSpans(
+    [...sourceDecisions.values()]
+      .filter((decision) => decision.score > 0.7)
+      .map((decision) => spanForRange(decision.range))
+      .flatMap((span) =>
+        chosen.flatMap((selectedSpan) => {
+          const start = Math.max(span.start, selectedSpan.start);
+          const end = Math.min(span.end, selectedSpan.end);
+          return start < end ? [{ start, end }] : [];
+        }),
+      ),
+  );
+  function presentationFor(spans: typeof chosen) {
+    const selectedRanges = spans.map(rangeForSpan);
+    const ownerHeaders = new Map<string, Range>();
+    for (const unit of syntax.units) {
+      if (!spans.some((span) => span.start < unit.sourceByteEnd && span.end > unit.sourceByteStart))
+        continue;
+      for (const header of unit.ownerHeaders ?? []) {
+        const byteLength = offsets[header.endLine]! - offsets[header.startLine - 1]!;
+        if (byteLength <= sourceUnitBytes)
+          ownerHeaders.set(`${header.startLine}:${header.endLine}`, header);
       }
     }
-    rendered.push({ start: segmentStart, end: offsets[window.endLine]! });
+    return excerptsFor(
+      [
+        ...selectedRanges.filter((range) => range.sourceByteStart === undefined),
+        ...ownerHeaders.values(),
+      ],
+      spans.filter((span) => rangeForSpan(span).sourceByteStart !== undefined),
+    );
   }
-  const output = mergeSpans(rendered);
-  function renderedRange(span: Span): EvidenceRange {
-    const range = rangeForSpan(span);
-    // A trailing empty line has no byte interval, but remains part of a line-based window.
-    if (
-      range.sourceByteStart === undefined &&
-      span.end === bytes.length &&
-      windows.some((window) => window.endLine === lines.length)
-    )
-      range.endLine = lines.length;
-    return range;
-  }
+  const presentation = presentationFor(displayed);
   const file: FileEvidence = {
     path: snapshot.path,
     contentHash: snapshot.contentHash,
@@ -301,18 +387,12 @@ export async function selectFile(
     roles: [...(previous?.roles ?? [])],
     leads: [...leads.values()],
     selected: chosen.map(rangeForSpan),
-    rendered: output.map(renderedRange),
-    excerpts: output.map((span) => {
-      const range = renderedRange(span),
-        partial = range.sourceByteStart !== undefined;
-      return {
-        range,
-        source: partial
-          ? bytes.subarray(span.start, span.end).toString("utf8")
-          : lines.slice(range.startLine - 1, range.endLine).join("\n"),
-        ...(partial ? { sourceByteStart: span.start, sourceByteEnd: span.end, partial: true } : {}),
-      };
-    }),
+    rendered: expanded.rendered,
+    excerpts: expanded.excerpts,
+    presentationExcerpts: presentation.excerpts,
+    selectedPresentationExcerpts: presentationFor(chosen).excerpts,
+    presentationSelected: displayed.map(rangeForSpan),
+    sourceDecisions: [...sourceDecisions.values()],
     sourceOmitted: invalidated,
   };
   return {

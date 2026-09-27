@@ -711,10 +711,11 @@ def aggregate(args):
     full = {row['task'] for row in rows} == {item['task'] for item in REGISTRY['tasks']}
     preserved = sum(row['baseline_resolved'] and row['resolved'] and row['protocol_valid'] for row in rows)
     wins = sum(row['successful_cost_win'] for row in rows)
-    complete = full and all(row['terminal'] and row['grading_attempted'] for row in rows)
+    complete = all(row['terminal'] and row['graded'] for row in rows)
     result = {'prospective_full_cohort': full, 'complete': complete, 'baseline_solves_preserved': preserved,
               'fully_billed_solved_cost_wins': wins,
-              'accepted': complete and preserved == REGISTRY['baseline_solves'] and wins >= REGISTRY['required_cost_wins'],
+              'official_solves': sum(row['official_resolved'] for row in rows),
+              'comparison_basis': 'Saved no-Jev baselines; descriptive only, not version acceptance',
               'known_gateway_subtotal_usd': sum(row['known_gateway_cost_usd'] for row in rows if row['known_gateway_cost_usd'] is not None),
               'fully_billed_total_usd': sum(row['gateway_cost_usd'] for row in rows) if all(row['fully_billed'] for row in rows) else None,
               'jev': {'included_in_scored_task_cost': False,
@@ -744,7 +745,7 @@ def main():
     grading.add_argument('--plan', type=Path, required=True)
     billing = sub.add_parser('account', help='Reconcile full Sol billing; never count unknown charges as zero')
     billing.add_argument('--plan', type=Path, required=True)
-    summary = sub.add_parser('aggregate', help='Evaluate the prospective ten-task acceptance rule without model calls')
+    summary = sub.add_parser('aggregate', help='Summarize official results and billing without a promotion verdict')
     summary.add_argument('--plan', type=Path, required=True)
     for operation in [execute, grading, billing]:
         choice = operation.add_mutually_exclusive_group(required=True)

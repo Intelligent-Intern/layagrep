@@ -10,6 +10,7 @@ export type SourceUnit = {
   sourceByteStart: number;
   sourceByteEnd: number;
   partial?: boolean;
+  ownerHeaders?: Range[];
 };
 export type Inspection = {
   units: SourceUnit[];
@@ -99,19 +100,23 @@ export async function inspect(
       : [],
   });
   if (Buffer.byteLength(source) > maxParseBytes) return fallback("size");
-  let units: { name: string; range: Range }[] = [],
+  let units: { name: string; range: Range; ownerHeaders?: Range[] }[] = [],
     comments: Range[] = [],
     mode: Inspection["mode"];
   let syntaxFallback = false;
   if (/\.pyi?$/.test(path)) {
     // A missing/incompatible packaged parser is a setup failure, never syntax fallback.
-    const parsed = await runPython<Array<Range & { name: string }>>(
+    const parsed = await runPython<Array<Range & { name: string; ownerHeaders: Range[] }>>(
       "inspect",
       source,
       options.signal,
     );
     if (parsed === null) return fallback("syntax");
-    units = parsed.map(({ name, startLine, endLine }) => ({ name, range: { startLine, endLine } }));
+    units = parsed.map(({ name, startLine, endLine, ownerHeaders }) => ({
+      name,
+      range: { startLine, endLine },
+      ownerHeaders,
+    }));
     comments = pythonComments;
     mode = "python";
   } else if (/\.(?:[cm]?[jt]s|[jt]sx)$/.test(path)) {
@@ -126,7 +131,7 @@ export async function inspect(
     syntaxFallback = !!(file as ts.SourceFile & { parseDiagnostics?: unknown[] }).parseDiagnostics
       ?.length;
     const line = (position: number) => file.getLineAndCharacterOfPosition(position).line + 1;
-    const add = (node: ts.Node, prefix = "") => {
+    const add = (node: ts.Node, prefix = "", ownerHeaders: Range[] = []) => {
       const named = node as ts.Node & { name?: ts.Node };
       const name =
         prefix +
@@ -137,12 +142,14 @@ export async function inspect(
       if (ts.isClassDeclaration(node) && node.members.length) {
         const start = line(node.getStart(file)),
           first = line(node.members[0]!.getStart(file));
-        if (first > start)
-          units.push({ name: name + ".context", range: { startLine: start, endLine: first - 1 } });
-        for (const member of node.members) add(member, name + ".");
+        const header = first > start ? { startLine: start, endLine: first - 1 } : undefined;
+        const headers = header ? [...ownerHeaders, header] : ownerHeaders;
+        if (header) units.push({ name: name + ".context", range: header, ownerHeaders: headers });
+        for (const member of node.members) add(member, name + ".", headers);
       } else
         units.push({
           name,
+          ownerHeaders,
           range: {
             startLine: line(node.getStart(file)),
             endLine: line(Math.max(node.getStart(file), node.end - 1)),
@@ -198,11 +205,15 @@ export async function inspect(
             id: `${unit.name}:${start}:${end}`,
             name: unit.name,
             range: unit.range,
+            ownerHeaders: unit.ownerHeaders,
             sourceByteStart: start,
             sourceByteEnd: end,
           },
         ];
-      return textUnits(text, unit.range, unit.name, maxUnitBytes, true);
+      return textUnits(text, unit.range, unit.name, maxUnitBytes, true).map((part) => ({
+        ...part,
+        ownerHeaders: unit.ownerHeaders,
+      }));
     }),
   };
 }
@@ -244,7 +255,7 @@ export type SourcePreview = {
   parseUnavailable?: boolean;
   scope?: string;
 };
-/** The frozen preview program owns both Python and generic text windows. */
+/** The bundled preview helper handles Python declarations and generic text windows. */
 export async function pythonPreview(
   snapshot: Snapshot,
   query: string,

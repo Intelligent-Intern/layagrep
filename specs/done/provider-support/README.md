@@ -39,10 +39,8 @@ This is a simpler setup contract, not a multi-account credential registry.
 The [preset owner](../../../packages/core/src/providers.ts),
 [evaluator](../../../packages/core/src/evaluator.ts), and
 [auth module](../../../apps/cli/src/auth.ts) hold the current mechanics.
-[Provider replay](../../../test/reference/provider-parity.test.ts) pins semantic
-requests and complete stdout; [installed journeys](../../../test/installed.test.mjs)
-exercise the packed product. The [preservation contract](parity.md) maps the other
-invariants to their checks. [Research](research.md) records the documented routes,
+[Provider behavior tests](../../../test/evaluator.test.ts) cover evaluation semantics; [installed journeys](../../../test/installed.test.mjs)
+exercise the packed product. The [historical preservation contract](parity.md) records the retired port checks. [Research](research.md) records the documented routes,
 model choices, pinned SDK and immutable inputs rather than relying on memory.
 
 ## What the implementation taught us

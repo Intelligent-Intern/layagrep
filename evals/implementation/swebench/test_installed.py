@@ -291,7 +291,7 @@ class InstalledTests(unittest.TestCase):
                 self.assertTrue(runner.existing_attempt(plan))
             self.assertEqual(json.loads((out/'receipt.json').read_text())['status'],'interrupted')
 
-    def test_cohort_gate_requires_eight_preserved_and_seven_fully_billed_wins(self):
+    def test_cohort_reports_official_results_and_incomplete_billing(self):
         with tempfile.TemporaryDirectory() as temporary:
             path,plan=self.fixture(Path(temporary),all_tasks=True)
             for index,item in enumerate(plan['cells']):
@@ -299,21 +299,21 @@ class InstalledTests(unittest.TestCase):
                 runner.write_json(out/'grading-receipt.json',{'run_id':'jg-'+item['cell']['id'],'exit_code':0,'resolved_instances':int(item['baseline_resolved'])})
                 runner.write_json(out/'generation-accounting.json',{'cell':item['cell']['id'],'all_requests_accounted':index<7,'gateway_cost_usd':0.01 if index<7 else None,'known_gateway_cost_usd':0.01})
             with contextlib.redirect_stdout(io.StringIO()):result=runner.aggregate(argparse.Namespace(plan=path))
-            self.assertTrue(result['accepted']);self.assertEqual(result['baseline_solves_preserved'],8)
+            self.assertEqual(result['official_solves'],8);self.assertEqual(result['baseline_solves_preserved'],8)
             self.assertEqual(result['fully_billed_solved_cost_wins'],7);self.assertIsNone(result['fully_billed_total_usd'])
             for item in plan['cells'][8:]:
                 self.receipt(path,item,'failed')
             with contextlib.redirect_stdout(io.StringIO()):result=runner.aggregate(argparse.Namespace(plan=path))
-            self.assertTrue(result['accepted'])
+            self.assertEqual(result['official_solves'],8)
             self.assertFalse(result['cells'][-1]['protocol_valid'])
             self.assertAlmostEqual(result['known_gateway_subtotal_usd'],0.1)
             last=plan['cells'][-1]
             runner.write_json(Path(last['output'])/'grading-receipt.json',{'run_id':'jg-'+last['cell']['id'],'exit_code':1})
             with contextlib.redirect_stdout(io.StringIO()):result=runner.aggregate(argparse.Namespace(plan=path))
-            self.assertTrue(result['accepted'])
+            self.assertEqual(result['official_solves'],8)
             out=Path(plan['cells'][0]['output']);runner.write_json(out/'generation-accounting.json',{'cell':plan['cells'][0]['cell']['id'],'all_requests_accounted':False,'gateway_cost_usd':None,'successful_cost_win':True})
             with contextlib.redirect_stdout(io.StringIO()):result=runner.aggregate(argparse.Namespace(plan=path))
-            self.assertFalse(result['accepted']);self.assertEqual(result['fully_billed_solved_cost_wins'],6)
+            self.assertIsNone(result['fully_billed_total_usd']);self.assertEqual(result['fully_billed_solved_cost_wins'],6)
             runner.write_json(out/'grading-receipt.json',{'run_id':'jg-'+plan['cells'][0]['cell']['id'],'exit_code':0,'resolved_instances':0})
             with contextlib.redirect_stdout(io.StringIO()):result=runner.aggregate(argparse.Namespace(plan=path))
             self.assertEqual(result['baseline_solves_preserved'],7)
@@ -329,11 +329,11 @@ class InstalledTests(unittest.TestCase):
             plan['cells'][1]['output']=plan['cells'][0]['output'];runner.write_json(path,plan)
             with self.assertRaisesRegex(ValueError,'distinct attempt'):runner.load_cohort(path)
 
-    def test_single_task_cannot_claim_full_cohort_acceptance(self):
+    def test_unstarted_task_is_not_complete(self):
         with tempfile.TemporaryDirectory() as temporary:
             path,_=self.fixture(Path(temporary))
             with contextlib.redirect_stdout(io.StringIO()):result=runner.aggregate(argparse.Namespace(plan=path))
-            self.assertFalse(result['prospective_full_cohort']);self.assertFalse(result['accepted'])
+            self.assertFalse(result['prospective_full_cohort']);self.assertFalse(result['complete'])
 
     def jev_fixture(self, root):
         traces=root/'jev-traces';traces.mkdir()

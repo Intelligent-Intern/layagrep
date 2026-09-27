@@ -1,3 +1,4 @@
+import { renderResult } from "../apps/cli/src/render";
 import { routeProviderFetch } from "./fixtures/provider-route.mjs";
 import { expect } from "bun:test";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
@@ -5,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { testIfDocker } from "./helpers/docker";
 import { retrieve } from "../packages/core/src/retrieve";
-import { createEvaluator } from "../packages/core/src/evaluator";
+import { createEvaluator, EvaluationFailure } from "../packages/core/src/evaluator";
 
 testIfDocker(
   "hierarchical retrieval returns source from multiple files without uploading excluded data",
@@ -312,4 +313,132 @@ testIfDocker(
       await rm(root, { recursive: true, force: true });
     }
   },
+);
+
+testIfDocker(
+  "file priority reaches stdout without changing relevance or excluding background documents",
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "jg-priority-"));
+    const roles: Array<{ query: string; path: string; preview: { text: string } }> = [];
+    const server = Bun.serve({
+      port: 0,
+      async fetch(request) {
+        const body = (await request.json()) as {
+          state: {
+            query: string;
+            path: string;
+            preview?: { text: string };
+            items?: Array<{ path: string }>;
+          };
+          questions: Record<string, unknown>;
+        };
+        if (body.state.preview) roles.push(body.state as (typeof roles)[number]);
+        const design = body.state.query.includes("design");
+        return Response.json({
+          answers: Object.fromEntries(
+            Object.keys(body.questions).map((id, index) => [
+              id,
+              {
+                type: "noul",
+                noul:
+                  id === "priority"
+                    ? body.state.path.startsWith("specs/") === design
+                      ? 0.95
+                      : 0.1
+                    : body.state.items
+                      ? body.state.items[index]!.path.startsWith("specs/")
+                        ? 0.99
+                        : 0.7
+                      : 0.9,
+              },
+            ]),
+          ),
+        });
+      },
+    });
+    try {
+      await mkdir(join(root, "src"));
+      await mkdir(join(root, "specs"));
+      await writeFile(
+        join(root, "src/events.ts"),
+        "export function record(name: string) { return name; }",
+      );
+      await writeFile(
+        join(root, "specs/events.md"),
+        "# Event design\nA plan for recording event names.",
+      );
+      for (const query of [
+        "How does event recording work?",
+        "Explain the event recording design plan",
+      ]) {
+        const signal = new AbortController().signal;
+        const evaluator = createEvaluator({
+          provider: "vercel",
+          apiKey: "fixture",
+          signal,
+          fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
+        });
+        const value = await retrieve({ root, query, signal }, evaluator);
+        expect(value.status).toBe("complete");
+        expect(value.files.find((file) => file.path === "specs/events.md")!.score).toBe(0.99);
+        const output = renderResult(value);
+        const expected = query.includes("design")
+          ? ["specs/events.md", "src/events.ts"]
+          : ["src/events.ts", "specs/events.md"];
+        expect(output.indexOf(`- "${expected[0]}"`)).toBeLessThan(
+          output.indexOf(`- "${expected[1]}"`),
+        );
+        expect(output.indexOf(`Source block "${expected[0]}"`)).toBeLessThan(
+          output.indexOf(`Source block "${expected[1]}"`),
+        );
+        expect(value.files.every((file) => !file.roles.includes("priority"))).toBe(true);
+      }
+      expect(
+        roles.some(
+          (state) => state.path === "specs/events.md" && state.preview.text.includes("A plan"),
+        ),
+      ).toBe(true);
+    } finally {
+      server.stop(true);
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+  120_000,
+);
+
+testIfDocker(
+  "test-body provider failure retains evidence and its diagnostic",
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "jg-test-body-failure-"));
+    try {
+      await writeFile(
+        join(root, "test_behavior.py"),
+        "import pytest\ndef test_behavior():\n    assert True\n",
+      );
+      const result = await retrieve(
+        { root, query: "behavior tests", signal: new AbortController().signal },
+        {
+          requests: 0,
+          async evaluate(request) {
+            if (Object.hasOwn(request.state as object, "candidates"))
+              throw new EvaluationFailure(
+                "provider",
+                false,
+                undefined,
+                "HTTP 503: fixture test selection unavailable",
+              );
+            return Object.fromEntries(Object.keys(request.questions).map((id) => [id, 0.95]));
+          },
+        },
+      );
+      expect(result.status).toBe("incomplete");
+      expect(result.files[0]?.path).toBe("test_behavior.py");
+      const output = renderResult(result);
+      expect(output).toContain("def test_behavior():");
+      expect(output).toContain("HTTP 503: fixture test selection unavailable");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+  30_000,
 );

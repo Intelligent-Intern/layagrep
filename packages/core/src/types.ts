@@ -13,6 +13,7 @@ export type FileEvidence = {
   path: string;
   contentHash: string;
   score: number;
+  priority?: number;
   roles: string[];
   leads: ReadingLead[];
   selected: EvidenceRange[];
@@ -24,6 +25,11 @@ export type FileEvidence = {
     sourceByteEnd?: number;
     partial?: boolean;
   }>;
+  presentationExcerpts?: FileEvidence["excerpts"];
+  selectedPresentationExcerpts?: FileEvidence["excerpts"];
+  presentationSelected?: EvidenceRange[];
+  sourceDecisions?: Array<{ range: EvidenceRange; score: number }>;
+  callLeads?: Array<{ caller: string; name: string; range: Range; unknownEarlierBases: string[] }>;
   sourceOmitted: boolean;
 };
 export type RetrievalResult = {

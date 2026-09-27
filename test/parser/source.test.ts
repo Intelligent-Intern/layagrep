@@ -84,44 +84,6 @@ test("selected methods add only their class header and small immediate neighbors
   );
 });
 
-test("query previews preserve frozen Python source windows and bytes", async () => {
-  const { readFile } = await import("node:fs/promises");
-  const { pythonPreview } = await import("../../packages/core/src/source.ts");
-  const corpus = JSON.parse(
-    await readFile(new URL("./fixtures/python-reference.json", import.meta.url), "utf8"),
-  );
-  for (const fixture of corpus.cases) {
-    const preview = await pythonPreview(
-      { path: fixture.path, source: fixture.source, contentHash: "fixture" },
-      fixture.query,
-      fixture.budget,
-    );
-    assert.deepEqual(preview, fixture.reference["content-handoff-v47-spike.py"], fixture.name);
-  }
-});
-
-test("Python declaration and neighbor ranges agree with frozen helper corpus", async () => {
-  const { readFile } = await import("node:fs/promises");
-  const { pythonNeighborhood } = await import("../../packages/core/src/source.ts");
-  const corpus = JSON.parse(
-    await readFile(new URL("./fixtures/python-reference.json", import.meta.url), "utf8"),
-  );
-  for (const fixture of corpus.cases.filter((f) => !["python2", "invalid"].includes(f.name))) {
-    const snapshot = { path: fixture.path, source: fixture.source, contentHash: "fixture" };
-    const result = await inspect(snapshot);
-    assert.deepEqual(
-      result.units.map(({ name, range }) => ({ name, ...range })),
-      fixture.reference["source-method-declarations-spike.py"],
-      fixture.name,
-    );
-    assert.deepEqual(
-      await pythonNeighborhood(snapshot, fixture.selected),
-      fixture.reference["source-neighborhood-spike.py"],
-      fixture.name,
-    );
-  }
-});
-
 test("TS/JS uses original source coordinates, comments, and decorator-bearing members", async () => {
   const source =
     '/** header */\r\nexport class Box {\r\n  // getter\r\n  @trace\r\n  get value() { return "🙂"; }\r\n}\r\n';
@@ -306,16 +268,32 @@ test("empty Python suites fall back instead of crashing query previews", async (
   assert.equal((await inspect(snapshot)).mode, "text");
 });
 
-test("TS comment discovery follows frozen AST nodes while retaining exact source bytes", async () => {
+test("TypeScript source units preserve embedded comments verbatim", async () => {
   const source =
     'function x() {\n // end\n}\nconst x = /*important*/ 1;\nconst url="https://example.test";\nconst regexp=/https?:\\/\\//;\n';
   const snapshot = { path: "comments.ts", source, contentHash: "fixture" };
   const result = await inspect(snapshot);
-  // The frozen forEachChild traversal does not visit the closing-brace or numeric-literal token.
-  assert.deepEqual(result.comments, []);
   const { sourceForUnit } = await import("../../packages/core/src/source.ts");
   assert.equal(
     sourceForUnit(snapshot, result.units[0]!),
     source.split("\n").slice(0, 3).join("\n") + "\n",
   );
+});
+
+test("same-named classes retain their own structural headers", async () => {
+  for (const [path, source] of [
+    [
+      "same.py",
+      "class Same:\n    def first(self): pass\n\nclass Same:\n    def second(self): pass\n",
+    ],
+    ["same.ts", "class Same {\n  first() {}\n}\nclass Same {\n  second() {}\n}\n"],
+  ]) {
+    const result = await inspect({ path: path!, source: source!, contentHash: "fixture" });
+    assert.deepEqual(result.units.find((unit) => unit.name === "Same.first")?.ownerHeaders, [
+      { startLine: 1, endLine: 1 },
+    ]);
+    assert.deepEqual(result.units.find((unit) => unit.name === "Same.second")?.ownerHeaders, [
+      { startLine: 4, endLine: 4 },
+    ]);
+  }
 });

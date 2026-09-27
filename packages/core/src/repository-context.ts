@@ -3,7 +3,7 @@ import type { FilesystemReader, Snapshot } from "./filesystem";
 import type { SelectionResult } from "./selection";
 import type { FileEvidence } from "./types";
 
-/** Match the reference's scoped lookup without reading instruction contents or running tests. */
+/** Locate scoped guidance and test entry points without executing either. */
 export async function repositoryContext(
   reader: FilesystemReader,
   files: FileEvidence[],
