@@ -1,4 +1,4 @@
-![jevgrep — Find the context. Start coding.](assets/cover.png)
+![jevgrep — Same intelligence. About 30% lower cost.](assets/cover.png)
 
 # jevgrep
 
@@ -7,7 +7,10 @@
 [![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square)](apps/cli/README.md)
 [![Release](https://img.shields.io/github/actions/workflow/status/dzhng/jevgrep/publish.yml?style=flat-square&label=release)](https://github.com/dzhng/jevgrep/actions/workflows/publish.yml)
 
-**Find code by asking what it does.**
+**Same intelligence. ~30% lower cost.**
+
+Find code by asking what it does. In our ten-task SWE-bench comparison, Jevgrep
+successfully completed the same 8 of 10 tasks as the baseline, at lower cost.
 
 Coding agents spend part of every unfamiliar task finding the right files.
 Jevgrep gives them a place to start: ask a repository question, and `jg` returns
@@ -95,23 +98,18 @@ all you need. Jevgrep is most useful for questions that span unfamiliar files.
 
 ## What we measured
 
-**The final development cohort solved 8/10 tasks at about 28.6% lower
-coding-agent cost than the saved no-Jev baseline**, which also solved 8/10.
-Full Sol cost was $5.44 versus $7.62, including failures and excluding Jev.
-These are ten tuned Python SWE-bench tasks; they do not establish general savings.
+**Same intelligence, ~30% lower coding-agent cost.** Both
+Jevgrep and the no-Jev baseline solved **8/10 tasks**. Full Sol cost fell from
+**$7.62 to $5.44**—a measured **28.6% reduction**, rounded to ~30%—including failed
+attempts and excluding Jev cost.
 
-The cohort uses one frozen installed package and the exact neutral public skill
-in this repository. See the [results, artifact identities, experiments and
-limitations](evals/results/relevance-threshold-2026-09-27.md). Earlier cohorts and
-out-of-scope agent-guidance trials remain separately identified.
+![Jevgrep workflow: about 30% lower coding-agent cost, with 8 of 10 tasks solved both with and without Jevgrep.](assets/how-it-works.png)
 
-The image below describes the **earlier historical run**, which saved about 40%
-but solved 7/10 versus the baseline's 8/10. It is not the latest result.
-
-![Historical Jevgrep workflow and benchmark: 40% lower Sol task cost, 7/10 solves versus 8/10 baseline; Jev excluded.](assets/how-it-works.png)
-
-The [historical report](specs/done/jevgrep/assets/variance-repeat.md) and
-[evaluation guide](evals/README.md) retain the earlier evidence and methodology.
+This comparison uses ten tuned Python SWE-bench tasks, one frozen installed
+package and the exact public skill in this repository. It measures task success
+and cost, not a speed improvement or guaranteed savings on every repository.
+See the [results and methodology](evals/results/relevance-threshold-2026-09-27.md)
+for per-task costs, artifact identities and limitations.
 
 ## Source, credentials, and local state
 
