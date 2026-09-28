@@ -275,10 +275,7 @@ async function context(t, mode = "healthy", executable = binary) {
       const stdout = [],
         stderr = [];
       let outputBytes = 0;
-      const timer = setTimeout(
-        () => signalChild(child, "SIGKILL"),
-        120_000,
-      );
+      const timer = setTimeout(() => signalChild(child, "SIGKILL"), 120_000);
       for (const [stream, chunks] of [
         [child.stdout, stdout],
         [child.stderr, stderr],
@@ -1074,7 +1071,8 @@ test("installed queued freshness withholds excluded source uploads", async (t) =
     join(fixture.tree, "large.txt"),
     "QUEUED_INSTALLED_SENTINEL line\n".repeat(18000),
   );
-  const result = await fixture.run([query, fixture.tree, "--no-cache"]);
+  // Fill every provider slot before changing the policy, leaving later uploads queued.
+  const result = await fixture.run([query, fixture.tree, "--concurrency", "8", "--no-cache"]);
   assert.equal(uploads, 8);
   assert.equal(result.code, 2, result.stdout);
   assert.match(result.stdout, /incomplete/);
