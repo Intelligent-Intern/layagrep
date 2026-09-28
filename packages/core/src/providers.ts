@@ -12,7 +12,7 @@ export const providers = {
   openrouter: {
     label: "OpenRouter",
     baseURL: "https://openrouter.ai/api/v1",
-    model: "jev-1.13",
+    model: "typesafe/jev-1.13",
   },
   opencode: {
     label: "OpenCode Zen",

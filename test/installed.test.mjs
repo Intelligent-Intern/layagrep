@@ -39,7 +39,7 @@ const providers = {
   openrouter: {
     label: "OpenRouter",
     url: "https://openrouter.ai/api/v1/systemone",
-    model: "jev-1.13",
+    model: "typesafe/jev-1.13",
   },
   opencode: {
     label: "OpenCode Zen",
