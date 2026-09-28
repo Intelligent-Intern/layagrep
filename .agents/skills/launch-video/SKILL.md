@@ -1,78 +1,104 @@
 ---
 name: launch-video
-description: Produce a professional, beat-locked motion-graphics launch video (showreel quality, with music) that introduces a CLI, library, or product from its repo. Use when asked for a launch, promo, explainer, sizzle, or showreel video, an animated motion-graphics intro for a project, or a video to post on X/social with a good preview thumbnail.
+description: Make a showreel-grade motion-graphics launch video, with music, that introduces a CLI, library, or product from its repo. Use when asked for a launch, promo, sizzle, or showreel video, an animated intro for a project, or a video to post on X/social.
 ---
 
 # Launch Video
 
-Build a ~30s showreel entirely in code: Remotion scenes plus a soundtrack
-synthesized from the same **cue sheet**, so every hit on screen lands on a hit in
-the mix. The bar is a designer's showreel, not a demo or prototype: dense,
-juicy motion that a technical audience can also learn the mechanism from.
+The bar is a **showreel**: the piece a motion designer puts on their résumé to
+prove how good they are — dynamic, ambitious, scored to music, a real
+professional production and never a demo or prototype. Go all out. The repo
+supplies the story; the craft is yours. Nothing here is a template: if the
+piece could be re-skinned for any other project, it has failed.
 
 ## Workflow
 
-1. **Mine the repo for the story.** Read the README, architecture docs, benchmark
-   records, and existing brand art (palette, typefaces, cover images). Done when
-   you can state, with a source for each: the one-line purpose, the mechanism
-   behind the scenes (the audience is technical), the models/engines to credit,
-   and the headline number with its exact disclosure. Flag any name or claim the
-   repo cannot back (a model family, a vendor) instead of inventing its meaning.
-2. **Score the cue sheet first.** Pick a tempo (120 BPM → bar = 2s) and put
-   every scene change on a bar line. Write one module holding every event time
-   (scene starts, word reveals, stamps, typing, impacts, risers); scenes and the
-   music both import it. Arc that works: problem cold open → drop + product
-   reveal with a real command (the README's first example) → behind-the-scenes
-   mechanism → the engine/model → proof number (breakdown, riser, slam) → lockup
-   with install command. Done when every visual event has a cue and every cue
-   has a sound.
-3. **Synthesize the soundtrack from the cue sheet.** Kick, clap, hats, sidechained
-   bass/pad/arp on a chord progression; builds into drops; a sound for each UI
-   event (pop, tick, key click, ✓ blip, ✗ thud, whoosh, impact, ding). Master to
-   roughly −11 to −14 LUFS. You cannot listen: verify with ffmpeg `ebur128` and a
-   `showspectrumpic` spectrogram that risers and impacts sit at cue times, and
-   say in the handoff that the audio was checked by measurement, not by ear.
-   Default style unless the user asks otherwise: bright electronic (synth-pop /
-   future bass).
-4. **Build the scenes** under the motion rules below. Drive them from absolute
-   time in seconds, not frames, so cue values stay literal.
-5. **Review by contact sheet.** Render a half-scale draft, tile ~6 moments per
-   scene, and fix collisions, clipping, overflow, and dead space; confirm type
-   details on full-res stills. Done when every scene has been looked at, not
-   sampled.
-6. **Make the thumbnail frame** (rules below), render the master (1080p60,
-   high-quality H.264, 320k AAC), and reveal it in Finder.
-7. **Keep the project.** Commit it into the repo as a standalone package outside
-   the workspace (renders and generated audio ignored, excluded from Docker
-   contexts, formatted to repo style) with a short README: commands, the shared
-   cue-sheet principle, and the claims disclosure to preserve.
+1. **Find the story.** Read the README, docs, benchmarks, and brand art. Done
+   when you can state, each with a source: what it is in one line, how it works
+   underneath (the audience is technical), and the proof worth landing. Flag
+   any claim the repo cannot back instead of inventing its meaning.
+2. **Direct before you build.** Choose one visual concept grown from what the
+   project *is* (its metaphors, its brand art, its mechanism): a world with its
+   own look, camera, and signature move, rather than a sequence of panels.
+   Then commit to one familiar real-world analogy for the mechanism (building
+   a city, running a kitchen, a heist) and map every step onto it: name each
+   step in the analogy's vocabulary, and give each one the everyday props that
+   explain it at a glance (a surveyor's tripod, stakes, cranes, an inspection
+   stamp). Digestible beats clever: a viewer should get each step from
+   references they already know, without reading a word. Write
+   it as a shot list on a music timeline. Done when every shot names its camera
+   move and the one moment in it a motion designer would be proud of. A shot
+   whose description is "a card/panel/list appears" gets redesigned.
+3. **Build picture and score from one timing source.** Every event time lives
+   in one place that both the scenes and the soundtrack read, so hits land on
+   hits. Synthesizing the music in code keeps that lock exact.
+4. **Review as a director.** Render a draft, tile each shot into contact
+   sheets, and get a fresh-eyes critique from a subagent that has not seen your
+   plan. Then ask each shot the showreel question. Fix and re-render until
+   every shot passes, not a sample.
+5. **Ship.** Make the thumbnail (rules below), render the master (1080p60,
+   high-quality H.264, 320k AAC), reveal it in Finder, and commit the project
+   to the repo as a standalone package, with renders and generated audio
+   ignored and a short README covering commands, the timing principle, and the
+   claims disclosure to preserve.
 
-## Motion rules
+## Show, don't tell
 
-- **No raw screenshots.** Rebuild every UI as components (file/folder icons,
-  terminal, chips, stamps, bars) so each part can move.
-- **Juicy by default:** springs with overshoot, squash & stretch on landings,
-  staggered cascades, mask-reveal kinetic type, shockwave + radial burst +
-  camera shake on impacts, shards/confetti on the payoff, number counters.
-- **Match cuts** between scenes (an element becomes the next scene's element;
-  zoom through a surface into the next world), never plain crossfades.
-- **Beat-reactive surfaces:** camera scale, backdrop grid, glows, and the
-  progress bar pulse on the kick.
-- **Production polish:** reuse the repo's brand palette and type; add a HUD
-  (corner marks, scene counter, timecode, progress), film grain, and vignette.
-- **Claims stay exact.** Restate measured results with their disclosure line
-  (sample size, what is excluded, any quality tradeoff) in small type; never
-  round or generalize past the source.
+Text is the last resort. Before any word goes on screen, find the picture
+that makes it unnecessary: an object that transforms, a world that changes,
+motion that performs the idea. Keep text only where nothing visual can carry
+it: the product's real commands, its name, and a claim that must be exact.
+The one exception is orientation: give each shot one header saying what is
+happening (it can be dynamic, like a live count that ticks with the action),
+or the best animation reads as random motion.
+When a draft leans on labels, captions, or subtitles to explain what is
+happening, redesign the shot instead of rewording the text.
 
-## Thumbnail
+## The showreel question
 
-- Feeds (X) thumbnail an early frame, not strictly frame 0; a one-frame poster
-  gets skipped. Hold the preview for ~0.3s of pre-roll, then animate it away
-  into the cold open. Shift the music by the pre-roll and fill it with a whoosh
-  into the first hit.
-- The pre-roll background must match the cold open's; a dark poster before a
-  light open reads as a flash.
-- The best preview is the product doing its job (logo + tagline + a completed
-  command's output), even when the headline claim is a benchmark: the number
-  gets its payoff scene and a separate key-art still (also README art), not the
-  thumbnail.
+Would a motion designer put this shot on their reel? Tells that it has slid
+into explainer or demo:
+
+- **Animated slide deck.** A static layout where elements slide in and hold.
+  A reel's camera is always going somewhere, and its composition keeps
+  changing.
+- **Reading, not watching.** Paragraphs, UI cards, body copy, or a subtitle
+  under a headline (a headline that needs a subtitle is two ideas). A reel
+  speaks in few-word hits at dramatic scale, and the visuals carry the
+  mechanism.
+- **Broken metaphor.** An action that doesn't do what it depicts: a cut that
+  ignores the pieces it claims to divide, a label nobody could read against
+  its ground. Make the motion true to the objects on screen.
+- **One trick.** Every element springs in the same way. A reel shows range:
+  depth and parallax, scale contrast, match cuts and transitions that carry an
+  element into the next shot, speed ramps, lighting and color shifts, particles
+  and physics, typography that moves as design.
+- **Flat.** Everything sits on one plane at one scale, with no foreground,
+  background, or light.
+- **Deaf.** Motion ignores the music, or the music sits under the picture
+  instead of driving it.
+- **Prototype 3D.** Untextured primitives under flat light with no lens: it
+  reads as a tech demo. If the piece goes 3D, finish it like a game
+  cinematic: physically based materials with surface detail and bevels that
+  catch light, reflections and soft shadows, emissives that bloom, and a lens
+  (ambient occlusion, depth of field, grain, aberration on impacts).
+
+## Rules
+
+- **Rebuild, never screenshot.** Break any UI down into parts that can move.
+- **Judge effects in a rendered frame, never the live preview.** Frame-by-frame
+  renderers (Remotion's manual advance, for one) can silently drop a post
+  stack or a canvas layer that looks fine live.
+- **Claims stay exact.** Restate measured results with their disclosure (sample
+  size, exclusions, tradeoffs) in small type; never round or generalize past
+  the source.
+- **You cannot listen.** Verify the mix by measurement (integrated loudness
+  around −11 to −14 LUFS, and a spectrogram showing risers and impacts at their
+  cue times), and say in the handoff that the audio was checked by measurement,
+  not by ear.
+- **Thumbnail.** Feeds (X) pick an early frame and skip a one-frame poster, so
+  hold the preview for ~0.3s of pre-roll, then move it into the opening (shift
+  the music by the same amount). Match the pre-roll background to the opening
+  so playback doesn't flash. The best preview is the product doing its job
+  (name, tagline, a completed command and its output); the headline number
+  gets its payoff shot and a separate key-art still.
