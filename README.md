@@ -113,6 +113,10 @@ for per-task costs, artifact identities and limitations. A separate
 [speed study](evals/results/speed-2026-09-28.md) measures the follow-up local
 optimizations with Jev’s native TypeSafe endpoint.
 
+The [latest total-cost rerun](evals/results/total-cost-2026-09-28.md), including
+Jev, measured **25.8% lower total cost with the same 8/10 tasks solved**.
+The older ~30% graphic above reports Sol-only cost. Future benchmark totals include Jev.
+
 ## Source, credentials, and local state
 
 Searches send eligible source content to Jev through the provider selected during auth. Default
