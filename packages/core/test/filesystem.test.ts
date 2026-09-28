@@ -272,6 +272,46 @@ test("limits and directory changes are visible issues, and fresh queries observe
   }
 });
 
+test("one reader observes same-size ignore edits with restored timestamps and recreated rules", async () => {
+  const root = await fixture({ ".ignore": "a.txt\n", "a.txt": "a", "b.txt": "b" });
+  const rules = join(root, ".ignore");
+  const stamp = new Date("2020-01-01T00:00:00Z");
+  await utimes(rules, stamp, stamp);
+  const reader = await createFilesystem({ root });
+  try {
+    expect(await reader.readSnapshot("a.txt")).toMatchObject({
+      status: "excluded",
+      reason: "ignored",
+    });
+    expect(await reader.readSnapshot("b.txt")).toMatchObject({
+      status: "ok",
+      snapshot: { source: "b" },
+    });
+    await writeFile(rules, "b.txt\n");
+    await utimes(rules, stamp, stamp);
+    expect(await reader.readSnapshot("a.txt")).toMatchObject({
+      status: "ok",
+      snapshot: { source: "a" },
+    });
+    expect(await reader.readSnapshot("b.txt")).toMatchObject({
+      status: "excluded",
+      reason: "ignored",
+    });
+    await rm(rules);
+    expect(await reader.readSnapshot("b.txt")).toMatchObject({
+      status: "ok",
+      snapshot: { source: "b" },
+    });
+    await writeFile(rules, "a.txt\n");
+    expect(await reader.readSnapshot("a.txt")).toMatchObject({
+      status: "excluded",
+      reason: "ignored",
+    });
+  } finally {
+    await reader.close();
+  }
+});
+
 test("protected storage remains excluded when explicit root resolves through its alias", async () => {
   const store = await fixture({ credential: "NEVER_UPLOAD" });
   const root = await fixture({});

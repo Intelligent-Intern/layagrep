@@ -223,23 +223,51 @@ export async function createFilesystem(options: FilesystemOptions) {
       await handle?.close();
     }
   }
+  // Search-local reuse; eviction only requires reparsing, never changes eligibility.
+  const ruleCache = new Map<string, { stat: BigIntStats; rules: Ignore }>();
   async function ruleFile(directory: string, name: string): Promise<Ignore | Issue | undefined> {
     const absolute = join(directory, name);
     try {
       const stat = await lstat(absolute, { bigint: true });
-      if (!stat.isFile() || stat.isSymbolicLink()) return undefined;
+      if (!stat.isFile() || stat.isSymbolicLink()) {
+        ruleCache.delete(absolute);
+        return undefined;
+      }
+      const cached = ruleCache.get(absolute);
+      if (cached && same(cached.stat, stat)) {
+        if (
+          !(await stable({
+            status: "eligible",
+            path: relative(root, absolute),
+            absolute,
+            stat,
+            ancestors: [],
+          }))
+        )
+          return issue("changed", relative(root, absolute));
+        ruleCache.delete(absolute);
+        ruleCache.set(absolute, cached);
+        return cached.rules;
+      }
       const bytes = await readBytes(
         { status: "eligible", path: relative(root, absolute), absolute, stat, ancestors: [] },
         limits.maxIgnoreBytes,
       );
       if (bytes.status === "issue") return bytes;
       try {
-        return ignore().add(new TextDecoder("utf-8", { fatal: true }).decode(bytes.bytes));
+        const rules = ignore().add(new TextDecoder("utf-8", { fatal: true }).decode(bytes.bytes));
+        ruleCache.delete(absolute);
+        ruleCache.set(absolute, { stat, rules });
+        if (ruleCache.size > 64) ruleCache.delete(ruleCache.keys().next().value!);
+        return rules;
       } catch {
         return issue("unreadable", relative(root, absolute));
       }
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        ruleCache.delete(absolute);
+        return undefined;
+      }
       return issue(errorKind(error), relative(root, absolute));
     }
   }
@@ -432,6 +460,7 @@ export async function createFilesystem(options: FilesystemOptions) {
   }
   async function close() {
     closed = true;
+    ruleCache.clear();
     await Promise.all([...cursors.keys()].map(discard));
   }
   return { root, readSnapshot, lookupFile, listPage, closeCursor: discard, close };
