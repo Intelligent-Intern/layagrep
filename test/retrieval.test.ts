@@ -179,7 +179,8 @@ testIfDocker(
           get requests() {
             return calls;
           },
-          async evaluate(request) {
+          async evaluate(request, policy) {
+            await policy?.beforeAttempt?.();
             calls++;
             const state = request.state as { selectedEvidence?: Array<{ path: string }> };
             if (state.selectedEvidence) {

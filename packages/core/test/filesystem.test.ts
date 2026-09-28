@@ -359,6 +359,12 @@ test("valid UTF-8 control-byte binary and invalid UTF-8 remain excluded under ev
     control: new Uint8Array([1, 2, 3]),
     invalid: new Uint8Array([255]),
     plain: "one\ttwo\r\nthree\f",
+    unicode: "雪 café 😀",
+    ...Object.fromEntries(
+      [...Array.from({ length: 32 }, (_, code) => code), 127]
+        .filter((code) => ![9, 10, 12, 13].includes(code))
+        .map((code) => [`control-${code}`, new Uint8Array([65, code, 66])]),
+    ),
   });
   const reader = await createFilesystem({
     root,
@@ -368,6 +374,17 @@ test("valid UTF-8 control-byte binary and invalid UTF-8 remain excluded under ev
     expect(await reader.readSnapshot("control")).toMatchObject({
       status: "excluded",
       reason: "binary",
+    });
+    for (const code of [...Array.from({ length: 32 }, (_, code) => code), 127]) {
+      if ([9, 10, 12, 13].includes(code)) continue;
+      expect(await reader.readSnapshot(`control-${code}`)).toMatchObject({
+        status: "excluded",
+        reason: "binary",
+      });
+    }
+    expect(await reader.readSnapshot("unicode")).toMatchObject({
+      status: "ok",
+      snapshot: { source: "雪 café 😀" },
     });
     expect(await reader.readSnapshot("invalid")).toMatchObject({
       status: "excluded",

@@ -111,12 +111,32 @@ def check_image(image):
     return actual
 
 
+def paired_runtime(baseline, rebuild=None):
+    if rebuild is None:
+        return baseline['image']
+    if (rebuild.get('original_image') != baseline['image'] or
+            rebuild.get('source_pinned_ref') != baseline['cell']['source_pinned_ref'] or
+            not re.fullmatch(r'sha256:[a-f0-9]{64}', rebuild.get('image', ''))):
+        raise ValueError('Rebuilt runtime does not match the retained source/environment pairing')
+    return rebuild['image']
+
+
 def prepare(args):
     root = args.evidence_root.resolve()
     selected = [item for item in REGISTRY['tasks'] if args.task in ('all', item['task'])]
     pairs = [(item, *load_pair(root / item['baseline'], root / REGISTRY['inputs'], item['task'])) for item in selected]
     baseline = pairs[0][1]
-    image = check_image(baseline['image'])
+    rebuild = None
+    if getattr(args, 'runtime_image', None):
+        if len(pairs) != 1:
+            raise ValueError('A rebuilt runtime must be prepared for one task at a time')
+        rebuild = {'original_image': baseline['image'], 'image': args.runtime_image,
+                   'source_pinned_ref': baseline['cell']['source_pinned_ref']}
+        base_layers = json.loads(text(['docker', 'image', 'inspect', rebuild['source_pinned_ref'], '--format', '{{json .RootFS.Layers}}']))
+        actual_layers = json.loads(text(['docker', 'image', 'inspect', rebuild['image'], '--format', '{{json .RootFS.Layers}}']))
+        if actual_layers[:len(base_layers)] != base_layers:
+            raise ValueError('Rebuilt runtime does not extend the pinned official source image')
+    image = check_image(paired_runtime(baseline, rebuild))
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     out.chmod(0o700)
@@ -151,7 +171,7 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
         # Every image gets an offline check using the same installed bytes.
         cells = []
         for registered, fixed, _ in pairs:
-            runtime = check_image(fixed['image'])
+            runtime = check_image(paired_runtime(fixed, rebuild))
             check = 'jg-preflight-' + uuid.uuid4().hex[:12]
             try:
                 command(['docker', 'create', '--platform', 'linux/amd64', '--network', 'none', '--name', check, runtime, 'sh', '-ec',
@@ -165,7 +185,7 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
             finally:
                 subprocess.run(['docker', 'rm', '-f', check], capture_output=True)
             cell = {**fixed['cell'], 'id': 'installed-' + registered['task'] + '-' + uuid.uuid4().hex[:12],
-                    'arm': 'chunks', 'candidate': str(out / 'installed-prefix.tar')}
+                    'arm': 'chunks', 'candidate': str(out / 'installed-prefix.tar'), 'image': runtime}
             cells.append({'cell': cell, 'baseline': str(root / registered['baseline']),
                           'baseline_cost_usd': registered['cost_usd'], 'baseline_resolved': registered['resolved'],
                           'output': str(out / 'attempts' / registered['task'])})
@@ -182,6 +202,9 @@ tar -C /opt -cf /tmp/installed-prefix.tar jg-install
                 'registry': str(frozen / 'fixed-baselines.json'), 'dataset': str(root / REGISTRY['dataset']),
                 'tooling': str(root / REGISTRY['tooling']),
                 'artifacts': {str(path): digest(path) for path in artifacts}}
+        plan['jev_provider'] = getattr(args, 'jev_provider', 'vercel')
+        if rebuild:
+            plan['runtime_rebuild'] = rebuild
         write_json(out / 'plan.json', plan)
         print(json.dumps({'status': 'prepared', 'plan': str(out / 'plan.json'), 'tasks': len(cells)}))
     finally:
@@ -216,7 +239,8 @@ def load_cohort(path):
         cell = item['cell']
         registered = next(row for row in REGISTRY['tasks'] if row['task'] == cell['instance_id'])
         baseline, _ = load_pair(Path(item['baseline']), Path(plan['inputs']), cell['instance_id'])
-        expected = {**baseline['cell'], 'id': cell['id'], 'arm': 'chunks', 'candidate': cell['candidate']}
+        expected = {**baseline['cell'], 'id': cell['id'], 'arm': 'chunks', 'candidate': cell['candidate'],
+                    'image': paired_runtime(baseline, plan.get('runtime_rebuild'))}
         if cell != expected or not re.fullmatch(r'installed-[A-Za-z0-9_.-]+', cell['id']):
             raise ValueError('Treatment pairing changed')
         if cell['candidate'] not in plan['artifacts'] or item['baseline_cost_usd'] != registered['cost_usd'] or item['baseline_resolved'] != registered['resolved']:
@@ -398,6 +422,9 @@ def monitor_native(invocation, stdout, stderr, policy):
 def run(args):
     plan, row = load_plan(args.plan.resolve(), args.task)
     cell = plan['cell']
+    jev_provider = plan.get('jev_provider', 'vercel')
+    if jev_provider not in ('vercel', 'typesafe'):
+        raise ValueError('Unsupported Jev provider')
     image = check_image(cell['image'])
     if args.dry_run:
         print(json.dumps({'status': 'validated', 'paid_calls': 0, 'baseline_reused': plan['baseline'], 'image': image, 'cell': cell['id']}))
@@ -407,13 +434,15 @@ def run(args):
         return
     if not os.environ.get('AI_GATEWAY_API_KEY'):
         raise ValueError('AI_GATEWAY_API_KEY is required; load it through the authorized credential workflow')
+    if jev_provider == 'typesafe' and not os.environ.get('TYPESAFE_API_KEY'):
+        raise ValueError('TYPESAFE_API_KEY is required for native Jev')
     out = Path(plan['output'])
     out.mkdir(parents=True, exist_ok=False)
     out.chmod(0o700)
     tag = 'jg-native-' + uuid.uuid4().hex[:12]
     network, proxy = tag + '-net', tag + '-proxy'
     receipt = {'engine': 'codex', 'cell': cell, 'image': image, 'plan_sha256': digest(args.plan), 'started': time.time(), 'status': 'preparing',
-               'provider_route': 'vercel-ai-gateway', 'gateway_model': 'openai/gpt-5.6-sol', 'baseline': plan['baseline'], 'host_pid': os.getpid()}
+               'jev_provider': jev_provider, 'provider_route': 'vercel-ai-gateway', 'gateway_model': 'openai/gpt-5.6-sol', 'baseline': plan['baseline'], 'host_pid': os.getpid()}
     write_json(out / 'receipt.json', receipt)
     def dx(argv, user=None):
         return command(['docker', 'exec', *(['-u', user] if user else []), tag, *argv])
@@ -460,11 +489,11 @@ def run(args):
         (out / 'prompt.txt').write_text(prompt)
         receipt['prompt_sha256'] = digest(out / 'prompt.txt')
         token = uuid.uuid4().hex
-        put(proxy, '/run/gateway.json', json.dumps({'key': os.environ['AI_GATEWAY_API_KEY'], 'token': token, 'agent_engine': 'codex', 'allow_jev': True}).encode(), 'root:root')
+        put(proxy, '/run/gateway.json', json.dumps({'key': os.environ['AI_GATEWAY_API_KEY'], 'token': token, 'agent_engine': 'codex', 'allow_jev': True, 'jev_provider': jev_provider, 'jev_key': os.environ.get('TYPESAFE_API_KEY') if jev_provider == 'typesafe' else None}).encode(), 'root:root')
         dx(['mkdir', '-p', '/home/agent/.config/jevgrep'], 'agent')
         dx(['chmod', '700', '/home/agent/.config/jevgrep'], 'agent')
         dx(['mkdir', '-p', '/opt/jg-harness'])
-        put(tag, '/home/agent/.config/jevgrep/credentials.json', json.dumps({'provider': 'vercel', 'apiKey': token}).encode())
+        put(tag, '/home/agent/.config/jevgrep/credentials.json', json.dumps({'provider': jev_provider, 'apiKey': token}).encode())
         put(tag, '/opt/jg-harness/provider-route.mjs', Path(plan['provider_preload']).read_bytes(), 'root:root', '444')
         receipt['provider_preload_sha256'] = digest(plan['provider_preload'])
         config = ('model = "openai/gpt-5.6-sol"\nmodel_provider = "vercel"\nmodel_reasoning_effort = "medium"\n'
@@ -738,6 +767,8 @@ def main():
     prep.add_argument('--task', default='all', choices=['all', *[item['task'] for item in REGISTRY['tasks']]])
     prep.add_argument('--evidence-root', type=Path, default=ROOT)
     prep.add_argument('--skill', type=Path, default=ROOT / 'skills/jevgrep/SKILL.md')
+    prep.add_argument('--jev-provider', choices=['vercel', 'typesafe'], default='vercel', help='Jev route only; Sol remains on Gateway')
+    prep.add_argument('--runtime-image', help='Rebuilt image ID extending the pinned source; source/tool versions still verified, original image recorded')
     execute = sub.add_parser('run', help='Run the paid coding-agent treatment once, or validate without calls')
     execute.add_argument('--plan', type=Path, required=True)
     execute.add_argument('--dry-run', action='store_true')

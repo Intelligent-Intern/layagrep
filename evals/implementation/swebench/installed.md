@@ -10,8 +10,8 @@ Preparation installs the packed npm artifact and dependencies once, then checks
 that same installation offline in every selected runtime image. Each check
 verifies the original source, agent versions and canonical packaged skill.
 The coding agent receives the archived prefix and runs the real `jg` executable
-on an internal network. The benchmark explicitly invokes `$jevgrep`, as required for the retrieval comparison;
-the retained skill begins by requiring retrieval. Retrieval limits come
+on an internal network. The benchmark prompt explicitly invokes `$jevgrep`, as required for the retrieval comparison;
+the public skill itself teaches CLI usage without prescribing a research workflow. Retrieval limits come
 from the frozen package's default policy.
 
 The plan binds one package, installed prefix, skill, safe task export, evaluator
@@ -29,9 +29,21 @@ python3 evals/implementation/swebench/installed.py run \
 ```
 
 Preparation and dry-run make no model calls. `prepare` defaults to all ten tasks;
+`--jev-provider typesafe` selects native Jev for a separately identified provider
+experiment. Sol continues through Gateway. The broker holds both real credentials;
+the agent receives only its scoped broker token. Native Jev billing is unknown
+without Gateway metadata and remains excluded from scored Sol cost.
 `--task` selects one registered task. `--evidence-root` locates the retained
 baseline and evaluator files when preparing from another checkout. The root
 `eval:swebench` alias points to this entry point; `--help` lists its arguments.
+
+If a retained Docker image was removed, restore its pinned official base and
+archived toolchain, then prepare that one task with `--runtime-image` and the new
+immutable image ID. Preparation verifies the base image's filesystem layers,
+source identity, tool versions and installed skill. The frozen plan records both
+image IDs; baseline receipts remain untouched. Preserve the rebuild recipe and
+toolchain checksum verification beside the study and disclose the rebuild when
+reporting timing comparisons.
 
 After reviewing the frozen plan, `run --all` without `--dry-run` executes the paid
 treatments sequentially. Load the Gateway credential through the authorized

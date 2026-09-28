@@ -109,7 +109,9 @@ This comparison uses ten tuned Python SWE-bench tasks, one frozen installed
 package and the exact public skill in this repository. It measures task success
 and cost, not a speed improvement or guaranteed savings on every repository.
 See the [results and methodology](evals/results/relevance-threshold-2026-09-27.md)
-for per-task costs, artifact identities and limitations.
+for per-task costs, artifact identities and limitations. A separate
+[speed study](evals/results/speed-2026-09-28.md) measures the follow-up local
+optimizations with Jev’s native TypeSafe endpoint.
 
 ## Source, credentials, and local state
 

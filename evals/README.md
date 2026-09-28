@@ -30,3 +30,5 @@ The [research archive](implementation/swebench/research-archive.md) preserves th
 superseded official experiments in Git without adding obsolete runners to `main`.
 
 The [final product research report](results/relevance-threshold-2026-09-27.md) records the neutral-skill cohort and parameter-effect map. The earlier [source-first cohort](results/source-first-2026-09-27.md) retains its separate package and skill identity.
+
+The [speed study](results/speed-2026-09-28.md) compares the frozen local optimizations and native TypeSafe route against that previous cohort and the same saved no-Jev baselines.

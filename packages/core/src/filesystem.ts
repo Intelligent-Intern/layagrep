@@ -362,7 +362,7 @@ export async function createFilesystem(options: FilesystemOptions) {
     const current = await eligibility(path);
     if (current.status !== "eligible") return current;
     if (!same(admitted.stat, current.stat)) return issue("changed", admitted.path);
-    if (read.bytes.some((byte) => (byte < 32 && ![9, 10, 12, 13].includes(byte)) || byte === 127))
+    if (/[\x00-\x08\x0b\x0e-\x1f\x7f]/.test(read.bytes.toString("latin1")))
       return excluded("binary");
     let source: string;
     try {

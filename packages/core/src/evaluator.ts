@@ -131,6 +131,8 @@ export function createEvaluator(options: {
           (id) => typeof cached[id] === "number" && cached[id]! >= 0 && cached[id]! <= 1,
         )
       ) {
+        await policy?.beforeAttempt?.();
+        assertActive();
         cacheHits++;
         return cached;
       }

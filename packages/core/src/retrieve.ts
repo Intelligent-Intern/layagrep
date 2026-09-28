@@ -57,8 +57,6 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       validationQueue = pending.catch(() => {});
       return pending;
     };
-    // Preserve queued request order while checks perform I/O; provider work stays concurrent.
-    await beforeAttempt();
     return evaluator.evaluate(request, { navigation, beforeAttempt });
   }
   let entriesSeen = 0;

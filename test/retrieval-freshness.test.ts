@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { testIfDocker } from "./helpers/docker";
 import { retrieve } from "../packages/core/src/retrieve";
 import { createEvaluator } from "../packages/core/src/evaluator";
+import { createEvaluationCache } from "../packages/core/src/cache";
 
 testIfDocker(
   "queued navigation never uploads source excluded after the first wave",
@@ -42,6 +43,7 @@ testIfDocker(
         { root, query: "sentinel", signal },
         createEvaluator({
           apiKey: "fixture",
+          concurrency: 8,
           provider: "vercel",
           fetch: routeProviderFetch(fetch, `http://127.0.0.1:${server.port}`),
           signal,
@@ -358,3 +360,62 @@ testIfDocker(
   },
   120_000,
 );
+
+testIfDocker("cached navigation revalidates source after cache lookup", async () => {
+  const root = await mkdtemp(join(tmpdir(), "jg-cache-freshness-"));
+  const directory = await mkdtemp(join(tmpdir(), "jg-cache-answers-"));
+  const cache = createEvaluationCache({ directory });
+  const signal = new AbortController().signal;
+  let calls = 0;
+  const requestFetch: typeof fetch = async (_input, init) => {
+    calls++;
+    const body = JSON.parse(String(init?.body));
+    return Response.json({
+      answers: Object.fromEntries(
+        Object.keys(body.questions).map((id) => [id, { type: "noul", noul: 0.9 }]),
+      ),
+    });
+  };
+  try {
+    await writeFile(join(root, "sample.txt"), "CACHE_FRESHNESS_SENTINEL");
+    const initial = await retrieve(
+      { root, query: "sentinel", signal },
+      createEvaluator({
+        provider: "vercel",
+        apiKey: "fixture",
+        signal,
+        cache,
+        fetch: requestFetch,
+      }),
+    );
+    expect(initial.files.some((file) => file.path === "sample.txt")).toBe(true);
+    const before = calls;
+    let changed = false;
+    const result = await retrieve(
+      { root, query: "sentinel", signal },
+      createEvaluator({
+        provider: "vercel",
+        apiKey: "fixture",
+        signal,
+        fetch: requestFetch,
+        cache: {
+          ...cache,
+          get: async (input) => {
+            const answer = await cache.get(input);
+            if (answer && !changed) {
+              await writeFile(join(root, ".ignore"), "sample.txt\n");
+              changed = true;
+            }
+            return answer;
+          },
+        },
+      }),
+    );
+    expect(changed).toBe(true);
+    expect(result.files).toEqual([]);
+    expect(calls).toBe(before);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(directory, { recursive: true, force: true });
+  }
+});

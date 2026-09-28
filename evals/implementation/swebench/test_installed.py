@@ -28,6 +28,28 @@ runner = load('installed')
 broker = load('gateway_broker')
 
 class InstalledTests(unittest.TestCase):
+    def test_rebuilt_runtime_records_new_identity_without_rewriting_baseline(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path, _ = self.fixture(Path(temporary))
+            plan = json.loads(path.read_text())
+            item = plan['cells'][0]
+            baseline_path = Path(item['baseline']) / 'receipt.json'
+            original = baseline_path.read_bytes()
+            plan['runtime_rebuild'] = {
+                'original_image': item['cell']['image'],
+                'image': 'sha256:' + '1' * 64,
+                'source_pinned_ref': item['cell']['source_pinned_ref'],
+            }
+            item['cell']['image'] = plan['runtime_rebuild']['image']
+            runner.write_json(path, plan)
+            restored = runner.load_cohort(path)
+            self.assertEqual(restored['cells'][0]['cell']['image'], 'sha256:' + '1' * 64)
+            self.assertEqual(baseline_path.read_bytes(), original)
+            plan['runtime_rebuild']['source_pinned_ref'] = 'different-source'
+            runner.write_json(path, plan)
+            with self.assertRaisesRegex(ValueError, 'source/environment pairing'):
+                runner.load_cohort(path)
+
     def test_frozen_prompt_and_required_product_call(self):
         row = {'problem_statement': 'Fix behavior.'}
         self.assertEqual(hashlib.sha256(runner.baseline_prompt(row).encode()).hexdigest(), '41c7e3cf7acbc19d0b24ab55e6ea29fe3cdbc2b777549d158488c6c55baaa643')
@@ -466,34 +488,38 @@ class InstalledTests(unittest.TestCase):
             self.assertFalse((root/'traces').exists())
 
     def test_broker_captures_exact_jev_bodies_without_auth_headers(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root=Path(temporary);config=root/'gateway.json';config.write_text(json.dumps({'key':'REAL_KEY_SENTINEL','token':'BROKER_TOKEN_SENTINEL','allow_jev':True,'agent_engine':'codex'}))
-            request_body=b'{"model":"typesafe-ai/jev","state":{"source":"public fixture"},"questions":{"q":{"type":"noul","instructions":"matches?"}}}';response_body=b'{"answers":{},"usage":{"input_tokens":11,"output_tokens":3},"provider_metadata":{"gateway":{"cost":"0.04","generationId":"gen_fixture"}}}'
-            forwarded={}
-            class Upstream(http.server.BaseHTTPRequestHandler):
-                def log_message(self,*args):pass
-                def do_POST(self):
-                    forwarded.update(path=self.path,body=self.rfile.read(int(self.headers['Content-Length'])),headers=dict(self.headers))
-                    self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(response_body)
-            upstream=http.server.ThreadingHTTPServer(('127.0.0.1',0),Upstream)
-            upstream_thread=threading.Thread(target=upstream.serve_forever,daemon=True);upstream_thread.start()
-            self.addCleanup(upstream_thread.join);self.addCleanup(upstream.server_close);self.addCleanup(upstream.shutdown)
-            with patch.object(broker,'CONFIG_PATH',str(config)),patch.object(broker,'TRACE_DIR',str(root/'traces')),patch.object(broker,'GATEWAY_ORIGIN','http://127.0.0.1:'+str(upstream.server_port)),contextlib.redirect_stdout(io.StringIO()):
-                server=http.server.ThreadingHTTPServer(('127.0.0.1',0),broker.Gateway)
-                thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
-                try:
-                    client=http.client.HTTPConnection('127.0.0.1',server.server_port)
-                    client.request('POST','/typesafe/v1/systemone',request_body,{'Authorization':'Bearer BROKER_TOKEN_SENTINEL','x-jevgrep-original-url':'https://ai-gateway.vercel.sh/typesafe/v1/systemone'})
-                    response=client.getresponse();self.assertEqual(response.status,200);self.assertEqual(response.read(),response_body);client.close()
-                finally:server.shutdown();server.server_close();thread.join()
-            self.assertEqual(forwarded['path'],'/typesafe/v1/systemone')
-            self.assertEqual(forwarded['body'],request_body)
-            self.assertEqual(forwarded['headers']['Authorization'],'Bearer REAL_KEY_SENTINEL')
-            self.assertNotIn('X-Jevgrep-Original-Url',forwarded['headers'])
-            requests=list((root/'traces').glob('*.request.json'));responses=list((root/'traces').glob('*.response.json'))
-            self.assertEqual(requests[0].read_bytes(),request_body);self.assertEqual(responses[0].read_bytes(),response_body)
-            for file in requests+responses:
-                self.assertEqual(file.stat().st_mode&0o777,0o600)
-                self.assertNotIn(b'REAL_KEY_SENTINEL',file.read_bytes());self.assertNotIn(b'BROKER_TOKEN_SENTINEL',file.read_bytes())
+        for provider in ('vercel', 'typesafe'):
+            with tempfile.TemporaryDirectory() as temporary:
+                root=Path(temporary);config=root/'gateway.json';config.write_text(json.dumps({'key':'REAL_KEY_SENTINEL','token':'BROKER_TOKEN_SENTINEL','allow_jev':True,'agent_engine':'codex','jev_provider':provider,'jev_key':'REAL_KEY_SENTINEL'}))
+                request_body=b'{"model":"typesafe-ai/jev","state":{"source":"public fixture"},"questions":{"q":{"type":"noul","instructions":"matches?"}}}';response_body=b'{"answers":{},"usage":{"input_tokens":11,"output_tokens":3},"provider_metadata":{"gateway":{"cost":"0.04","generationId":"gen_fixture"}}}'
+                if provider == 'typesafe':request_body=request_body.replace(b'typesafe-ai/jev',b'jev-1.13.0')
+                path='/v1/systemone' if provider == 'typesafe' else '/typesafe/v1/systemone'
+                origin='https://api.typesafe.ai' if provider == 'typesafe' else 'https://ai-gateway.vercel.sh'
+                forwarded={}
+                class Upstream(http.server.BaseHTTPRequestHandler):
+                    def log_message(self,*args):pass
+                    def do_POST(self):
+                        forwarded.update(path=self.path,body=self.rfile.read(int(self.headers['Content-Length'])),headers=dict(self.headers))
+                        self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(response_body)
+                upstream=http.server.ThreadingHTTPServer(('127.0.0.1',0),Upstream)
+                upstream_thread=threading.Thread(target=upstream.serve_forever,daemon=True);upstream_thread.start()
+                self.addCleanup(upstream_thread.join);self.addCleanup(upstream.server_close);self.addCleanup(upstream.shutdown)
+                with patch.object(broker,'CONFIG_PATH',str(config)),patch.object(broker,'TRACE_DIR',str(root/'traces')),patch.object(broker,'TYPESAFE_ORIGIN' if provider == 'typesafe' else 'GATEWAY_ORIGIN','http://127.0.0.1:'+str(upstream.server_port)),contextlib.redirect_stdout(io.StringIO()):
+                    server=http.server.ThreadingHTTPServer(('127.0.0.1',0),broker.Gateway)
+                    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+                    try:
+                        client=http.client.HTTPConnection('127.0.0.1',server.server_port)
+                        client.request('POST',path,request_body,{'Authorization':'Bearer BROKER_TOKEN_SENTINEL','x-jevgrep-original-url':origin+path})
+                        response=client.getresponse();self.assertEqual(response.status,200);self.assertEqual(response.read(),response_body);client.close()
+                    finally:server.shutdown();server.server_close();thread.join()
+                self.assertEqual(forwarded['path'],path)
+                self.assertEqual(forwarded['body'],request_body)
+                self.assertEqual(forwarded['headers']['Authorization'],'Bearer REAL_KEY_SENTINEL')
+                self.assertNotIn('X-Jevgrep-Original-Url',forwarded['headers'])
+                requests=list((root/'traces').glob('*.request.json'));responses=list((root/'traces').glob('*.response.json'))
+                self.assertEqual(requests[0].read_bytes(),request_body);self.assertEqual(responses[0].read_bytes(),response_body)
+                for file in requests+responses:
+                    self.assertEqual(file.stat().st_mode&0o777,0o600)
+                    self.assertNotIn(b'REAL_KEY_SENTINEL',file.read_bytes());self.assertNotIn(b'BROKER_TOKEN_SENTINEL',file.read_bytes())
 
 if __name__=='__main__':unittest.main()
