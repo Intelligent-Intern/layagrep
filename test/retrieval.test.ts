@@ -108,7 +108,9 @@ testIfDocker(
               }
             }
             if (state.selectedEvidence) followups.push(state);
-            return Object.fromEntries(Object.keys(request.questions).map((id) => [id, 0.9]));
+            return Object.fromEntries(
+              Object.keys(request.questions).map((id) => [id, /^q\d+$/.test(id) ? 0.8 : 0.9]),
+            );
           },
         },
       );
@@ -185,18 +187,21 @@ testIfDocker(
             const state = request.state as { selectedEvidence?: Array<{ path: string }> };
             if (state.selectedEvidence) {
               followups++;
-              if (followups > 8 && state.selectedEvidence.some((entry) => entry.path === "0.ts"))
+              if (followups > 1 && state.selectedEvidence.some((entry) => entry.path === "0.ts"))
                 staleUploads++;
               if (!changed) {
                 changed = true;
                 await writeFile(join(root, ".ignore"), "0.ts\n");
               }
             }
-            return Object.fromEntries(Object.keys(request.questions).map((id) => [id, 0.9]));
+            return Object.fromEntries(
+              Object.keys(request.questions).map((id) => [id, /^q\d+$/.test(id) ? 0.8 : 0.9]),
+            );
           },
         },
       );
       expect(changed).toBe(true);
+      expect(followups).toBeGreaterThan(1);
       expect(staleUploads).toBe(0);
       expect(result.status).toBe("incomplete");
       expect(result.files.find((file) => file.path === "0.ts")?.excerpts).toEqual([]);
@@ -250,7 +255,7 @@ testIfDocker(
     try {
       await writeFile(
         join(root, "events.ts"),
-        Array.from({ length: 20 }, (_, i) => `export function event${i}() {return true;}\n`).join(
+        Array.from({ length: 400 }, (_, i) => `export function event${i}() {return true;}\n`).join(
           "",
         ),
       );
@@ -286,7 +291,7 @@ testIfDocker(
     try {
       await writeFile(
         join(root, "events.ts"),
-        Array.from({ length: 20 }, (_, i) => `export function event${i}() {return ${i};}\n`).join(
+        Array.from({ length: 400 }, (_, i) => `export function event${i}() {return ${i};}\n`).join(
           "",
         ),
       );
@@ -309,7 +314,7 @@ testIfDocker(
         .flatMap((file) => file.excerpts.map((excerpt) => excerpt.source))
         .join("\n");
       expect(source).toContain("function event0");
-      expect(source).not.toContain("function event19");
+      expect(source).not.toContain("function event399");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -442,4 +447,36 @@ testIfDocker(
     }
   },
   30_000,
+);
+
+testIfDocker(
+  "terminal refinement failures stop later files without discarding first-pass evidence",
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), "jg-refinement-stop-"));
+    try {
+      for (const path of ["a.ts", "b.ts", "c.ts"])
+        await writeFile(join(root, path), "export function event() { return true; }\n");
+      let followups = 0;
+      const result = await retrieve(
+        { root, query: "event", signal: new AbortController().signal },
+        {
+          requests: 0,
+          async evaluate(request) {
+            if ((request.state as { selectedEvidence?: unknown }).selectedEvidence) {
+              followups++;
+              throw new EvaluationFailure("authentication");
+            }
+            return Object.fromEntries(Object.keys(request.questions).map((id) => [id, 0.8]));
+          },
+        },
+      );
+      expect(followups).toBe(1);
+      expect(result.status).toBe("incomplete");
+      expect(result.files).toHaveLength(3);
+      expect(result.files.every((file) => file.selected.length > 0)).toBe(true);
+      expect(result.issues).toContainEqual({ kind: "authentication", count: 1 });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
 );

@@ -1,5 +1,5 @@
 {
-  "status": "research concluded; published implementation retained",
+  "status": "accepted by user for0.5.0 release after review",
   "baseline": "total-cost-2026-09-28.json",
   "candidate": "restored128",
   "package_sha256": "15be7a2f9ccc42ab73fb146052da59e567e18c34911367b7979832d2b86ef834",
@@ -328,7 +328,7 @@
     "method": "65536inputtokens per missing native response; conservative published64kcontextceiling. Actual charges remain unknown; known subtotal alone exceeds baseline.",
     "source": "https://docs.typesafe.ai/models"
   },
-  "decision": "Do not promote as combined-cost improvement. Official quality retained, native cost lower, combined cost higher. User relaxed15%target; that does not make a cost increase a win.",
+  "decision": "Measured official quality retained, native cost lower, combined cost higher. User accepts this tradeoff for0.5.0; it is not marketed as a combined-cost improvement.",
   "comparison_controls": "All10task prompts byte-identical; source HEAD/tree,runtimeimage,engine/model/effort andruntimeversions match; onefirstattempt pertask; no rerunbaseline or cheapestcellpooling. Exact currentpublicskill packaged.",
   "raw_evidence": "evals/runs/swebench/cost-half-research/restored128-cohort (ignored local run storage)",
   "final_followup": {
@@ -346,5 +346,17 @@
     "baseline_combined_usd": 0.528859888,
     "decision": "Reject as combined-cost optimization: known charges alone already exceed fixedbaseline by33.9%. Added helper/test snippets in a fixed-query diagnostic did not establish an end-to-end win."
   },
-  "outcome": "No new retrieval candidate promoted. Unsuccessful product experiments preserved in ignored researchpatch/packages, then reverted from working production code. Retain published0.4.4; no new cost-improvementrelease."
+  "initial_closeout_decision": "No new retrieval candidate promoted. Unsuccessful product experiments preserved in ignored researchpatch/packages, then reverted from working production code. Retain published0.4.4; no new cost-improvementrelease.",
+  "release_decision": {
+    "version": "0.5.0",
+    "candidate": "restored128",
+    "basis": "User explicitly accepts observed2\u20133%combinedincrease as practically equivalent for this release, withlowerJevcost andsameofficialsolverate. This is a product acceptance judgment, not a measured statistical margin of error.",
+    "changes": "Restore ten-task candidate, retain128declarationcap; finalcompact32trialnotpromoted.",
+    "limitations": "Same tuned10Python tasks; native list-price estimate;19missingnativechargesboundedconservatively; no speed/equivalence guarantee.",
+    "verification": {
+      "archive_sha256": "a4eb2a8d50aa5c62f4de4048dbb575f7110932706fe907b1382e1549c83b2f15",
+      "benchmark_fidelity": "CompiledCLIbyte-identicaltorestored128except0.4.4to0.5.0version; samearchivemembers, onlyCLIandpackageversionbytesdiffer.",
+      "checks": "Fullverify:97Buntests,18providerprotocol,22parser,4release,30harness,40installedDockerjourneys passed.10nativemacOSinstalledchecks passed. Independentreviewnoactionableregressions."
+    }
+  }
 }

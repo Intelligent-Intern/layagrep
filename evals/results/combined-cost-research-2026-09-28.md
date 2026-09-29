@@ -3,15 +3,19 @@
 Reducing retrieval expense did not reduce total task expense in the completed
 ten-task experiment. The candidate retained 8/10 official solves, matching the
 fixed baseline, but its known charges already exceed the baseline before any
-allowance for missing native usage. It is not a verified combined-cost improvement.
+allowance for missing native usage. It is not a verified combined-cost improvement. The user subsequently accepted
+the small observed combined-cost difference for release 0.5.0 in exchange for
+roughly 59% lower Jev cost with unchanged official solves. That is a product
+acceptance decision, not a statistically established equivalence margin.
 
 The [result data](combined-cost-research-2026-09-28.json) owns task-level costs,
 package identity, accounting assumptions and timings. Its comparison is the
 [fixed total-cost cohort](total-cost-2026-09-28.md), not a fresh baseline run.
 The final, separately identified batch-size follow-up also failed to establish a
 combined-cost improvement. It solved Pytest, but known charges alone were above
-that task's fixed baseline; one Sol charge remains unavailable. The published
-implementation is retained, and no cost-improvement release is justified.
+that task's fixed baseline; one Sol charge remains unavailable. The smaller-batch variant is not promoted; 0.5.0 uses the completed ten-task
+candidate. The initial closeout decision and later release authorization are
+retained separately in the result data.
 
 ## What the experiment establishes
 
