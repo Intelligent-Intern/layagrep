@@ -395,6 +395,19 @@ class InstalledTests(unittest.TestCase):
             events[-1]['transportError']='Interrupted'
             self.assertIsNone(runner.observed_jev(root,events,True,True)['observed_cost_usd'])
 
+    def test_jev_retained_bill_counts_when_client_disconnects_after_response_capture(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);events=self.jev_fixture(root)
+            events[-1]['transportError']='BrokenPipeError'
+            events[-1]['responseBytes']=0
+            result=runner.observed_jev(root,events,True,True)
+            self.assertTrue(result['complete'])
+            self.assertEqual(result['observed_cost_usd'],0.03)
+            self.assertEqual(result['input_tokens'],20)
+            response=root/'jev-traces'/('1'*32+'.response.json')
+            response.write_text('{')
+            self.assertFalse(runner.observed_jev(root,events,True,True)['complete'])
+
     def test_retained_jev_cost_survives_missing_log_or_request_start(self):
         for missing_log in [True, False]:
             with self.subTest(missing_log=missing_log),tempfile.TemporaryDirectory() as temporary:

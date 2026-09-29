@@ -28,9 +28,11 @@ Pass a natural-language question and an optional search root. The root defaults
 to the current directory; a narrower folder limits the search to that subtree.
 Use `jg --help` for available options.
 
-Results are printed to stdout; no report file is created. If the shell returns a
-running session, retrieve the completed output through that session. The complete
-context ends with `End context.`; shell output limits may truncate it.
+Results are printed to stdout; no report file is created. Preserve the complete
+shell-tool result, including any session/process ID. If the search is still
+running, wait on that ID until it exits; do not launch another search to recover
+its output. The complete context ends with `End context.`; shell output limits
+may truncate it.
 
 ## Output
 
