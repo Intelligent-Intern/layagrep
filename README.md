@@ -27,6 +27,20 @@ The default endpoint is `http://127.0.0.1:8000/v1`. If port 8000 is occupied, se
 
 Laya's multilingual checkpoint is selected explicitly, with a 4096-token request budget. This fork has not reproduced jevgrep's published cost or retrieval benchmarks; those upstream measurements do not establish Layagrep's quality. If a search reports incomplete discovery, inspect the source directly. Exact symbols and paths are often faster with `rg`.
 
+## Agent benchmark
+
+We ran GPT-6 Sol once on each of the [same ten public SWE-bench tasks selected for the jevgrep comparison](evals/implementation/swebench/fixed-baselines.json) with and without the Layagrep skill. Both variants used the same pinned task images and official SWE-bench grader. The skill used a local Laya server; CodeGraph was not enabled.
+
+| | Without Layagrep | With Layagrep |
+| --- | ---: | ---: |
+| Officially resolved | 7/10 | 7/10 |
+| Total agent time | 20 min 19 s | 27 min 18 s |
+| Estimated GPT-6 Sol API cost | $2.31 | $2.63 |
+
+Layagrep produced no additional solves in this run. The skill runs took about 34% longer and used about 14% more model API spend. Agent time includes search, editing, and checks, but excludes image downloads and official grading; costs use [standard GPT-6 Sol token prices](https://developers.openai.com/api/docs/models/gpt-6-sol) and exclude local Laya compute. One task (`pylint-dev__pylint-4604`) was inconclusive in both arms because the grader collected no tests. An initial skill setup failure was excluded from the paired results and cost an additional estimated $0.12 in API usage.
+
+You only know whether a tool helps when you test it. A trial that finds no improvement is useful evidence too. This is one attempt per task with one model and no CodeGraph index, so it does not establish how Layagrep performs on other repositories or configurations.
+
 ## Code graph
 
 The CLI can use [CodeGraph](https://github.com/colbymchenry/codegraph) as an optional local structural index. CodeGraph has its own file watcher and incremental sync; Layagrep does not maintain a second graph database. Install CodeGraph with `npm install -g @colbymchenry/codegraph`, run `codegraph telemetry off` if you want usage telemetry disabled, and then run `codegraph init /path/to/repo`. Search with `layagrep "question" /path/to/repo --graph`. Layagrep runs CodeGraph's incremental sync before each graph search, so edits are picked up even if no watcher is active. CodeGraph's `serve --mcp` mode additionally watches files continuously. Graph results scope the Laya search; rerun without `--graph` when you need whole-tree discovery. Layagrep checks graph paths against the current files and its normal filesystem policy before returning excerpts.
