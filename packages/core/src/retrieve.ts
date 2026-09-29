@@ -17,7 +17,7 @@ import { repositoryContext } from "./repository-context";
 import type { Evaluator, FileEvidence, RetrievalResult, SearchInput } from "./types";
 
 // Bound per-stage source work; the evaluator separately caps shared provider attempts.
-const stageWorkers = 32;
+const stageWorkers = 4;
 /** Traversal owns admission; every stage reads through the same eligibility policy. */
 export async function retrieve(input: SearchInput, evaluator: Evaluator): Promise<RetrievalResult> {
   const reader = await createFilesystem({
@@ -82,17 +82,17 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     let batch: NavigationItem[] = [];
     for (const item of items) {
       if (
-        Buffer.byteLength(JSON.stringify(navigationRequest(input.query, [item], anchor))) > 38_000
+        Buffer.byteLength(JSON.stringify(navigationRequest(input.query, [item], anchor))) > 12_000
       ) {
         issue("request-size");
         continue;
       }
       if (
         batch.length &&
-        (batch.length >= 128 ||
+        (batch.length >= 48 ||
           Buffer.byteLength(
             JSON.stringify(navigationRequest(input.query, [...batch, item], anchor)),
-          ) > 38_000)
+          ) > 12_000)
       ) {
         batches.push(batch);
         batch = [];
@@ -201,7 +201,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     };
     const sources: Donor[] = [];
     const children = preview.entries.filter((child) => child.kind === "file");
-    const perFile = Math.max(80, Math.floor(16000 / Math.max(1, children.length)));
+    const perFile = Math.max(80, Math.floor(10000 / Math.max(1, children.length)));
     for (const child of children) {
       if (stop) break;
       const snapshotValue = await snapshot(`${item.path}/${child.name}`);
@@ -241,11 +241,11 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   }
   async function previewFile(source: Snapshot): Promise<FilePreview> {
     const bytes = Buffer.from(source.source);
-    let text = new TextDecoder("utf8", { fatal: true }).decode(bytes.subarray(0, 16384), {
-      stream: bytes.length > 16384,
+    let text = new TextDecoder("utf8", { fatal: true }).decode(bytes.subarray(0, 4096), {
+      stream: bytes.length > 4096,
     });
-    let truncated = bytes.length > 16384;
-    while (Buffer.byteLength(JSON.stringify(text)) > 24000) {
+    let truncated = bytes.length > 4096;
+    while (Buffer.byteLength(JSON.stringify(text)) > 6000) {
       let end = Math.floor(text.length * 0.75);
       const last = text.charCodeAt(end - 1);
       if (last >= 0xd800 && last <= 0xdbff) end--;
@@ -267,8 +267,8 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       if (
         sampled?.truncated &&
         sampled.text &&
-        Buffer.byteLength(sampled.text) <= 16384 &&
-        Buffer.byteLength(JSON.stringify(sampled.text)) <= 24000
+        Buffer.byteLength(sampled.text) <= 4096 &&
+        Buffer.byteLength(JSON.stringify(sampled.text)) <= 6000
       ) {
         preview.text = sampled.text;
         preview.previewBytes = sampled.previewBytes;
@@ -287,7 +287,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
       preview.declarations = syntax.units
         .filter((unit) => !unit.partial)
         .map((unit) => ({ name: unit.name, ...unit.range }));
-      while (preview.declarations.length && Buffer.byteLength(JSON.stringify(preview)) > 32000) {
+      while (preview.declarations.length && Buffer.byteLength(JSON.stringify(preview)) > 8000) {
         preview.declarations.pop();
         preview.declarationIndexTruncated = true;
       }
@@ -363,7 +363,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
           item.kind === "file" &&
           item.filePreview &&
           item.filePreview.sizeBytes <= 1_000_000 &&
-          Buffer.byteLength(JSON.stringify(navigationRequest(input.query, [item], anchor))) > 38_000
+          Buffer.byteLength(JSON.stringify(navigationRequest(input.query, [item], anchor))) > 12_000
         )
           previewsToExpand.push(item);
         else previewsToScore.push(item);
@@ -376,7 +376,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
         if (!source) continue;
         // Requests too large for preview scoring are split into bounded chunks.
         // Otherwise admission uses the preview; unseen source may still be relevant.
-        for (const chunk of splitSource(source, 12_000)) {
+        for (const chunk of splitSource(source, 4_000)) {
           const text = sourceForUnit(source, chunk);
           remaining.push(
             buffered(
@@ -464,7 +464,25 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
   }
   try {
     try {
-      await discover(["."]);
+      if (input.graphHints?.length) {
+        const graphItems: NavigationItem[] = [];
+        const graphHashes = new Map<string, string>();
+        for (const path of [...new Set(input.graphHints)]) {
+          const source = await snapshot(path);
+          if (!source || Buffer.byteLength(source.source) > 1_000_000) continue;
+          graphHashes.set(path, source.contentHash);
+          const filePreview = await previewFile(source);
+          previews.set(path, filePreview);
+          graphItems.push(buffered({ path, kind: "file", filePreview }, [source]));
+        }
+        for (const { item, score: probability } of await score(graphItems))
+          if (probability > 0.5)
+            candidates.set(item.path, {
+              path: item.path,
+              contentHash: graphHashes.get(item.path)!,
+              score: probability,
+            });
+      } else await discover(["."]);
       let anchor: { path: string; classes: string[] } | undefined;
       for (const candidate of sortedCandidates()) {
         if (candidate.score <= 0.5 || stop) break;
@@ -724,6 +742,7 @@ export async function retrieve(input: SearchInput, evaluator: Evaluator): Promis
     return {
       root: reader.root,
       query: input.query,
+      ...(input.graphHints?.length ? { scope: "graph" as const } : {}),
       status: input.signal.aborted ? "interrupted" : issues.size ? "incomplete" : "complete",
       files: sortedCandidates().map((candidate) => files.get(candidate.path)!),
       repositoryContext: context,

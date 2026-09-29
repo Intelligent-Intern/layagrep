@@ -138,8 +138,8 @@ export async function createFilesystem(options: FilesystemOptions) {
   }
   const protectedPaths = await Promise.all(
     [
-      join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "jevgrep"),
-      join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "jevgrep"),
+      join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "layagrep"),
+      join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "layagrep"),
       ...(options.protectedPaths ?? []),
     ].map(async (path) => {
       const absolute = resolve(path);

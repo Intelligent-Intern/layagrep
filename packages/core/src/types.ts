@@ -35,6 +35,7 @@ export type FileEvidence = {
 export type RetrievalResult = {
   root: string;
   query: string;
+  scope?: "graph";
   status: "complete" | "incomplete" | "interrupted";
   files: FileEvidence[];
   issues: Array<{ kind: string; count: number }>;
@@ -49,6 +50,7 @@ export type RetrievalResult = {
 export type SearchInput = {
   root: string;
   query: string;
+  graphHints?: string[];
   policy?: FilesystemPolicy;
   signal: AbortSignal;
   protectedPaths?: string[];

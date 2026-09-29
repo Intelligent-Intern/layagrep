@@ -7,7 +7,7 @@ import { providers, isProviderId, type ProviderId } from "@repo/core/providers";
 import { CliError } from "./errors";
 
 export function configDirectory() {
-  return join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "jevgrep");
+  return join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "layagrep");
 }
 
 function validateKey(raw: string): string {
@@ -44,7 +44,7 @@ export async function authenticate(provider: ProviderId | undefined, signal: Abo
         `Use auth --provider ${Object.keys(providers).join("|")} --stdin to read a piped key.`,
       );
     const selected = await select<ProviderId>({
-      message: "Choose your Jev provider",
+      message: "Choose your Laya server",
       options: (Object.keys(providers) as ProviderId[]).map((value) => ({
         value,
         label: providers[value].label,
@@ -79,7 +79,7 @@ export async function authenticate(provider: ProviderId | undefined, signal: Abo
   } finally {
     await rm(temporary, { force: true });
   }
-  process.stdout.write(`${providers[provider].label} key saved. Run jg doctor to verify access.\n`);
+  process.stdout.write(`${providers[provider].label} key saved. Run layagrep doctor to verify access.\n`);
 }
 
 export async function loadCredentials(): Promise<Credentials> {
@@ -88,15 +88,14 @@ export async function loadCredentials(): Promise<Credentials> {
       await readFile(join(configDirectory(), "credentials.json"), "utf8"),
     );
     if (typeof credentials.apiKey !== "string" || !credentials.apiKey.trim()) {
-      throw new CliError("Invalid credentials. Run jg auth again.");
+      throw new CliError("Invalid credentials. Run layagrep auth again.");
     }
-    const provider = Object.hasOwn(credentials, "provider") ? credentials.provider : "vercel";
-    if (!isProviderId(provider)) throw new CliError("Invalid provider. Run jg auth again.");
+    const provider = Object.hasOwn(credentials, "provider") ? credentials.provider : "laya";
+    if (!isProviderId(provider)) throw new CliError("Invalid provider. Run layagrep auth again.");
     return { provider, apiKey: validateKey(credentials.apiKey) };
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      throw new CliError("Run jg auth or use jg auth --provider NAME --stdin.");
-    }
-    throw new CliError("Could not read valid credentials. Run jg auth again.");
+    if ((error as NodeJS.ErrnoException).code === "ENOENT")
+      return { provider: "laya", apiKey: "local" };
+    throw new CliError("Could not read valid credentials. Run layagrep auth again.");
   }
 }

@@ -7,7 +7,7 @@ function quote(value: string): string {
   );
 }
 
-export const DEFAULT_MAX_SOURCE_BYTES = 0;
+export const DEFAULT_MAX_SOURCE_BYTES = 24_000;
 
 /** Present source before detailed reading leads so truncated output remains useful. */
 export function renderResult(
@@ -38,7 +38,7 @@ export function renderResult(
   const context = result.repositoryContext;
   const omittedCount = files.filter(({ omitted }) => omitted).length;
   const lines = [
-    `Jevgrep: ${files.length} relevant files${result.status !== "complete" ? "; discovery incomplete" : ""}.`,
+    `Layagrep: ${files.length} relevant files${result.scope === "graph" ? "; graph-scoped discovery" : ""}${result.status !== "complete" ? "; discovery incomplete" : ""}.`,
     "Symbols use name@start-end. Roles are estimates; locations-only files remain reading leads.",
     `AGENTS.md lookup (root and returned-file ancestors): ${context.instructionFiles.length ? context.instructionFiles.map(quote).join(", ") : "none found"}${context.instructionLookupIncomplete ? "; lookup incomplete" : ""}.`,
     ...(result.status === "interrupted" ? ["Interrupted."] : []),

@@ -1,5 +1,5 @@
 {
-  "name": "jevgrep",
+  "name": "layagrep",
   "private": true,
   "workspaces": {
     "packages": [

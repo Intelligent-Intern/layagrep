@@ -20,9 +20,9 @@ export function releaseIdentity(metadata, tag) {
   if (version === "0.0.0")
     throw new Error("Set an intentional release version; 0.0.0 is a development checkpoint");
   if (tag !== `v${version}`) throw new Error("Tag must equal v plus the CLI package version");
-  if (metadata.name !== "@dzhng/jevgrep") throw new Error("Release package must be @dzhng/jevgrep");
-  if (metadata.bin?.jg !== "./dist/bin/index.js" || Object.keys(metadata.bin).length !== 1)
-    throw new Error("Release must expose only the jg executable");
+  if (metadata.name !== "@intelligent-intern/layagrep") throw new Error("Release package must be @intelligent-intern/layagrep");
+  if (metadata.bin?.layagrep !== "./dist/bin/index.js" || metadata.bin?.jg !== "./dist/bin/index.js" || Object.keys(metadata.bin).length !== 2)
+    throw new Error("Release must expose layagrep and the compatible jg alias");
   if (metadata.private || metadata.publishConfig?.access !== "public")
     throw new Error("Release package must be public");
   if (metadata.license !== "MIT" || metadata.engines?.node !== ">=22")
@@ -48,7 +48,7 @@ export async function validateRelease(tarball, tag, root = repository) {
   if (new Set(files).size !== files.length) throw new Error("Duplicate archive entries");
   for (const path of files)
     if (
-      !/^package\/(?:package\.json|README(?:\.md)?|LICENSE|dist\/(?:bin\/(?:index\.js|python-worker\.mjs)|assets\/(?:python\/(?:inspect|preview|neighborhood|calls)\.py|README\.md)|skills\/jevgrep\/SKILL\.md|LICENSE|THIRD_PARTY_NOTICES\.txt))$/.test(
+      !/^package\/(?:package\.json|README(?:\.md)?|LICENSE|dist\/(?:bin\/(?:index\.js|python-worker\.mjs)|assets\/(?:python\/(?:inspect|preview|neighborhood|calls)\.py|README\.md)|skills\/layagrep\/SKILL\.md|LICENSE|THIRD_PARTY_NOTICES\.txt))$/.test(
         path,
       )
     )
@@ -75,7 +75,7 @@ export async function validateRelease(tarball, tag, root = repository) {
     throw new Error("Packed executable must run in Node");
   for (const [packed, original] of [
     ["dist/LICENSE", "LICENSE"],
-    ["dist/skills/jevgrep/SKILL.md", "skills/jevgrep/SKILL.md"],
+    ["dist/skills/layagrep/SKILL.md", "skills/layagrep/SKILL.md"],
     ["dist/bin/python-worker.mjs", "packages/core/src/python-worker.mjs"],
     ...["inspect", "preview", "neighborhood", "calls"].map((name) => [
       `dist/assets/python/${name}.py`,

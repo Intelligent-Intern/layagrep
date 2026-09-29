@@ -12,7 +12,7 @@ import type { Evaluator, FileEvidence, ReadingLead, EvidenceRange } from "./type
 
 import type { Snapshot } from "./filesystem";
 type Span = { start: number; end: number };
-const sourceUnitBytes = 24_000;
+const sourceUnitBytes = 6_000;
 export type SelectionResult = {
   file: FileEvidence;
   declarations: Array<Pick<SourceUnit, "name" | "range">>;
@@ -146,10 +146,10 @@ export async function selectFile(
   for (const unit of units) {
     if (
       pending.length &&
-      (pending.length >= 128 ||
+      (pending.length >= 16 ||
         Buffer.byteLength(
           lines.slice(pending[0]!.range.startLine - 1, unit.range.endLine).join("\n"),
-        ) > 42000)
+        ) > 10_000)
     ) {
       groups.push(pending);
       pending = [];
@@ -184,7 +184,7 @@ export async function selectFile(
                   `Source lines ${unit.range.startLine}-${unit.range.endLine}; source bytes ${unit.sourceByteStart}-${unit.sourceByteEnd}:\n${sourceForUnit(snapshot, unit)}`,
               )
               .join("\n")
-          : bytes.length <= 16000
+          : bytes.length <= 8000
             ? snapshot.source
             : `Opening context:\n${lines.slice(0, 20).join("\n")}\nSource lines ${first}-${last}:\n${lines.slice(first - 1, last).join("\n")}`;
       const request = evidenceRequest(
@@ -195,7 +195,7 @@ export async function selectFile(
         prepared.evidence,
       );
       // Shared evidence contributes to the state limit as well as local source.
-      if (group.length > 1 && Buffer.byteLength(JSON.stringify(request.state)) > 80_000) {
+      if (group.length > 1 && Buffer.byteLength(JSON.stringify(request.state)) > 12_000) {
         const middle = Math.ceil(group.length / 2);
         groups.splice(groupIndex, 1, group.slice(0, middle), group.slice(middle));
         groupIndex--;
@@ -354,7 +354,7 @@ export async function selectFile(
     };
   }
   const expanded = excerptsFor([...wholeRanges, ...neighborhood], rendered);
-  // Presentation can be stricter without narrowing evidence sent to Jev.
+  // Presentation can be stricter without narrowing evidence sent to Laya.
   const displayed = mergeSpans(
     [...sourceDecisions.values()]
       .filter((decision) => decision.score > 0.7)

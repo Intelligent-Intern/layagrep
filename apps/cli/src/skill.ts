@@ -6,7 +6,7 @@ export async function installSkill(
   command: Extract<Command, { kind: "skill" }>,
   signal: AbortSignal,
 ): Promise<number> {
-  const args = ["--yes", "skills", "add", "dzhng/jevgrep", "--skill", "jevgrep"];
+  const args = ["--yes", "skills", "add", "intelligent-intern/layagrep", "--skill", "layagrep"];
   for (const agent of command.agents) args.push("--agent", agent);
   if (command.global) args.push("--global");
   if (command.yes) args.push("--yes");
@@ -21,7 +21,7 @@ export async function installSkill(
     child.once("error", (error: NodeJS.ErrnoException) =>
       reject(
         error.code === "ENOENT"
-          ? new CliError("Skill installation requires npx. Install npm, then run jg skill again.")
+          ? new CliError("Skill installation requires npx. Install npm, then run layagrep skill again.")
           : error,
       ),
     );

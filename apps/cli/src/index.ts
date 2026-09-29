@@ -8,6 +8,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { version } from "../package.json";
 import { installSkill } from "./skill";
+import { graphHints } from "./graph";
 
 globalThis.AI_SDK_LOG_WARNINGS = false;
 
@@ -33,7 +34,7 @@ async function write(text: string) {
 }
 
 function cacheDirectory() {
-  return join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "jevgrep");
+  return join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "layagrep");
 }
 
 async function main() {
@@ -73,30 +74,31 @@ async function main() {
             },
           },
         });
-        if (!(answers.relevant! > 0.5))
+        if (typeof answers.relevant !== "number" || !Number.isFinite(answers.relevant))
           throw new CliError(
             `${providers[credentials.provider].label} returned an unexpected answer to the connection check.`,
           );
-        await write(`Jev connection verified through ${providers[credentials.provider].label}.\n`);
+        await write(`Laya connection verified through ${providers[credentials.provider].label}.\n`);
       } catch (error) {
         if (error instanceof CliError) throw error;
         if (error instanceof EvaluationFailure && error.diagnostic) {
           const { statusCode, message } = error.diagnostic;
           throw new CliError(
-            `Jev connection check failed through ${providers[credentials.provider].label} (HTTP ${statusCode}).\n` +
+            `Laya connection check failed through ${providers[credentials.provider].label} (HTTP ${statusCode}).\n` +
               (message
                 ? `Provider: ${message}`
-                : "Check your saved key, model access, and provider billing."),
+                : "Check the local server key and model availability."),
           );
         }
         throw new CliError(
-          `Jev connection check failed through ${providers[credentials.provider].label}. Check your saved key, model access, and network.`,
+          `Laya connection check failed through ${providers[credentials.provider].label}. Check the local server and model availability.`,
         );
       }
       return;
     }
     case "search": {
       const credentials = await loadCredentials();
+      const hints = command.graph ? await graphHints(command.root, command.query, controller.signal) : [];
       const { retrieve, createEvaluator, createEvaluationCache } = await import("@repo/core");
       const cache = createEvaluationCache({
         directory: cacheDirectory(),
@@ -113,6 +115,7 @@ async function main() {
         {
           root: command.root,
           query: command.query,
+          ...(hints.length ? { graphHints: hints } : {}),
           policy: command.policy,
           signal: controller.signal,
           protectedPaths: [configDirectory(), cacheDirectory()],

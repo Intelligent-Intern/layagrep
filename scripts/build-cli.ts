@@ -27,6 +27,6 @@ await writeFile(
 await cp(join(root, "packages/core/src/python-worker.mjs"), join(out, "bin/python-worker.mjs"));
 await cp(join(root, "LICENSE"), join(out, "LICENSE"));
 await cp(join(root, "packages/core/assets"), join(out, "assets"), { recursive: true });
-const skill = join(out, "skills/jevgrep/SKILL.md");
+const skill = join(out, "skills/layagrep/SKILL.md");
 await mkdir(dirname(skill), { recursive: true });
-await cp(join(root, "skills/jevgrep/SKILL.md"), skill);
+await cp(join(root, "skills/layagrep/SKILL.md"), skill);

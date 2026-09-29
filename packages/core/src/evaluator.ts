@@ -1,10 +1,9 @@
 import { APICallError, experimental_evaluate as evaluate } from "ai";
 import { createTypeSafeAi } from "@ai-sdk/typesafe-ai";
-import { providers, type ProviderId } from "./providers";
+import { layaBaseURL, providers, type ProviderId } from "./providers";
 import { type createEvaluationCache, type CacheInput } from "./cache";
 import { setTimeout as delay } from "node:timers/promises";
 import { stripVTControlCharacters } from "node:util";
-import { createRateBudget, estimatedInputTokens } from "./rate-budget";
 
 export type EvaluationRequest = {
   state: Parameters<typeof evaluate>[0]["state"];
@@ -23,7 +22,7 @@ export class EvaluationFailure extends Error {
     public readonly diagnostic?: { statusCode: number; message?: string },
     message?: string,
   ) {
-    super(message ?? `Jev evaluation failed: ${kind}`);
+    super(message ?? `Laya evaluation failed: ${kind}`);
     this.name = "EvaluationFailure";
   }
 }
@@ -40,17 +39,14 @@ export function createEvaluator(options: {
   concurrency?: number;
 }) {
   const preset = providers[options.provider];
-  const concurrency = options.concurrency ?? 32;
-  const timeoutMs = options.timeoutMs ?? (options.provider === "typesafe" ? 60_000 : 15_000);
+  const baseURL = layaBaseURL();
+  const concurrency = options.concurrency ?? 2;
+  const timeoutMs = options.timeoutMs ?? 120_000;
   if (!Number.isSafeInteger(concurrency) || concurrency < 1)
     throw new Error("Concurrency must be a positive integer");
   let requests = 0;
   let cacheHits = 0;
   let cooldownUntil = 0;
-  const rateBudget =
-    options.provider === "typesafe"
-      ? createRateBudget({ tokensPerSecond: 250_000, requestsPerMinute: 1_200 })
-      : undefined;
   const authenticationFailure = new AbortController();
   function assertActive() {
     if (options.signal.aborted) throw new EvaluationFailure("cancelled");
@@ -79,13 +75,16 @@ export function createEvaluator(options: {
   }
   const provider = createTypeSafeAi({
     apiKey: options.apiKey,
-    baseURL: preset.baseURL,
+    baseURL,
     fetch: async (input, init) => {
       assertActive();
       if (requests >= (options.requestLimit ?? 50_000))
         throw new EvaluationFailure("request-limit");
       requests++;
-      const response = await (options.fetch ?? fetch)(input, init);
+      const body = typeof init?.body === "string" ? JSON.parse(init.body) : null;
+      const response = await (options.fetch ?? fetch)(input, body && typeof body === "object"
+        ? { ...init, body: JSON.stringify({ ...body, max_len: 4096, head_max_len: 512 }) }
+        : init);
       if (response.status === 429) {
         const raw = response.headers.get("retry-after");
         const seconds = raw === null ? NaN : Number(raw);
@@ -121,8 +120,8 @@ export function createEvaluator(options: {
         namespace: {
           model: preset.model,
           provider: options.provider,
-          endpoint: preset.baseURL,
-          protocol: "typesafe-ai-3.0.8",
+          endpoint: baseURL,
+          protocol: "laya-systemone-v1-4096-512",
           policyVersion: options.policyVersion ?? "1",
           parserVersion: "cpython-3.11.3-pyodide-0.25.1-ts-5.9.3",
           promptVersion: "unit-locators-1",
@@ -143,7 +142,6 @@ export function createEvaluator(options: {
         return cached;
       }
       const navigation = policy?.navigation === true;
-      const reservedTokens = rateBudget ? estimatedInputTokens(request) : 0;
       const multiple = Object.keys(request.questions).length > 1;
       let attemptLimit = navigation && multiple ? 1 : 2;
       for (let attempt = 0; attempt < attemptLimit; attempt++) {
@@ -156,10 +154,7 @@ export function createEvaluator(options: {
           // Wait before validating source and before starting the network timeout.
           // Recheck after validation: another worker may have consumed the budget.
           for (;;) {
-            const wait = Math.max(
-              cooldownUntil - Date.now(),
-              rateBudget?.waitMs(reservedTokens) ?? 0,
-            );
+            const wait = cooldownUntil - Date.now();
             if (wait > 0) {
               try {
                 await delay(Math.min(60_000, wait), undefined, { signal: stopped });
@@ -171,11 +166,10 @@ export function createEvaluator(options: {
             }
             await policy?.beforeAttempt?.();
             assertActive();
-            if (cooldownUntil > Date.now() || (rateBudget?.waitMs(reservedTokens) ?? 0) > 0)
+            if (cooldownUntil > Date.now())
               continue;
             break;
           }
-          const reservation = rateBudget?.reserve(reservedTokens);
           try {
             const result = await evaluate({
               model: provider.evaluationModel(preset.model),
@@ -187,7 +181,6 @@ export function createEvaluator(options: {
                 AbortSignal.timeout(timeoutMs),
               ]),
             });
-            reservation?.reconcile(result.usage.inputTokens);
             const scores = Object.fromEntries(
               Object.keys(request.questions).map((id) => {
                 const answer = result.answers[id];
