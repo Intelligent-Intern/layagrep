@@ -33,4 +33,4 @@ The CLI can use [CodeGraph](https://github.com/colbymchenry/codegraph) as an opt
 
 ## License
 
-MIT. The fork retains jevgrep's copyright and history. Laya and CodeGraph are separate projects with their own licenses.
+Layagrep is MIT licensed and retains jevgrep's copyright and history. [Laya is Apache-2.0 licensed](https://github.com/NandhaKishorM/laya/blob/main/LICENSE) and is installed and run separately; no Laya source, model, or binary is distributed with this repository or the Layagrep CLI. [CodeGraph](https://github.com/colbymchenry/codegraph) is also a separately installed tool. If a future distribution bundles Laya, it must include Laya's Apache-2.0 license and any applicable notices with that distribution.
